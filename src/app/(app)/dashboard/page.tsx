@@ -22,7 +22,7 @@ function Pie({ items, total }: { items: Item[]; total: number }) {
   let angle = -Math.PI / 2;
   const r = 100, cx = 110, cy = 110;
   return (
-    <svg viewBox="0 0 220 220" className="h-56 w-56 shrink-0">
+    <svg viewBox="0 0 220 220" className="h-48 w-48 shrink-0 sm:h-56 sm:w-56">
       {items.map((it, i) => {
         const frac = it.amount / total, a0 = angle, a1 = angle + frac * 2 * Math.PI;
         angle = a1;
@@ -41,7 +41,7 @@ function Breakdown({ title, items, total }: { title: string; items: Item[]; tota
       <div className="card space-y-3">
         <h3 className="text-sm font-semibold">{title} breakdown</h3>
         {items.length ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
             {items.map((it, i) => (
               <div key={it.id} className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200" style={{ borderTop: `3px solid ${colors[i % colors.length]}` }}>
                 <p className="flex items-center gap-2 text-xs text-slate-600"><span className="h-2.5 w-2.5 rounded-full" style={{ background: colors[i % colors.length] }} />{it.name}</p>
@@ -107,9 +107,9 @@ export default function DashboardPage() {
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Academic</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-3 min-[480px]:grid-cols-3 sm:gap-4">
           {[["Students", counts.students], ["Diary entries today", counts.diary], ["Papers created", counts.papers]].map(([label, value]) => (
-            <div key={label} className="card"><p className="text-sm text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div>
+            <div key={label} className="card"><p className="text-sm text-slate-500">{label}</p><p className="mt-1 text-xl font-bold sm:text-2xl">{value}</p></div>
           ))}
         </div>
       </section>
@@ -117,10 +117,10 @@ export default function DashboardPage() {
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Income</h2>
         <div className="card flex flex-wrap items-end gap-4">
-          <div><label className="text-xs font-semibold text-slate-500">From</label><input type="date" className="input mt-1 w-44" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
-          <div><label className="text-xs font-semibold text-slate-500">To</label><input type="date" className="input mt-1 w-44" value={to} onChange={(e) => setTo(e.target.value)} /></div>
+          <div className="min-w-0 flex-1 sm:flex-none"><label className="text-xs font-semibold text-slate-500">From</label><input type="date" className="input mt-1 w-full sm:w-44" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
+          <div className="min-w-0 flex-1 sm:flex-none"><label className="text-xs font-semibold text-slate-500">To</label><input type="date" className="input mt-1 w-full sm:w-44" value={to} onChange={(e) => setTo(e.target.value)} /></div>
         </div>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 lg:grid-cols-5">
           {cards.map(([label, value, color]) => (<div key={label} className="card"><p className="text-xs uppercase text-slate-500">{label}</p><p className={`mt-1 text-lg font-bold ${color}`}>{money(value)}</p></div>))}
         </div>
         <Breakdown title="Expense" items={t.expense} total={t.expenseTotal} />

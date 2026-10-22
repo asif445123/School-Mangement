@@ -37,8 +37,8 @@ export default function SchoolMarks() {
   function view(p: any) {
     const m = marksOf(p._id), sts = classStudents(p.className).sort(byRoll);
     Swal.fire({
-      title: `${p.title} - ${p.subject}`, confirmButtonText: "Close",
-      html: `<table style="width:100%;text-align:left;font-size:14px"><thead><tr><th>Roll</th><th>Student</th><th>Marks (out of ${esc(p.totalMarks)})</th></tr></thead><tbody>${sts.map((s) => `<tr><td>${esc(s.rollNo)}</td><td>${esc(s.name)}</td><td>${m.has(s._id) ? esc(m.get(s._id)) : '<span style="color:#dc2626">not entered</span>'}</td></tr>`).join("") || '<tr><td colspan="3">No students in this class</td></tr>'}</tbody></table>`,
+      title: `${p.title} - ${p.subject}`, confirmButtonText: "Close", width: 560,
+      html: `<div style="overflow-x:auto"><table style="width:100%;text-align:left;font-size:13.5px;line-height:1.5"><thead><tr><th>Roll</th><th>Student</th><th>Marks (out of ${esc(p.totalMarks)})</th></tr></thead><tbody>${sts.map((s) => `<tr><td>${esc(s.rollNo)}</td><td>${esc(s.name)}</td><td>${m.has(s._id) ? esc(m.get(s._id)) : '<span style="color:#dc2626">not entered</span>'}</td></tr>`).join("") || '<tr><td colspan="3">No students in this class</td></tr>'}</tbody></table></div>`,
     });
   }
   const enter = (p: any) => { setEntryPaper(p._id); setMode("entry"); };
@@ -63,7 +63,7 @@ export default function SchoolMarks() {
 
       {mode === "entry" ? <MarksEntry key={entryPaper} initialPaperId={entryPaper} /> : (
         <div className="card overflow-x-auto p-0">
-          <table className="w-full">
+          <table className="w-full min-w-[600px]">
             <thead><tr><th className="th w-8"></th><th className="th">Class teacher</th><th className="th">Class</th><th className="th">Section</th><th className="th">Tests</th><th className="th">Exams</th><th className="th text-center">Marks</th></tr></thead>
             <tbody>
               {rows.map((r) => {

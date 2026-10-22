@@ -34,8 +34,8 @@ export async function accessDialog(kind: "rejected" | "pending", info: Info = {}
     background: "#f8fafc", showConfirmButton: false, showCloseButton: true, width: 440,
     html: `<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:6px">
       ${rejected ? ban : clock}
-      <div style="font-family:Georgia,serif;font-weight:700;font-size:27px;color:${rejected ? "#b91c1c" : "#b45309"}">${rejected ? "Access Denied" : "Awaiting Approval"}</div>
-      <div style="font-size:15px;color:#475569;line-height:1.5">${text}</div>
+      <div style="font-weight:700;font-size:21px;line-height:1.3;color:${rejected ? "#b91c1c" : "#b45309"}">${rejected ? "Access Denied" : "Awaiting Approval"}</div>
+      <div style="font-size:14px;color:#475569;line-height:1.55">${text}</div>
       <div style="display:flex;gap:14px;margin-top:4px">${btn(wa, "#22c55e", "WhatsApp", whatsappIcon)}${btn(contactUrl, "#2563eb", "Contact us", mailIcon, { newTab: false, id: "ad-contact" })}</div>
       <div style="font-size:14px;margin-top:6px"><a href="#" id="ad-login" style="color:#2563eb;font-weight:600;text-decoration:none">&larr; Back to Login</a> <span style="color:#94a3b8">or</span> <a href="#" id="ad-demo" style="color:#2563eb;font-weight:600;text-decoration:none">View Demo</a></div>
     </div>`,

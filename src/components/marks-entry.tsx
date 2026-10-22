@@ -51,7 +51,7 @@ export default function MarksEntry({ initialPaperId = "" }: { initialPaperId?: s
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Enter Marks</h1>
-        <select className="input w-72" value={paperId} onChange={(e) => setPaperId(e.target.value)}>
+        <select className="input w-full sm:w-72" value={paperId} onChange={(e) => setPaperId(e.target.value)}>
           <option value="">Select test / exam paper</option>
           {papers.map((p) => <option key={p._id} value={p._id}>{p.title} - Class {p.className} ({p.type})</option>)}
         </select>
@@ -59,7 +59,7 @@ export default function MarksEntry({ initialPaperId = "" }: { initialPaperId?: s
       {paper && (
         <div className="card overflow-x-auto p-0">
           <p className="p-4 pb-2 text-sm text-slate-500">Marks saved: {Object.keys(saved).length} of {students.length} students · Total marks {paper.totalMarks}</p>
-          <table className="w-full">
+          <table className="w-full min-w-[600px]">
             <thead><tr><th className="th">Roll #</th><th className="th">Student</th><th className="th">Marks (out of {paper.totalMarks})</th><th className="th">Actions</th></tr></thead>
             <tbody>
               {students.map((s) => (
@@ -67,7 +67,7 @@ export default function MarksEntry({ initialPaperId = "" }: { initialPaperId?: s
                   <td className="td">{s.rollNo}</td><td className="td">{s.name}</td>
                   <td className="td">
                     {isOpen(s._id)
-                      ? <input type="number" min={0} max={paper.totalMarks} className="input w-32" value={values[s._id] ?? ""} onChange={(e) => setValues({ ...values, [s._id]: e.target.value })} />
+                      ? <input type="number" min={0} max={paper.totalMarks} className="input w-24 sm:w-32" value={values[s._id] ?? ""} onChange={(e) => setValues({ ...values, [s._id]: e.target.value })} />
                       : <span className="font-semibold">{saved[s._id].obtained} <span className="font-normal text-slate-400">/ {paper.totalMarks}</span></span>}
                   </td>
                   <td className="td whitespace-nowrap">

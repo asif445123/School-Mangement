@@ -40,7 +40,7 @@ export function AccountList({ data }: { data: Data }) {
       </Filters>
       {applied === null ? <Hint /> : (
         <div id="report-area" className="card overflow-x-auto p-0">
-          <table className="w-full"><thead><tr><Th>Code</Th><Th>Description</Th><Th>Type</Th><Th right>Total amount</Th></tr></thead>
+          <table className="w-full min-w-[600px]"><thead><tr><Th>Code</Th><Th>Description</Th><Th>Type</Th><Th right>Total amount</Th></tr></thead>
             <tbody>{rows.map((a) => <tr key={a._id} className="border-t"><td className="td font-semibold">{a.code}</td><td className="td">{a.name}</td><td className="td text-slate-500">{a.accountType?.name}</td><td className="td text-right">{num(totals.get(a._id) || 0)}</td></tr>)}
               {!rows.length && <tr><td colSpan={4} className="td py-6 text-center text-slate-400">No accounts</td></tr>}</tbody></table>
         </div>
@@ -61,7 +61,7 @@ export function JournalReport({ data }: { data: Data }) {
   const table = (title: string, list: [string, { amount: number; count: number }][]) => (
     <div className="card overflow-x-auto p-0">
       <h3 className="p-4 font-semibold">{title}</h3>
-      <table className="w-full"><thead><tr><Th>{a?.mode === "date" ? "Date" : "Month"}</Th><Th right>Entries</Th><Th right>Total amount</Th></tr></thead>
+      <table className="w-full min-w-[600px]"><thead><tr><Th>{a?.mode === "date" ? "Date" : "Month"}</Th><Th right>Entries</Th><Th right>Total amount</Th></tr></thead>
         <tbody>{list.map(([k, v]) => <tr key={k} className="border-t"><td className="td">{k}</td><td className="td text-right">{v.count}</td><td className="td text-right">{num(v.amount)}</td></tr>)}
           <tr className="border-t bg-slate-50 font-semibold"><td className="td">Total</td><td className="td text-right">{list.reduce((s, [, v]) => s + v.count, 0)}</td><td className="td text-right">{num(list.reduce((s, [, v]) => s + v.amount, 0))}</td></tr></tbody></table>
     </div>
@@ -136,7 +136,7 @@ export function LedgerReport({ data }: { data: Data }) {
           {blocks.map((b) => (
             <div key={b.acc._id} className="card overflow-x-auto p-0">
               <h3 className="p-4 font-semibold">{b.acc.code} - {b.acc.name} <span className="text-sm font-normal text-slate-400">({b.acc.accountType?.name})</span></h3>
-              <table className="w-full"><thead><tr><Th>Date</Th><Th>JV</Th><Th>Narration</Th><Th right>Amount</Th><Th right>Balance</Th></tr></thead>
+              <table className="w-full min-w-[600px]"><thead><tr><Th>Date</Th><Th>JV</Th><Th>Narration</Th><Th right>Amount</Th><Th right>Balance</Th></tr></thead>
                 <tbody>
                   <tr className="border-t bg-slate-50"><td className="td" colSpan={4}>Opening balance</td><td className="td text-right">{num(b.opening)}</td></tr>
                   {b.rows.map((e) => <tr key={e._id} className="border-t"><td className="td whitespace-nowrap">{e.date}</td><td className="td">{e.jv ? `JV ${e.jv}` : "-"}</td><td className="td">{e.narration}</td><td className="td text-right">{num(e.amount)}</td><td className="td text-right">{num(e.balance)}</td></tr>)}
@@ -163,7 +163,7 @@ export function RecvPayReport({ data }: { data: Data }) {
   const table = (title: string, rows: any[]) => (
     <div className="card overflow-x-auto p-0">
       <h3 className="p-4 font-semibold text-slate-600">{title}</h3>
-      <table className="w-full"><thead><tr><Th>Code</Th><Th>Description</Th><Th right>Balance</Th></tr></thead>
+      <table className="w-full min-w-[600px]"><thead><tr><Th>Code</Th><Th>Description</Th><Th right>Balance</Th></tr></thead>
         <tbody>{rows.map((r) => <tr key={r._id} className="border-t"><td className="td font-semibold">{r.code}</td><td className="td">{r.name}</td><td className="td text-right">{num(r.balance)}</td></tr>)}
           <tr className="border-t bg-slate-50 font-semibold"><td className="td">Total</td><td className="td"></td><td className="td text-right">{num(rows.reduce((s, r) => s + r.balance, 0))}</td></tr></tbody></table>
     </div>
@@ -206,7 +206,7 @@ function PeriodTable({ title, m, labels, compare, bars }: any) {
   return (
     <div className="card overflow-x-auto p-0">
       <h2 className="p-4 font-semibold">{title}</h2>
-      <table className="w-full">
+      <table className="w-full min-w-[600px]">
         <thead><tr><Th>Account</Th>{labels.map((l: string) => <Th key={l} right>{l}</Th>)}</tr></thead>
         <tbody>
           {m.list.map((r: any) => { const max = Math.max(...r.values, 0); return (

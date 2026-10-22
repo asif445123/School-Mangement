@@ -58,17 +58,17 @@ export default function EntriesPage() {
       <h1 className="text-xl font-bold">Entries</h1>
       <div className="card space-y-4">
         <h2 className="font-semibold">Add entry</h2>
-        <div><label className="text-sm text-slate-600">Date</label><input type="date" className="input mt-1 w-48" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+        <div><label className="text-sm text-slate-600">Date</label><input type="date" className="input mt-1 w-full sm:w-48" value={date} onChange={(e) => setDate(e.target.value)} /></div>
         <datalist id="account-list">{accounts.map((a) => <option key={a._id} value={label(a)} />)}</datalist>
         <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full">
+          <table className="w-full min-w-[600px]">
             <thead><tr><th className="th">#</th><th className="th">Account code</th><th className="th">Narration</th><th className="th">Amount</th><th className="th"></th></tr></thead>
             <tbody>
               {rows.map((r, i) => (
                 <tr key={i} className="border-t">
                   <td className="td">{i + 1}</td>
-                  <td className="td"><input className="input min-w-48" list="account-list" placeholder="Search account..." value={r.account} onChange={(e) => setRow(i, "account", e.target.value)} /></td>
-                  <td className="td"><input className="input min-w-48" placeholder="Narration" value={r.narration} onChange={(e) => setRow(i, "narration", e.target.value)} /></td>
+                  <td className="td"><input className="input min-w-40 sm:min-w-48" list="account-list" placeholder="Search account..." value={r.account} onChange={(e) => setRow(i, "account", e.target.value)} /></td>
+                  <td className="td"><input className="input min-w-40 sm:min-w-48" placeholder="Narration" value={r.narration} onChange={(e) => setRow(i, "narration", e.target.value)} /></td>
                   <td className="td"><input type="number" min={0} className="input w-32" placeholder="Amount" value={r.amount} onChange={(e) => setRow(i, "amount", e.target.value)} /></td>
                   <td className="td">{rows.length > 1 && <button className="icon-btn text-slate-400 hover:text-red-600" title="Remove row" onClick={() => setRows(rows.filter((_, j) => j !== i))}><FaTimes /></button>}</td>
                 </tr>
@@ -83,13 +83,13 @@ export default function EntriesPage() {
 
       <div className="space-y-3">
         <div className="card flex flex-wrap items-center gap-3">
-          <div className="inline-flex overflow-hidden rounded-lg border">
+          <div className="inline-flex max-w-full overflow-x-auto rounded-lg border">
             {tabs.map(([k, l]) => <button key={k} onClick={() => { setTab(k); setQ(""); }} className={`px-4 py-2 text-sm ${tab === k ? "bg-emerald-700 text-white" : "bg-white text-slate-600"}`}>{l}</button>)}
           </div>
-          <input className="input w-60" placeholder={placeholder} value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="input w-full min-w-0 flex-1 sm:w-60 sm:flex-none" placeholder={placeholder} value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="card overflow-x-auto p-0">
-          <table className="w-full">
+          <table className="w-full min-w-[600px]">
             <thead><tr>{["Date", "Code", "Account", "Account type", "Narration", "Amount", "Actions"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
             <tbody>
               {shown.map((r) => (

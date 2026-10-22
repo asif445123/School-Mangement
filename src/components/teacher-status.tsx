@@ -52,7 +52,7 @@ export default function TeacherStatus({ kind }: { kind: Kind }) {
     <div className="card overflow-x-auto p-0">
       <h3 className="p-4 pb-1 font-semibold">{title}</h3>
       <p className="px-4 pb-2 text-xs text-slate-500">{hint}</p>
-      <table className="w-full">
+      <table className="w-full min-w-[600px]">
         <thead><tr><th className="th w-8"></th><th className="th">Class</th><th className="th">Section</th><th className="th text-center">{LABEL[kind]}</th></tr></thead>
         <tbody>
           {rows.map((r) => {

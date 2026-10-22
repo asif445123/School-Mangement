@@ -58,10 +58,10 @@ function TeacherPapers() {
         {(["all", "test", "exam"] as const).map((t) => (
           <button key={t} onClick={() => setFilter(t)} className={`rounded-lg px-3 py-2 text-sm font-medium capitalize ${filter === t ? "bg-blue-600 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"}`}>{t === "all" ? `All papers (${rows.length})` : `${t === "test" ? "Tests" : "Exams"} (${rows.filter((r) => r.type === t).length})`}</button>
         ))}
-        <input className="input ml-auto w-48" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="input w-full sm:ml-auto sm:w-48" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       <div className="card overflow-x-auto p-0">
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
           <thead><tr>{["Title", "Type", "Term", "Class", "Subject", "Date", "Total marks", "Actions"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
           <tbody>
             {shown.map((r) => (
