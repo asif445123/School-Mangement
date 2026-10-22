@@ -11,6 +11,7 @@ import Mark from "@/models/mark";
 import PeriodSchedule from "@/models/period-schedule";
 import Timetable from "@/models/timetable";
 import { classTeacherAssignment, classTeacherClasses, cleanAssignments, periodNumber, subjectMatch } from "@/lib/teacher-scope";
+import { assignmentConflict } from "@/lib/period-conflicts";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -33,6 +34,21 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   const { status, password, name, teacherType, email, phone, className, section, subject, period, extras } = await req.json();
   const t = g.target;
   if (period !== undefined && period !== "" && !periodNumber(period)) return fail("Period must be from 1 to 8");
+
+  // A class period has one teacher only: refuse a period that already belongs to
+  // another teacher of that class and name him in the message.
+  if (className !== undefined || section !== undefined || period !== undefined || extras !== undefined) {
+    const next = g.classTeacher
+      ? [{ className: g.ct.className, section: g.ct.section, period: period !== undefined ? period : t.period }]
+      : [
+        { className: className !== undefined ? className : t.className, section: section !== undefined ? section : t.section, period: period !== undefined ? period : t.period },
+        ...(extras !== undefined ? cleanAssignments(extras) : []),
+      ];
+    const others = await User.find({ school: t.school, role: "teacher", _id: { $ne: t._id } })
+      .select("name teacherType className section subject period assignments").lean();
+    const clash = assignmentConflict(others, next);
+    if (clash) return fail(clash, 409);
+  }
   if (password !== undefined) { // reset a login password
     if (String(password).length < 6) return fail("Password must be 6+ characters");
     t.password = await bcrypt.hash(password, 10);
