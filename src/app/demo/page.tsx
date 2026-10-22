@@ -25,7 +25,7 @@ export default function DemoPage() {
         {Object.keys(tabs).map((k) => <button key={k} onClick={() => setTab(k)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${tab === k ? "bg-blue-600 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"}`}>{k}</button>)}
       </div>
       <div className="card overflow-x-auto p-0">
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
           <thead><tr>{t.head.map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
           <tbody>{t.rows().map((r, i) => <tr key={i} className="border-t">{r.map((c, j) => <td key={j} className="td capitalize">{c}</td>)}</tr>)}</tbody>
         </table>

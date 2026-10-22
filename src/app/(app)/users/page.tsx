@@ -13,7 +13,7 @@ export default function SchoolsPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-bold">School Approvals</h1>
       <div className="card overflow-x-auto p-0">
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
           <thead><tr>{["School", "Admin name", "Email", "Phone", "Status", "Actions"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((u) => (

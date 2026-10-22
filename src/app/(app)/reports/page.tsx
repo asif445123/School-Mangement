@@ -51,19 +51,19 @@ export default function ReportsPage() {
 
       {tab === "fees" && (
         <>
-          <input type="month" className="input w-44" value={month} onChange={(e) => setMonth(e.target.value)} />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <input type="month" className="input w-full sm:w-44" value={month} onChange={(e) => setMonth(e.target.value)} />
+          <div className="grid gap-3 min-[420px]:grid-cols-2 sm:gap-4 lg:grid-cols-5">
             {cards.map(([l, v]) => <div key={l as string} className="card"><p className="text-sm text-slate-500">{l}</p><p className="text-xl font-bold">{money(v as number)}</p></div>)}
           </div>
           <div className="card overflow-x-auto p-0">
             <h2 className="p-4 font-semibold">Received fees ({received.length})</h2>
-            <table className="w-full"><thead><tr>{["Student", "Class", "Chalan #", "Received", "Received on", "Received by", "Narration", "Status"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
+            <table className="w-full min-w-[600px]"><thead><tr>{["Student", "Class", "Chalan #", "Received", "Received on", "Received by", "Narration", "Status"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
               <tbody>{received.map((f) => { const last = (f.payments || [])[(f.payments || []).length - 1]; return <tr key={f._id} className="border-t"><td className="td">{f.student?.name}</td><td className="td">{f.student?.className}</td><td className="td">{f.chalanNo}</td><td className="td">{money(f.paid)}</td><td className="td whitespace-nowrap">{last?.date || f.receivedDate || "-"}</td><td className="td">{last?.receivedBy || "-"}</td><td className="td">{last?.narration || "-"}</td><td className="td"><span className={`rounded px-2 py-1 text-xs ${f.balance <= 0 ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{f.balance <= 0 ? "Received" : "Part received"}</span></td></tr>; })}
                 {!received.length && <tr><td colSpan={8} className="td py-6 text-center text-slate-400">No fees received for this month</td></tr>}</tbody></table>
           </div>
           <div className="card overflow-x-auto p-0">
             <h2 className="p-4 font-semibold">Pending / defaulters ({defaulters.length})</h2>
-            <table className="w-full"><thead><tr>{["Student", "Class", "Chalan #", "Previous pending", "This month pending", "Balance"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
+            <table className="w-full min-w-[600px]"><thead><tr>{["Student", "Class", "Chalan #", "Previous pending", "This month pending", "Balance"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
               <tbody>{defaulters.map((f) => <tr key={f._id} className="border-t"><td className="td">{f.student?.name}</td><td className="td">{f.student?.className}</td><td className="td">{f.chalanNo}</td><td className="td">{money(f.prev)}</td><td className="td">{money(f.pend)}</td><td className="td font-semibold">{money(f.balance)}</td></tr>)}</tbody></table>
           </div>
         </>
@@ -71,14 +71,14 @@ export default function ReportsPage() {
 
       {tab === "results" && (
         <>
-          <select className="input w-72" value={paperId} onChange={(e) => setPaperId(e.target.value)}>
+          <select className="input w-full sm:w-72" value={paperId} onChange={(e) => setPaperId(e.target.value)}>
             <option value="">Select test / exam paper</option>
             {papers.map((p) => <option key={p._id} value={p._id}>{p.title} - Class {p.className}</option>)}
           </select>
           {paper && (
             <div className="card overflow-x-auto p-0">
               <p className="p-4 text-sm text-slate-600">Appeared: {results.length} · Passed: {passed} · Failed: {results.length - passed} · Pass mark: 40%</p>
-              <table className="w-full"><thead><tr>{["Position", "Roll #", "Student", "Obtained", "%", "Grade"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
+              <table className="w-full min-w-[600px]"><thead><tr>{["Position", "Roll #", "Student", "Obtained", "%", "Grade"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
                 <tbody>{results.map((r, i) => <tr key={r._id} className="border-t"><td className="td">{i + 1}</td><td className="td">{r.rollNo}</td><td className="td">{r.name}</td><td className="td">{r.obtained}/{paper.totalMarks}</td><td className="td">{r.pct.toFixed(1)}%</td><td className="td font-semibold">{gradeOf(r.pct)}</td></tr>)}</tbody></table>
             </div>
           )}

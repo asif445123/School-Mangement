@@ -46,12 +46,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SessionContext.Provider value={{ user, setUser }}>
       <Header />
-      <nav className="flex gap-1 overflow-x-auto bg-white px-3 py-2 shadow-sm">
+      <nav aria-label="Main menu" className="flex gap-1 overflow-x-auto bg-white px-2 py-2 shadow-sm [-ms-overflow-style:none] [scrollbar-width:thin] sm:px-3">
         {nav.map(([href, label]) => (
-          <Link key={label} href={href} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${pathname === href ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{label}</Link>
+          <Link key={label} href={href} className={`flex min-h-[38px] items-center whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium sm:text-sm ${pathname === href ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{label}</Link>
         ))}
       </nav>
-      <main className="mx-auto max-w-6xl p-4">{children}</main>
+      <main className="mx-auto w-full max-w-6xl px-3 py-4 pb-24 sm:px-4 sm:pb-10">{children}</main>
     </SessionContext.Provider>
   );
 }

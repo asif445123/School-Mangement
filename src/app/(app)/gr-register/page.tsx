@@ -62,13 +62,13 @@ export default function GrRegisterPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h1 className="text-xl font-bold">G.R. Register</h1><p className="text-sm text-slate-500">Enter every admitted student here. The full register is in Reports &rarr; GR Register.</p></div>
-        <div className="flex gap-2">
-          <input className="input w-48" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="flex w-full gap-2 sm:w-auto">
+          <input className="input min-w-0 flex-1 sm:w-48 sm:flex-none" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
           <button className="btn flex items-center gap-2" onClick={add}><FaPlus /> Add entry</button>
         </div>
       </div>
       <div className="card overflow-x-auto p-0">
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
           <thead><tr>{["G.R. No", "Admission date", "Name", "Father", "Date of birth", "Class admitted", "Left on", "Actions"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
           <tbody>
             {shown.map((r) => (

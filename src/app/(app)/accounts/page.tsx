@@ -38,13 +38,13 @@ export default function AccountMasterPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Account Master</h1>
-        <div className="flex gap-2">
-          <input className="input w-48" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="flex w-full gap-2 sm:w-auto">
+          <input className="input min-w-0 flex-1 sm:w-48 sm:flex-none" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
           <button className="btn flex items-center gap-2" onClick={() => save()}><FaPlus /> Add account</button>
         </div>
       </div>
       <div className="card overflow-x-auto p-0">
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
           <thead><tr>{["Code", "Account name", "Account type", "Account", "Counts as", "Actions"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
           <tbody>
             {shown.map((r) => (

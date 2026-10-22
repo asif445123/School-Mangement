@@ -46,12 +46,12 @@ export default function FeesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Fee Chalan & Receiving</h1>
         <div className="flex gap-2">
-          <input type="month" className="input w-44" value={month} onChange={(e) => setMonth(e.target.value)} />
+          <input type="month" className="input w-full min-w-0 flex-1 sm:w-44 sm:flex-none" value={month} onChange={(e) => setMonth(e.target.value)} />
           {isSchool && <button className="btn" onClick={generate}>Generate chalans</button>}
         </div>
       </div>
       <div className="card overflow-x-auto p-0">
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
           <thead><tr>{head.map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((f) => {

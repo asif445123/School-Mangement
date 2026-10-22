@@ -4,33 +4,45 @@ export const toast = (icon: "success" | "error" | "info" | "warning", title: str
   Swal.fire({ toast: true, position: "top-end", icon, title, showConfirmButton: false, timer: 2500 });
 
 export const confirmDelete = async (text = "This cannot be undone.") =>
-  (await Swal.fire({ title: "Are you sure?", text, icon: "warning", showCancelButton: true, confirmButtonColor: "#dc2626", confirmButtonText: "Yes, delete" })).isConfirmed;
+  (await Swal.fire({ title: "Are you sure?", text, icon: "warning", showCancelButton: true, confirmButtonColor: "#dc2626", confirmButtonText: "Yes, delete", width: 420 })).isConfirmed;
 
 export type Field = {
   name: string; label: string; type?: string;
   options?: string[]; // simple option list (value = label)
   choices?: { value: string; label: string; disabled?: boolean }[]; // options whose text differs from the saved value (disabled = cannot be picked)
   required?: boolean; hint?: string;
+  wide?: boolean; // always take the full popup width (long text, address...)
 };
 const esc = (v: any) => String(v ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
+// One consistent, readable popup form: 13px labels, 14px / 40px fields
+// (16px on phones so iOS does not zoom), two short fields per row on
+// screens >= 560px, full-width rows for textarea / image / long fields.
+// Styling lives in globals.css (.swal2-*, .sms-form) so every popup —
+// Add Teacher, Daily Diary, Papers & Tests, Marks, Students, Fees... —
+// looks the same without each caller passing sizes.
+const WIDE_TYPES = ["textarea", "image", "radio", "checkbox"];
+const WIDE_NAMES = /address|narration|questions|text|note|remarks|title|description/i;
+
 export async function formDialog(title: string, fields: Field[], values: any = {}, validate?: (values: any) => string | null | void) {
-  const html = fields.map((f) => {
+  const html = `<div class="sms-form">${fields.map((f) => {
     const id = `f-${f.name}`, val = values[f.name] ?? "";
-    const label = `<label style="display:block;text-align:left;font-size:13px;margin-top:10px;color:#475569">${f.label}${f.required ? " *" : ""}</label>`;
-    if (f.type === "checkbox") return `<label style="display:flex;align-items:center;gap:8px;text-align:left;margin-top:12px;color:#334155;font-size:15px"><input id="${id}" type="checkbox" ${val ? "checked" : ""} style="width:18px;height:18px"> ${f.label}</label>${f.hint ? `<small style="display:block;text-align:left;color:#94a3b8;margin-left:26px">${f.hint}</small>` : ""}`;
-    if (f.type === "radio") return `<div style="text-align:left;margin-top:12px"><span style="font-size:13px;color:#475569">${f.label}${f.required ? " *" : ""}</span><div style="display:flex;gap:18px;margin-top:6px">${(f.options || []).map((o) => `<label style="display:flex;align-items:center;gap:6px"><input type="radio" name="${id}" value="${esc(o)}" ${o === val ? "checked" : ""}> ${o}</label>`).join("")}</div></div>`;
-    if (f.type === "image") return `${label}<div style="display:flex;align-items:center;gap:12px;margin-top:6px">${val ? `<img src="${esc(val)}" style="height:48px;border-radius:6px" alt="">` : ""}<input id="${id}" type="file" accept="image/*" style="font-size:13px"></div>`;
-    if (f.type === "textarea") return `${label}<textarea id="${id}" class="swal2-textarea" style="width:100%;margin:4px 0">${esc(val)}</textarea>`;
+    const wide = f.wide || WIDE_TYPES.includes(f.type || "") || WIDE_NAMES.test(f.name) ? " sms-field--wide" : "";
+    const label = `<label for="${id}" style="display:block;text-align:left;font-size:13px;font-weight:500;margin-top:10px;color:#475569">${f.label}${f.required ? " *" : ""}</label>`;
+    if (f.type === "checkbox") return `<div class="sms-field${wide}"><label style="display:flex;align-items:center;gap:8px;text-align:left;margin-top:12px;color:#334155;font-size:14px"><input id="${id}" type="checkbox" ${val ? "checked" : ""}> ${f.label}</label>${f.hint ? `<small style="display:block;text-align:left;font-size:12px;color:#94a3b8;margin:3px 0 0 25px">${f.hint}</small>` : ""}</div>`;
+    if (f.type === "radio") return `<div class="sms-field${wide}"><span style="display:block;text-align:left;font-size:13px;font-weight:500;margin-top:10px;color:#475569">${f.label}${f.required ? " *" : ""}</span><div style="display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:6px">${(f.options || []).map((o) => `<label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#334155"><input type="radio" name="${id}" value="${esc(o)}" ${o === val ? "checked" : ""}> ${o}</label>`).join("")}</div></div>`;
+    if (f.type === "image") return `<div class="sms-field${wide}">${label}<div style="display:flex;align-items:center;gap:12px;margin-top:6px">${val ? `<img src="${esc(val)}" style="height:44px;border-radius:6px" alt="">` : ""}<input id="${id}" type="file" accept="image/*" style="font-size:13px;min-width:0"></div></div>`;
+    if (f.type === "textarea") return `<div class="sms-field${wide}">${label}<textarea id="${id}" class="swal2-textarea">${esc(val)}</textarea>${f.hint ? `<small style="display:block;font-size:12px;color:#94a3b8;margin-top:3px">${f.hint}</small>` : ""}</div>`;
     if (f.type === "select") {
       const choices: { value: string; label: string; disabled?: boolean }[] = f.choices || (f.options || []).map((o) => ({ value: o, label: o }));
-      return `${label}<select id="${id}" class="swal2-select" style="width:100%;margin:4px 0">${choices.map((o) => `<option value="${esc(o.value)}" ${o.disabled ? "disabled" : ""} ${String(o.value) === String(val ?? "") ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`;
+      return `<div class="sms-field">${label}<select id="${id}" class="swal2-select">${choices.map((o) => `<option value="${esc(o.value)}" ${o.disabled ? "disabled" : ""} ${String(o.value) === String(val ?? "") ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select></div>`;
     }
-    if (f.type === "password") return `${label}<div style="position:relative"><input id="${id}" type="password" value="${esc(val)}" class="swal2-input" style="width:100%;margin:4px 0;padding-right:44px"><button type="button" onclick="var i=document.getElementById('${id}');var s=i.type==='password';i.type=s?'text':'password';this.textContent=s?'👁️':'👁️‍🗨️'" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:18px;cursor:pointer">👁️‍🗨️</button></div>`;
-    return `${label}<input id="${id}" type="${f.type || "text"}" value="${esc(val)}" class="swal2-input" style="width:100%;margin:4px 0">`;
-  }).join("");
+    if (f.type === "password") return `<div class="sms-field">${label}<div style="position:relative"><input id="${id}" type="password" value="${esc(val)}" class="swal2-input" style="padding-right:44px !important"><button type="button" aria-label="Show password" onclick="var i=document.getElementById('${id}');var s=i.type==='password';i.type=s?'text':'password';this.textContent=s?'👁️':'👁️‍🗨️'" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:16px;cursor:pointer">👁️‍🗨️</button></div></div>`;
+    return `<div class="sms-field${wide}">${label}<input id="${id}" type="${f.type || "text"}" value="${esc(val)}" class="swal2-input">${f.hint ? `<small style="display:block;font-size:12px;color:#94a3b8;margin-top:3px">${f.hint}</small>` : ""}</div>`;
+  }).join("")}</div>`;
   const res = await Swal.fire({
     title, html, focusConfirm: false, showCancelButton: true, confirmButtonText: "Save", confirmButtonColor: "#2563eb",
+    width: 580,
     preConfirm: async () => {
       const out: any = {};
       for (const f of fields) {

@@ -132,7 +132,7 @@ export default function TeachersPage() {
         <button className="btn flex items-center gap-2" onClick={add}><FaPlus /> {isSchool ? "Add teacher" : "Add subject teacher"}</button>
       </div>
       <div className="card overflow-x-auto p-0">
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
           <thead><tr>{heads.map((h, i) => <th key={i} className={`th ${h === "" ? "w-8" : ""}`}>{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((u) => {
