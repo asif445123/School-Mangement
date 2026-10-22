@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/db";
 import { fail, getSessionUser, schoolIdOf } from "@/lib/auth";
-import { buildTimetableItems, blankSchedule, PERIODS, scheduleFrom } from "@/lib/timetable";
+import { buildMyPeriods, buildTimetableItems, blankSchedule, PERIODS, scheduleFrom } from "@/lib/timetable";
 import PeriodSchedule from "@/models/period-schedule";
 import Timetable from "@/models/timetable";
 import User from "@/models/user";
@@ -38,7 +38,10 @@ export async function GET() {
   }
 
   return NextResponse.json({
+    // school admin: every class | class teacher: his own class | subject teacher: none
     items: buildTimetableItems(teachers, s.me),
+    // the teacher's own teaching periods (used by the "My periods" tables)
+    myPeriods: buildMyPeriods(s.me),
     schedule,
     // Period times are one school-wide setting, so only the school admin edits them.
     canEdit: s.me.role === "school",

@@ -1,4 +1,5 @@
-import { assignmentsOf, nz, periodNumber, splitList } from "./teacher-scope";
+import { assignmentsOf, nz, PERIOD_OPTIONS, periodNumber, splitList } from "./teacher-scope";
+import { periodTime } from "./timetable";
 
 // A class can have only ONE teacher in a period. Every period already assigned
 // to a class becomes a "busy slot"; a new assignment for the same class (and
@@ -51,6 +52,20 @@ export function conflictsFor(seat: Seat, busy: BusySlot[], ignoreTeacherId?: str
     && (!ignore || slot.teacherId !== ignore)
     && sameClass(slot.className, seat.className)
     && sameSection(slot.section, seat.section));
+}
+
+// Options of a period dropdown: the school time is added to every period and a
+// period that another teacher of the class already holds is named and disabled.
+// Used by the school admin popup, the class teacher popup and the class teacher's
+// edit dialog, so all three offer exactly the same periods.
+export type PeriodChoice = { value: string; label: string; taken: BusySlot[] };
+export function periodChoices(schedule: any, busy: BusySlot[], seat?: Seat): PeriodChoice[] {
+  return PERIOD_OPTIONS.map((period) => {
+    const taken = seat ? conflictsFor({ ...seat, period }, busy) : [];
+    const who = [...new Set(taken.map((t) => t.teacherName))].join(", ");
+    const time = periodTime(schedule, period);
+    return { value: period, label: `Period ${period}${time ? ` · ${time}` : ""}${who ? ` (${who} taken)` : ""}`, taken };
+  });
 }
 
 // "Period 2 of class 10th Iqbal" / "Period 2 of class 5 A"

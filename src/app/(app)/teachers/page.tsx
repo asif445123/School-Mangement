@@ -3,23 +3,24 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { FaChevronDown, FaChevronRight, FaPlus } from "react-icons/fa";
 import { api } from "@/lib/api";
 import { Field, formDialog, toast } from "@/lib/alerts";
-import { assignmentsOf, classTeacherAssignment, classTeacherClasses, nz, PERIOD_OPTIONS, splitList } from "@/lib/teacher-scope";
+import { assignmentsOf, classTeacherAssignment, classTeacherClasses } from "@/lib/teacher-scope";
 import { Directory, classTeacherDialog, emptyDirectory, schoolTeacherDialog } from "@/lib/teacher-dialogs";
-import { busySlots, conflictsFor, conflictText } from "@/lib/period-conflicts";
+import { BusySlot, busySlots, conflictsFor, conflictText, periodChoices, Seat } from "@/lib/period-conflicts";
 import { blankSchedule, periodTime, SchoolSchedule } from "@/lib/timetable";
 import AccountActions, { badge } from "@/components/account-actions";
 import { useSession } from "@/components/session";
 
-// Class teacher editing a subject teacher: only the subject and period he teaches in this class
-const classTeacherFields = (schedule: SchoolSchedule): Field[] => [
+// Class teacher editing a subject teacher: only the subject and period he teaches in this class.
+// A period that already belongs to another teacher of the class is shown but cannot be picked.
+const classTeacherFields = (schedule: SchoolSchedule, busy: BusySlot[], seat: Seat): Field[] => [
   { name: "name", label: "Teacher name", required: true },
   { name: "subject", label: "Teacher subject", required: true },
   {
     name: "period", label: "Period", type: "select", required: true,
-    choices: [{ value: "", label: "Select period" }, ...PERIOD_OPTIONS.map((p) => {
-      const time = periodTime(schedule, p);
-      return { value: p, label: `Period ${p}${time ? ` · ${time}` : ""}` };
-    })],
+    choices: [
+      { value: "", label: "Select period" },
+      ...periodChoices(schedule, busy, seat).map((c) => ({ value: c.value, label: c.label, disabled: c.taken.length > 0 })),
+    ],
   },
   { name: "phone", label: "Phone" },
   { name: "email", label: "Email (login)", type: "email", required: true },
@@ -83,9 +84,12 @@ export default function TeachersPage() {
 
   // periods already taken: every teacher of the school except the one being edited
   const busyFor = (u?: any) => busySlots([...(isSchool ? [] : [user]), ...dir.items].filter((t) => String(t._id) !== String(u?._id || "")));
+  // the class a class teacher adds his subject teachers to (the popup must know it
+  // to show which periods are already taken by another teacher of that class)
+  const myClass = { className: myClassAssignment?.className || "", section: myClassAssignment?.section || "" };
 
   async function add() {
-    const ctx = { busy: busyFor(), schedule };
+    const ctx = { busy: busyFor(), schedule, myClass };
     const v = isSchool ? await schoolTeacherDialog("Add teacher", {}, true, dir, ctx) : await classTeacherDialog(dir, ctx);
     if (!v) return;
     try {
@@ -104,8 +108,8 @@ export default function TeachersPage() {
       return;
     }
     // his class is fixed, so only the subject / period of this class can change
-    const seat = { className: myClassAssignment?.className || "", section: myClassAssignment?.section || "" };
-    const v = await formDialog("Edit teacher", classTeacherFields(schedule),
+    const seat = myClass;
+    const v = await formDialog("Edit teacher", classTeacherFields(schedule, busy, seat),
       { ...u, subject: u.matchedSubject ?? u.subject, period: u.matchedPeriod ?? u.period },
       (values) => {
         const hits = conflictsFor({ ...seat, period: values.period }, busy);
@@ -115,21 +119,9 @@ export default function TeachersPage() {
     try { await api(`/api/users/${u._id}`, { method: "PATCH", body: v }); toast("success", "Teacher updated"); load(); }
     catch (e: any) { toast("error", e.message); }
   }
-  // what a class teacher's colleague teaches outside the class teacher's own class(es)
-  const otherTeaching = (u: any) => {
-    const rest = assignmentsOf(u).filter((a) => !splitList(a.className).some((c) => myClasses.some((m) => nz(m.className) === nz(c))));
-    if (!rest.length) return "-";
-    return rest.map((a, i) => (
-      <div key={i} className="py-0.5">
-        <div>{`${a.className || "?"}${a.section ? " " + a.section : ""}${a.subject ? " - " + a.subject : ""}`}</div>
-        <div className="text-xs text-slate-500">{a.period ? `Period ${a.period}` : "Period not set"}{periodTime(schedule, a.period) ? ` · ${periodTime(schedule, a.period)}` : ""}</div>
-      </div>
-    ));
-  };
-
   const heads = isSchool
     ? ["", "Name", "Type", "Class", "Section", "Subject", "Period", "Phone", "Email", "Status", "Actions"]
-    : ["", "Name", "Subject", "Period", "Also teaches", "Phone", "Email", "Status", "Actions"];
+    : ["", "Name", "Subject", "Period", "Phone", "Email", "Status", "Actions"];
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -153,7 +145,6 @@ export default function TeachersPage() {
                     {isSchool && <><td className="td">{u.teacherType || "-"}</td><td className="td">{u.className || "-"}</td><td className="td">{u.section || "-"}</td></>}
                     <td className="td">{(u.matchedSubject ?? u.subject) || "-"}{isSchool && all.length > 1 && <span className="ml-2 rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">+{all.length - 1} more</span>}</td>
                     <td className="td"><PeriodCell period={u.matchedPeriod ?? u.period} schedule={schedule} /></td>
-                    {!isSchool && <td className="td text-xs">{otherTeaching(u)}</td>}
                     <td className="td">{u.phone}</td><td className="td">{u.email}</td>
                     <td className="td"><span className={`rounded px-2 py-1 text-xs capitalize ${badge[u.status]}`}>{u.status}</span></td>
                     <td className="td whitespace-nowrap" onClick={(e) => e.stopPropagation()}><AccountActions u={u} reload={load} onEdit={edit} /></td>
@@ -173,7 +164,7 @@ export default function TeachersPage() {
         </table>
       </div>
       <p className="text-xs text-slate-500">
-        Period times come from <b>Set Timetable</b>{periodTime(schedule, 1) ? ` (period 1: ${periodTime(schedule, 1)})` : ""}. A period can be given to only one teacher of a class - the popup names the teacher who already has it.
+        Period times come from <b>Set Timetable</b>{periodTime(schedule, 1) ? ` (period 1: ${periodTime(schedule, 1)})` : ""}. A period can be given to only one teacher of a class - a period that another teacher already has is shown as taken and cannot be selected.
       </p>
     </div>
   );
