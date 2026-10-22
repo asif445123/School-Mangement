@@ -5,6 +5,7 @@ import { fail, getSessionUser } from "@/lib/auth";
 import User from "@/models/user";
 import Student from "@/models/student";
 import { anyMatch, assignmentsOf, classTeacherAssignment, classTeacherClasses, cleanAssignments, periodNumber, sameAssignment, splitList, subjectMatch } from "@/lib/teacher-scope";
+import { assignmentConflict, busySlots, conflictsFor, conflictText } from "@/lib/period-conflicts";
 
 // admin -> schools | school -> its teachers / student logins (?role=) | class teacher -> subject teachers of his class
 export async function GET(req: NextRequest) {
@@ -56,6 +57,14 @@ export async function POST(req: NextRequest) {
   if (me.role !== "school" && !String(subject || "").trim()) return fail("Subject is required");
   if (requested.some((a) => String(a.subject || "").trim() && !periodNumber(a.period))) return fail("Select a period from 1 to 8 for every subject");
 
+  // A period of a class belongs to one teacher only. The teacher being edited /
+  // extended is not counted, everybody else in the school is.
+  const schoolId = me.role === "school" ? me._id : me.school;
+  const others = await User.find({ school: schoolId, role: "teacher", ...(existingId ? { _id: { $ne: existingId } } : {}) })
+    .select("name teacherType className section subject period assignments").lean();
+  const clash = assignmentConflict(others, requested);
+  if (clash) return fail(clash, 409);
+
   // A saved teacher was picked: add the new subject / class to him. His name, email, phone and password are not touched.
   if (existingId) {
     const t: any = await User.findOne({ _id: existingId, school: me.role === "school" ? me._id : me.school, role: "teacher" });
@@ -65,11 +74,17 @@ export async function POST(req: NextRequest) {
     const add = cleanAssignments(requested);
     if (!add.length) return fail("Enter the class and subject to add");
     const current = assignmentsOf(t);
+    const ownBusy = busySlots([t]);
     const fresh: any[] = [];
     let changed = false;
     for (const a of add) {
       const index = current.findIndex((x) => sameAssignment(x, a));
-      if (index < 0) { fresh.push(a); continue; }
+      if (index < 0) {
+        const ownHits = conflictsFor(a, ownBusy);
+        if (ownHits.length) return fail(`${conflictText(a, ownHits)}, so he cannot take this period again`, 409);
+        fresh.push(a);
+        continue;
+      }
       // Picking an already-assigned subject with a different period updates its
       // period instead of creating a duplicate assignment.
       if (a.period !== undefined && periodNumber(current[index].period) !== a.period) {

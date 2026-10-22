@@ -17,5 +17,7 @@ All data is separated per school. Pending / rejected / logged-out visitors can c
 
 ## Timetable
 - Period times are **one school-wide setting**, not per class. School admins open **Set Timetable** and set periods 1–8 plus the break once for the whole school. Monday–Thursday uses one set of times; Friday has separate times. Every class uses these same times.
-- Teacher and subject assignments include a **Period (1–8)** field. School admins can set it for any assignment, and class teachers can set it for subject teachers in their own class.
+- Teacher and subject assignments include a **Period (1–8)** field. School admins can set it for any assignment, and class teachers can set it for subject teachers in their own class. Every place that shows a period also shows its **school time** (from the schedule above), e.g. "Period 3 · 09:20 – 10:00".
+- **One teacher per class period.** When a class (and section) already has a teacher in a period, the add/edit popup shows a red note naming that teacher and the save is refused (server returns 409). A blank section counts as every section of the class.
+- Both the school admin and the class teacher can expand a teacher's row to see **all his assignments** (type, class, section, subject, period and period times).
 - Class teachers and subject teachers get a read-only view of their assigned classes, subjects, periods and the shared school times. Only the school admin can change the period times.

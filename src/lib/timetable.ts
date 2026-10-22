@@ -38,6 +38,15 @@ export const blankSchedule = (): SchoolSchedule => ({
 export const timetableKey = (className: any, section: any) => `${nz(className)}|${nz(section)}`;
 export const slotText = (slot?: TimeSlot) => slot?.start && slot?.end ? `${slot.start} – ${slot.end}` : "Not set";
 
+// Start and end time of a period, taken from the school-wide schedule.
+// Every page that shows a period also shows this time next to it.
+export const periodTime = (schedule: any, period: any, friday = false): string => {
+  const number = Number(period);
+  if (!Number.isInteger(number) || number < 1 || number > PERIODS.length) return "";
+  const slot = (friday ? schedule?.fridayPeriods : schedule?.regularPeriods)?.[number - 1];
+  return slot?.start && slot?.end ? `${slot.start} – ${slot.end}` : "";
+};
+
 const slots = (value: any): TimeSlot[] => PERIODS.map((_, i) => ({
   start: String(value?.[i]?.start || ""),
   end: String(value?.[i]?.end || ""),
