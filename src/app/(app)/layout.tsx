@@ -18,7 +18,7 @@ const all: [string, string, string[]][] = [
   ["/marks", "Marks", ["school", "teacher"]],
   ["/teachers", "Teachers", ["school"]],
   ["/teachers", "Subject Teachers", ["classTeacher"]],
-  ["/timetable", "Set Timetable", ["school", "classTeacher"]],
+  ["/timetable", "Set Timetable", ["school"]],
   ["/timetable", "Timetable", ["teacher"]],
   ["/account-types", "Account Types", ["school"]],
   ["/accounts", "Account Master", ["school"]],

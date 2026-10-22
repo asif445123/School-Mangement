@@ -15,9 +15,12 @@ export type TimetableItem = {
   key: string;
   className: string;
   section: string;
-  editable: boolean;
   classTeachers: string[];
   entries: TimetableEntry[];
+};
+
+// One schedule per school: every class uses these same period and break times.
+export type SchoolSchedule = {
   regularPeriods: TimeSlot[];
   fridayPeriods: TimeSlot[];
   regularBreak: TimeSlot;
@@ -26,6 +29,12 @@ export type TimetableItem = {
 
 export const blankSlot = (): TimeSlot => ({ start: "", end: "" });
 export const blankPeriods = () => PERIODS.map(() => blankSlot());
+export const blankSchedule = (): SchoolSchedule => ({
+  regularPeriods: blankPeriods(),
+  fridayPeriods: blankPeriods(),
+  regularBreak: blankSlot(),
+  fridayBreak: blankSlot(),
+});
 export const timetableKey = (className: any, section: any) => `${nz(className)}|${nz(section)}`;
 export const slotText = (slot?: TimeSlot) => slot?.start && slot?.end ? `${slot.start} – ${slot.end}` : "Not set";
 
@@ -34,6 +43,14 @@ const slots = (value: any): TimeSlot[] => PERIODS.map((_, i) => ({
   end: String(value?.[i]?.end || ""),
 }));
 const oneSlot = (value: any): TimeSlot => ({ start: String(value?.start || ""), end: String(value?.end || "") });
+
+// Reads a saved schedule (new PeriodSchedule or a legacy per-class Timetable row).
+export const scheduleFrom = (doc: any): SchoolSchedule => ({
+  regularPeriods: slots(doc?.regularPeriods),
+  fridayPeriods: slots(doc?.fridayPeriods),
+  regularBreak: oneSlot(doc?.regularBreak),
+  fridayBreak: oneSlot(doc?.fridayBreak),
+});
 
 // A blank assignment section applies to every section of the class. A specific
 // section never leaks into another section's timetable.
@@ -47,8 +64,9 @@ const ownsClass = (ct: { className: string; section: string }, item: { className
  * Builds timetable rows from the school's existing teacher/subject assignments.
  * School admins see everything, class teachers see their whole class plus their
  * own teaching elsewhere, and subject teachers see only their own assignments.
+ * Period times live on the school-wide schedule, so they are not part of a row.
  */
-export function buildTimetableItems(teachers: any[], saved: any[], me: any): TimetableItem[] {
+export function buildTimetableItems(teachers: any[], me: any): TimetableItem[] {
   const classes = new Map<string, TimetableItem>();
   const ensure = (className: any, section: any) => {
     const name = String(className || "").trim();
@@ -56,23 +74,13 @@ export function buildTimetableItems(teachers: any[], saved: any[], me: any): Tim
     const sec = String(section || "").trim();
     const key = timetableKey(name, sec);
     if (!classes.has(key)) classes.set(key, {
-      key, className: name, section: sec, editable: false, classTeachers: [], entries: [],
-      regularPeriods: blankPeriods(), fridayPeriods: blankPeriods(), regularBreak: blankSlot(), fridayBreak: blankSlot(),
+      key, className: name, section: sec, classTeachers: [], entries: [],
     });
     return classes.get(key)!;
   };
 
   for (const teacher of teachers) for (const a of assignmentsOf(teacher)) {
     for (const className of splitList(a.className)) ensure(className, a.section);
-  }
-  for (const config of saved) {
-    const item = ensure(config.className, config.section);
-    if (item) {
-      item.regularPeriods = slots(config.regularPeriods);
-      item.fridayPeriods = slots(config.fridayPeriods);
-      item.regularBreak = oneSlot(config.regularBreak);
-      item.fridayBreak = oneSlot(config.fridayBreak);
-    }
   }
 
   for (const teacher of teachers) {
@@ -100,10 +108,9 @@ export function buildTimetableItems(teachers: any[], saved: any[], me: any): Tim
     splitList(a.className).some((name) => nz(name) === nz(item.className)) && sectionMatches(a.section, item.section));
 
   return [...classes.values()].filter((item) => {
-    if (me?.role === "school") { item.editable = true; return true; }
+    if (me?.role === "school") return true;
     const ownClass = myClasses.some((ct) => ownsClass(ct, item));
     if (!ownClass && !teachesClass(item)) return false;
-    item.editable = ownClass;
     if (!ownClass) item.entries = item.entries.filter((entry) => entry.teacherId === myId);
     return true;
   }).map((item) => ({

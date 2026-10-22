@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/db";
 import { fail, getSessionUser, schoolIdOf } from "@/lib/auth";
-import { classTeacherAssignment, classTeacherClasses, nz } from "@/lib/teacher-scope";
-import { buildTimetableItems, PERIODS, timetableKey } from "@/lib/timetable";
+import { buildTimetableItems, blankSchedule, PERIODS, scheduleFrom } from "@/lib/timetable";
+import PeriodSchedule from "@/models/period-schedule";
 import Timetable from "@/models/timetable";
 import User from "@/models/user";
 
@@ -19,11 +19,29 @@ export async function GET() {
   await connectDb();
   const [teachers, saved] = await Promise.all([
     User.find({ school: s.schoolId, role: "teacher" }).select("name teacherType className section subject period assignments").lean(),
-    Timetable.find({ school: s.schoolId }).lean(),
+    PeriodSchedule.findOne({ school: s.schoolId }).lean(),
   ]);
+
+  // One-time fallback: schools that entered times before the schedule became
+  // school-wide keep those times instead of starting from a blank grid.
+  let schedule = saved ? scheduleFrom(saved) : blankSchedule();
+  if (!saved) {
+    const legacy = await Timetable.findOne({ school: s.schoolId }).sort({ updatedAt: -1 }).lean();
+    if (legacy) {
+      schedule = scheduleFrom(legacy);
+      await PeriodSchedule.updateOne(
+        { school: s.schoolId },
+        { $setOnInsert: { school: s.schoolId, ...schedule } },
+        { upsert: true },
+      );
+    }
+  }
+
   return NextResponse.json({
-    items: buildTimetableItems(teachers, saved, s.me),
-    canEdit: s.me.role === "school" || !!classTeacherAssignment(s.me),
+    items: buildTimetableItems(teachers, s.me),
+    schedule,
+    // Period times are one school-wide setting, so only the school admin edits them.
+    canEdit: s.me.role === "school",
   });
 }
 
@@ -44,36 +62,26 @@ function cleanPeriods(value: any, label: string) {
 export async function PUT(req: NextRequest) {
   const s = await session();
   if (s.error) return s.error;
-  const canEdit = s.me.role === "school" || !!classTeacherAssignment(s.me);
-  if (!canEdit) return fail("Subject teachers have read-only timetable access", 403);
-
-  const body = await req.json();
-  const className = String(body.className || "").trim();
-  const section = String(body.section || "").trim();
-  if (!className || className.length > 60 || section.length > 30) return fail("Select a valid class and section");
-  if (s.me.role !== "school") {
-    const allowed = classTeacherClasses(s.me).some((ct) =>
-      nz(ct.className) === nz(className) && (!nz(ct.section) || nz(ct.section) === nz(section)));
-    if (!allowed) return fail("You can only set the timetable for your own class", 403);
-  }
+  // A class teacher can see the times of his own class, but the times belong to
+  // the whole school and are changed only by the school admin.
+  if (s.me.role !== "school") return fail("Only the school admin can change the school period times", 403);
 
   try {
-    const values = {
-      className,
-      section,
+    const body = await req.json();
+    const schedule = {
       regularPeriods: cleanPeriods(body.regularPeriods, "Monday–Thursday"),
       fridayPeriods: cleanPeriods(body.fridayPeriods, "Friday"),
       regularBreak: cleanSlot(body.regularBreak, "Monday–Thursday break"),
       fridayBreak: cleanSlot(body.fridayBreak, "Friday break"),
     };
     await connectDb();
-    await Timetable.findOneAndUpdate(
-      { school: s.schoolId, key: timetableKey(className, section) },
-      { ...values, school: s.schoolId, key: timetableKey(className, section) },
-      { new: true, upsert: true, runValidators: true },
+    await PeriodSchedule.findOneAndUpdate(
+      { school: s.schoolId },
+      { $set: { ...schedule, school: s.schoolId } },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
     );
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, schedule });
   } catch (error: any) {
-    return fail(error.message || "Timetable could not be saved");
+    return fail(error.message || "Period times could not be saved");
   }
 }

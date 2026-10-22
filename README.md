@@ -16,6 +16,6 @@
 All data is separated per school. Pending / rejected / logged-out visitors can click **View Demo**.
 
 ## Timetable
-- School admins open **Set Timetable** to configure periods 1–8 and break times for each class. Monday–Thursday uses one set of times; Friday has separate times.
+- Period times are **one school-wide setting**, not per class. School admins open **Set Timetable** and set periods 1–8 plus the break once for the whole school. Monday–Thursday uses one set of times; Friday has separate times. Every class uses these same times.
 - Teacher and subject assignments include a **Period (1–8)** field. School admins can set it for any assignment, and class teachers can set it for subject teachers in their own class.
-- Class teachers can manage timetable times for their own classes. Subject teachers get a read-only view of their assigned classes, subjects, periods and times.
+- Class teachers and subject teachers get a read-only view of their assigned classes, subjects, periods and the shared school times. Only the school admin can change the period times.

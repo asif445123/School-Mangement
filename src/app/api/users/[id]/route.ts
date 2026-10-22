@@ -8,6 +8,7 @@ import Fee from "@/models/fee";
 import Diary from "@/models/diary";
 import Paper from "@/models/paper";
 import Mark from "@/models/mark";
+import PeriodSchedule from "@/models/period-schedule";
 import Timetable from "@/models/timetable";
 import { classTeacherAssignment, classTeacherClasses, cleanAssignments, periodNumber, subjectMatch } from "@/lib/teacher-scope";
 
@@ -73,7 +74,7 @@ export async function DELETE(_: NextRequest, { params }: Ctx) {
   const g = await guard((await params).id); if (g.error) return g.error;
   const id = g.target._id;
   if (g.target.role === "school") { // remove the whole school and its data
-    await Promise.all([Student, Fee, Diary, Paper, Mark, Timetable].map((m: any) => m.deleteMany({ school: id })));
+    await Promise.all([Student, Fee, Diary, Paper, Mark, Timetable, PeriodSchedule].map((m: any) => m.deleteMany({ school: id })));
     await User.deleteMany({ school: id });
   }
   await User.findByIdAndDelete(id);
