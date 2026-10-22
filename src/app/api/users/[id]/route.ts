@@ -8,7 +8,8 @@ import Fee from "@/models/fee";
 import Diary from "@/models/diary";
 import Paper from "@/models/paper";
 import Mark from "@/models/mark";
-import { classTeacherAssignment, classTeacherClasses, cleanAssignments, subjectMatch } from "@/lib/teacher-scope";
+import Timetable from "@/models/timetable";
+import { classTeacherAssignment, classTeacherClasses, cleanAssignments, periodNumber, subjectMatch } from "@/lib/teacher-scope";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -28,8 +29,9 @@ async function guard(id: string): Promise<any> {
 
 export async function PATCH(req: NextRequest, { params }: Ctx) {
   const g = await guard((await params).id); if (g.error) return g.error;
-  const { status, password, name, teacherType, email, phone, className, section, subject, extras } = await req.json();
+  const { status, password, name, teacherType, email, phone, className, section, subject, period, extras } = await req.json();
   const t = g.target;
+  if (period !== undefined && period !== "" && !periodNumber(period)) return fail("Period must be from 1 to 8");
   if (password !== undefined) { // reset a login password
     if (String(password).length < 6) return fail("Password must be 6+ characters");
     t.password = await bcrypt.hash(password, 10);
@@ -44,13 +46,20 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     t.email = email;
   }
   if (phone !== undefined) t.phone = phone;
-  if (g.classTeacher) { // a class teacher may only change the subject he teaches in his own class
-    if (subject !== undefined) {
+  if (g.classTeacher) { // a class teacher may only change the subject / period he teaches in his own class
+    if (subject !== undefined || period !== undefined) {
       const i = subjectMatch(t, g.ct);
-      if (i === 0) t.subject = subject; else { t.assignments[i - 1].subject = subject; t.markModified("assignments"); }
+      if (subject !== undefined) {
+        if (i === 0) t.subject = subject; else t.assignments[i - 1].subject = subject;
+      }
+      if (period !== undefined) {
+        if (i === 0) t.period = periodNumber(period); else t.assignments[i - 1].period = periodNumber(period);
+      }
+      t.markModified("assignments");
     }
   } else {
     if (subject !== undefined) t.subject = subject;
+    if (period !== undefined) t.period = periodNumber(period);
     if (className !== undefined) t.className = className;
     if (section !== undefined) t.section = section;
     if (teacherType !== undefined) t.teacherType = teacherType;
@@ -64,7 +73,7 @@ export async function DELETE(_: NextRequest, { params }: Ctx) {
   const g = await guard((await params).id); if (g.error) return g.error;
   const id = g.target._id;
   if (g.target.role === "school") { // remove the whole school and its data
-    await Promise.all([Student, Fee, Diary, Paper, Mark].map((m: any) => m.deleteMany({ school: id })));
+    await Promise.all([Student, Fee, Diary, Paper, Mark, Timetable].map((m: any) => m.deleteMany({ school: id })));
     await User.deleteMany({ school: id });
   }
   await User.findByIdAndDelete(id);
