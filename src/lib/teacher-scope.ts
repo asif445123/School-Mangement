@@ -19,9 +19,18 @@ export const classTeacherAssignment = (u: any) => (u?.role === "teacher" ? assig
 // Names are compared without caring about capital letters or extra spaces ("9th " = "9TH")
 export const nz = (s: any) => String(s || "").trim().replace(/\s+/g, " ").toLowerCase();
 
+// Every class (with its section) a teacher is assigned to (class teacher or subject teacher)
+export const teacherClasses = (u: any): { className: string; section: string }[] =>
+  u?.role === "teacher" ? assignmentsOf(u).flatMap((a) => splitList(a.className).map((c) => ({ className: c, section: a.section || "" }))) : [];
+
 // Every class (with its section) a teacher is class teacher of; "5, 6" counts as two classes
 export const classTeacherClasses = (u: any): { className: string; section: string }[] =>
   u?.role === "teacher" ? assignmentsOf(u).filter((a) => a.teacherType === "Class teacher" && a.className).flatMap((a) => splitList(a.className).map((c) => ({ className: c, section: a.section || "" }))) : [];
+
+// Student records belong to the school admin and to the class teacher of the class.
+// A subject teacher (a teacher who is not class teacher of any class) never sees them.
+export const isClassTeacher = (u: any) => classTeacherClasses(u).length > 0;
+export const canSeeStudents = (u: any) => u?.role === "school" || isClassTeacher(u);
 
 // Does this assignment teach in the class of the class teacher `ct`? No section on either side matches every section.
 const inClass = (a: any, ct: { className?: string; section?: string }) =>

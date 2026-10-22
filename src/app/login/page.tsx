@@ -18,7 +18,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const d = await api("/api/auth/login", { method: "POST", body: { ...form, remember } });
-      router.replace(d.role === "student" ? "/my" : d.role === "admin" ? "/users" : d.role === "teacher" ? "/students" : "/dashboard");
+      router.replace(d.role === "student" ? "/my" : d.role === "admin" ? "/users" : d.role === "teacher" ? (d.classTeacher ? "/students" : "/marks") : "/dashboard");
     } catch (err: any) {
       const status = err.data?.status;
       if (status === "pending" || status === "rejected") {

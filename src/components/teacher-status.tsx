@@ -28,7 +28,8 @@ export default function TeacherStatus({ kind }: { kind: Kind }) {
   const load = useCallback(async () => {
     try {
       const req: Promise<any>[] = [api(kind === "diary" ? `/api/diary?date=${date}` : `/api/papers?date=${date}`), isClassTeacher ? api("/api/users?role=teacher&view=class") : Promise.resolve({ items: [] })];
-      if (kind === "marks") req.push(api("/api/marks"), api("/api/students"));
+      // the roster (not the students resource) is what a teacher may read
+      if (kind === "marks") req.push(api("/api/marks"), api("/api/roster"));
       const [it, ts, mk, st] = await Promise.all(req);
       setItems(it.items); setSubTeachers(ts.items); if (mk) setMarks(mk.items); if (st) setStudents(st.items);
     } catch (e: any) { toast("error", e.message); }
