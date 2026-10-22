@@ -9,7 +9,7 @@ import { SessionContext } from "@/components/session";
 
 const all: [string, string, string[]][] = [
   ["/dashboard", "Dashboard", ["school"]],
-  ["/students", "Students", ["school", "teacher"]],
+  ["/students", "Students", ["school", "classTeacher"]], // subject teachers have no access to student records
   ["/gr-register", "GR Register", ["school"]],
   ["/fees", "Fee Chalan", ["school"]],
   ["/fee-receivable", "Fee Receivable", ["school"]],
@@ -28,6 +28,8 @@ const all: [string, string, string[]][] = [
   ["/my", "My Portal", ["student"]],
 ];
 const home: any = { admin: "/users", school: "/dashboard", teacher: "/students", student: "/my" };
+// Where a role starts: a subject teacher never lands on Students, he starts on Marks.
+const landing = (u: any) => (u?.role === "teacher" && !classTeacherAssignment(u) ? "/marks" : home[u?.role]);
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -39,7 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const nav = user ? all.filter(([, , roles]) => roles.some((r) => keys.includes(r)))
     .filter(([href], index, rows) => rows.findIndex(([other]) => other === href) === index) : [];
   useEffect(() => { // keep each role inside its own pages
-    if (user && !nav.some(([href]) => href === pathname)) router.replace(home[user.role]);
+    if (user && !nav.some(([href]) => href === pathname)) router.replace(landing(user));
   }, [user, pathname]); // eslint-disable-line
 
   if (!user) return <p className="p-10 text-center text-slate-500">Loading...</p>;
