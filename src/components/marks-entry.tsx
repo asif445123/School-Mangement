@@ -3,8 +3,11 @@ import { useCallback, useEffect, useState } from "react";
 import { FaPen, FaTimes, FaTrash } from "react-icons/fa";
 import { api } from "@/lib/api";
 import { confirmDelete, toast } from "@/lib/alerts";
+import { nz, teacherClasses } from "@/lib/teacher-scope";
+import { useSession } from "./session";
 
 export default function MarksEntry({ initialPaperId = "" }: { initialPaperId?: string }) {
+  const { user } = useSession();
   const [papers, setPapers] = useState<any[]>([]);
   const [paperId, setPaperId] = useState(initialPaperId);
   const [students, setStudents] = useState<any[]>([]);
@@ -12,14 +15,17 @@ export default function MarksEntry({ initialPaperId = "" }: { initialPaperId?: s
   const [values, setValues] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<string[]>([]); // students whose saved mark is being changed
   const [saving, setSaving] = useState(false);
-  const paper = papers.find((p) => p._id === paperId);
-
   useEffect(() => { api("/api/papers").then((d) => setPapers(d.items)); }, []);
+  // A teacher only enters marks for the classes he teaches; the school sees every paper.
+  const mine = new Set(teacherClasses(user).map((c) => nz(c.className)));
+  const shownPapers = user?.role === "teacher" ? papers.filter((p) => mine.has(nz(p.className))) : papers;
+  const paper = shownPapers.find((p) => p._id === paperId);
 
   // students of the paper's class + the marks already stored on the server
   const load = useCallback(async (p: any) => {
     if (!p) return;
-    const [st, mk] = await Promise.all([api(`/api/students?className=${encodeURIComponent(p.className)}`), api(`/api/marks?paper=${p._id}`)]);
+    // roster = name / roll number of that class only (a teacher may not read full student records)
+    const [st, mk] = await Promise.all([api(`/api/roster?className=${encodeURIComponent(p.className)}`), api(`/api/marks?paper=${p._id}`)]);
     setStudents(st.items.sort((a: any, b: any) => Number(a.rollNo) - Number(b.rollNo)));
     setSaved(Object.fromEntries(mk.items.map((m: any) => [m.student, { id: m._id, obtained: m.obtained }])));
     setValues(Object.fromEntries(mk.items.map((m: any) => [m.student, String(m.obtained)])));
@@ -53,7 +59,7 @@ export default function MarksEntry({ initialPaperId = "" }: { initialPaperId?: s
         <h1 className="text-xl font-bold">Enter Marks</h1>
         <select className="input w-full sm:w-72" value={paperId} onChange={(e) => setPaperId(e.target.value)}>
           <option value="">Select test / exam paper</option>
-          {papers.map((p) => <option key={p._id} value={p._id}>{p.title} - Class {p.className} ({p.type})</option>)}
+          {shownPapers.map((p) => <option key={p._id} value={p._id}>{p.title} - Class {p.className} ({p.type})</option>)}
         </select>
       </div>
       {paper && (

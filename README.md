@@ -10,10 +10,16 @@
 |---|---|---|
 | **admin** | First account that signs up | Approve / reject / delete **schools** |
 | **school** (school admin) | Signs up at /signup, waits for admin approval | Everything in its school: students, fee chalans, diary, papers, marks, reports, create **teachers**, approve/disable teacher & student logins |
-| **teacher** | Created by school (Users page) | Add students (+ student login), diary, papers, enter marks, result reports. No fees |
+| **teacher** | Created by school (Users page) | Diary, papers, enter marks, result reports, and their own timetable. No fees. **Class teachers** also get the Students page (add students + student login, leaving certificate). A **subject teacher** has **no access to student records** at all — the Students tab is hidden, `/api/students` answers 403 and they only get a name / roll-number roster of the classes they teach (`/api/roster`) so they can enter marks |
 | **student** | Created from Students page (school or teacher) with login email/password | Read-only **My Portal**: own fee chalans, class diary, test/exam marks |
 
 All data is separated per school. Pending / rejected / logged-out visitors can click **View Demo**.
+
+### Who sees student data
+- **School admin**: every student of the school, with fees, phone, leaving certificate and student login approvals.
+- **Class teacher**: the Students page as before (a teacher is a class teacher when at least one of his assignments has type *Class teacher* with a class).
+- **Subject teacher** (no *Class teacher* assignment): no Students tab, no student records from the API. Marks entry and the marks status table use `/api/roster`, which returns only `name`, `rollNo`, `className` and `leftDate` for the classes that teacher is assigned to — never father name, phone, fees, admission data or the student's login email.
+
 
 ## Install this app (PWA) + responsive layout
 - The app is a **Progressive Web App**: `public/manifest.webmanifest`, app icons in `public/icons/` (made from the school-cap logo) and a service worker (`public/sw.js`, network-first for pages/APIs so live data is never stale, `/offline.html` fallback) let any visitor **install it on mobile, PC or laptop** — no app store needed. Serve it over **HTTPS** (or `localhost`) or browsers will not offer the install prompt.
