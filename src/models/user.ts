@@ -12,7 +12,8 @@ const userSchema = new Schema({
   className: { type: String, default: "" }, // teacher class
   section: { type: String, default: "" },   // teacher section
   subject: { type: String, default: "" },   // teacher subject
-  assignments: [{ _id: false, teacherType: String, className: String, section: String, subject: String }], // extra assignments (e.g. class teacher of 9 A and subject teacher of 8 B)
+  period: { type: Number, min: 1, max: 8 }, // timetable period for the main class / subject assignment
+  assignments: [{ _id: false, teacherType: String, className: String, section: String, subject: String, period: { type: Number, min: 1, max: 8 } }], // extra assignments (e.g. class teacher of 9 A and subject teacher of 8 B)
   password: { type: String, required: true },
   role: { type: String, enum: ["admin", "school", "teacher", "student"], default: "school" },
   status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },

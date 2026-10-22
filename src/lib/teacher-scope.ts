@@ -1,11 +1,17 @@
 import type { Field } from "./alerts";
 
-export type Assignment = { teacherType?: string; className?: string; section?: string; subject?: string };
+export const PERIOD_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8"];
+export const periodNumber = (value: any) => {
+  const period = Number(value);
+  return Number.isInteger(period) && period >= 1 && period <= 8 ? period : undefined;
+};
+
+export type Assignment = { teacherType?: string; className?: string; section?: string; subject?: string; period?: number | string };
 export const splitList = (s?: string) => String(s || "").split(",").map((x) => x.trim()).filter(Boolean);
 
-// A teacher has one main assignment (teacherType / className / section / subject on the account) plus optional extra ones.
+// A teacher has one main assignment (teacherType / className / section / subject / period on the account) plus optional extra ones.
 export const assignmentsOf = (u: any): Assignment[] =>
-  [{ teacherType: u?.teacherType, className: u?.className, section: u?.section, subject: u?.subject }, ...(u?.assignments || [])].filter((a) => a.teacherType || a.className || a.subject);
+  [{ teacherType: u?.teacherType, className: u?.className, section: u?.section, subject: u?.subject, period: u?.period }, ...(u?.assignments || [])].filter((a) => a.teacherType || a.className || a.subject);
 
 // The class a teacher is "Class teacher" of (any of his assignments)
 export const classTeacherAssignment = (u: any) => (u?.role === "teacher" ? assignmentsOf(u).find((a) => a.teacherType === "Class teacher" && a.className) : undefined);
@@ -44,6 +50,7 @@ export const sameAssignment = (a: Assignment, b: Assignment) =>
 export const cleanAssignments = (x: any) => (Array.isArray(x) ? x.slice(0, 10).map((a: any) => ({
   teacherType: ["Class teacher", "Subject teacher"].includes(a?.teacherType) ? a.teacherType : "Subject teacher",
   className: String(a?.className || "").trim(), section: String(a?.section || "").trim(), subject: String(a?.subject || "").trim(),
+  period: periodNumber(a?.period),
 })).filter((a: any) => a.className || a.subject) : []);
 
 // Diary / paper popups: a teacher's class and subject come from the account the school created.

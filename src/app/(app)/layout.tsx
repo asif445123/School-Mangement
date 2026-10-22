@@ -18,6 +18,8 @@ const all: [string, string, string[]][] = [
   ["/marks", "Marks", ["school", "teacher"]],
   ["/teachers", "Teachers", ["school"]],
   ["/teachers", "Subject Teachers", ["classTeacher"]],
+  ["/timetable", "Set Timetable", ["school", "classTeacher"]],
+  ["/timetable", "Timetable", ["teacher"]],
   ["/account-types", "Account Types", ["school"]],
   ["/accounts", "Account Master", ["school"]],
   ["/entries", "Entries", ["school"]],
@@ -34,7 +36,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => { api("/api/auth/me").then((d) => setUser(d.user)).catch(() => router.replace("/login")); }, [router]);
 
   const keys = user ? [user.role, ...(classTeacherAssignment(user) ? ["classTeacher"] : [])] : [];
-  const nav = user ? all.filter(([, , roles]) => roles.some((r) => keys.includes(r))) : [];
+  const nav = user ? all.filter(([, , roles]) => roles.some((r) => keys.includes(r)))
+    .filter(([href], index, rows) => rows.findIndex(([other]) => other === href) === index) : [];
   useEffect(() => { // keep each role inside its own pages
     if (user && !nav.some(([href]) => href === pathname)) router.replace(home[user.role]);
   }, [user, pathname]); // eslint-disable-line

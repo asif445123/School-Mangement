@@ -1,5 +1,5 @@
 import { Swal } from "./alerts";
-import { nz } from "./teacher-scope";
+import { nz, PERIOD_OPTIONS } from "./teacher-scope";
 
 export type Directory = { items: any[]; hints: { classes: string[]; sections: string[]; subjects: string[] } };
 export const emptyDirectory: Directory = { items: [], hints: { classes: [], sections: [], subjects: [] } };
@@ -9,6 +9,7 @@ const esc = (v: any) => String(v ?? "").replace(/&/g, "&amp;").replace(/"/g, "&q
 const lbl = (t: string) => `<label style="display:block;text-align:left;font-size:13px;margin-top:8px;color:#475569">${t}</label>`;
 const inp = (k: string, v: any, list = "") => `<input data-k="${k}" ${list ? `list="${list}"` : ""} value="${esc(v)}" autocomplete="off" class="swal2-input" style="width:100%;margin:4px 0">`;
 const options = (id: string, values: string[]) => `<datalist id="${id}">${values.map((o) => `<option value="${esc(o)}"></option>`).join("")}</datalist>`;
+const periodOptions = (selected: any) => `<option value="">Select period</option>${PERIOD_OPTIONS.map((p) => `<option value="${p}" ${String(selected ?? "") === p ? "selected" : ""}>Period ${p}</option>`).join("")}`;
 // saved classes / sections / subjects are offered when a field is clicked
 const hintLists = (d: Directory) => options("dl-class", d.hints.classes) + options("dl-section", d.hints.sections) + options("dl-subject", d.hints.subjects)
   + `<datalist id="dl-names">${d.items.map((t) => `<option value="${esc(t.name)}" label="${esc(t.email)}"></option>`).join("")}</datalist>`;
@@ -24,6 +25,7 @@ function block(a: any, i: number) {
     ${lbl("Teacher class (e.g. 5 or 5, 6)")}${inp("className", a.className, "dl-class")}
     ${lbl("Teacher section (e.g. A)")}${inp("section", a.section, "dl-section")}
     ${lbl("Teacher subject")}${inp("subject", a.subject, "dl-subject")}
+    ${lbl("Period (for this subject)")}<select data-k="period" class="swal2-select" style="width:100%;margin:4px 0">${periodOptions(a.period)}</select>
   </div>`;
 }
 
@@ -45,7 +47,7 @@ const readBlocks = () => [...document.querySelectorAll(".asg")].map((el) => Obje
 
 // School admin: add a teacher (or add assignments to a saved teacher) / edit a teacher
 export async function schoolTeacherDialog(title: string, t: any, isNew: boolean, dir: Directory) {
-  const blocks = [{ teacherType: t.teacherType || "Class teacher", className: t.className, section: t.section, subject: t.subject }, ...(t.assignments || [])];
+  const blocks = [{ teacherType: t.teacherType || "Class teacher", className: t.className, section: t.section, subject: t.subject, period: t.period }, ...(t.assignments || [])];
   let existing: any = null;
   const res = await Swal.fire({
     title, focusConfirm: false, showCancelButton: true, confirmButtonText: "Save", confirmButtonColor: "#2563eb",
@@ -62,6 +64,7 @@ export async function schoolTeacherDialog(title: string, t: any, isNew: boolean,
     },
     preConfirm: () => {
       const all = readBlocks();
+      if (all.some((a) => a.subject && !PERIOD_OPTIONS.includes(a.period))) { Swal.showValidationMessage("Select a period from 1 to 8 for every subject"); return false; }
       if (existing) { // saved teacher: only the assignments are added
         if (!(all[0].className || all[0].subject)) { Swal.showValidationMessage("Enter the class and subject to add"); return false; }
         return { existingId: existing._id, ...all[0], extras: all.slice(1) };
@@ -82,16 +85,18 @@ export async function classTeacherDialog(dir: Directory) {
     title: "Add subject teacher", focusConfirm: false, showCancelButton: true, confirmButtonText: "Save", confirmButtonColor: "#2563eb",
     html: `${hintLists(dir)}${lbl("Teacher name *")}<input id="t-name" list="dl-names" autocomplete="off" class="swal2-input" style="width:100%;margin:4px 0">${note}
       ${lbl("Teacher subject *")}<input id="t-subject" list="dl-subject" autocomplete="off" class="swal2-input" style="width:100%;margin:4px 0">
+      ${lbl("Period *")}<select id="t-period" class="swal2-select" style="width:100%;margin:4px 0">${periodOptions("")}</select>
       ${lbl("Phone")}<input id="t-phone" class="swal2-input" style="width:100%;margin:4px 0">
       ${lbl("Email (login) *")}<input id="t-email" type="email" class="swal2-input" style="width:100%;margin:4px 0">${pwRow}`,
     didOpen: () => wireExisting(dir, (x) => (existing = x)),
     preConfirm: () => {
       if (!val("t-subject")) { Swal.showValidationMessage("Teacher subject is required"); return false; }
-      if (existing) return { existingId: existing._id, subject: val("t-subject") };
+      if (!PERIOD_OPTIONS.includes(val("t-period"))) { Swal.showValidationMessage("Select a period from 1 to 8"); return false; }
+      if (existing) return { existingId: existing._id, subject: val("t-subject"), period: val("t-period") };
       if (!val("t-name")) { Swal.showValidationMessage("Teacher name is required"); return false; }
       if (!val("t-email")) { Swal.showValidationMessage("Email is required"); return false; }
       if (val("t-password").length < 6) { Swal.showValidationMessage("Password must be 6+ characters"); return false; }
-      return { name: val("t-name"), subject: val("t-subject"), phone: val("t-phone"), email: val("t-email"), password: val("t-password") };
+      return { name: val("t-name"), subject: val("t-subject"), period: val("t-period"), phone: val("t-phone"), email: val("t-email"), password: val("t-password") };
     },
   });
   return res.isConfirmed ? res.value : null;
