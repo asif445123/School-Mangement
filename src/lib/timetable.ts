@@ -66,13 +66,44 @@ export const scheduleFrom = (doc: any): SchoolSchedule => ({
 const sectionMatches = (assignmentSection: any, classSection: any) =>
   !nz(assignmentSection) || nz(assignmentSection) === nz(classSection);
 
-const ownsClass = (ct: { className: string; section: string }, item: { className: string; section: string }) =>
+// Is this class (with its section) the one the teacher is class teacher of?
+export const ownsClass = (ct: { className: string; section: string }, item: { className: string; section: string }) =>
   nz(ct.className) === nz(item.className) && (!nz(ct.section) || nz(ct.section) === nz(item.section));
+
+export type MyPeriod = {
+  key: string;
+  className: string;
+  section: string;
+  subject: string;
+  period?: number;
+};
+
+/**
+ * Every period the logged-in teacher has to teach, read from his own
+ * assignments (the main one plus the extra ones). Class teachers use it for
+ * the "My periods in other classes" table and subject teachers for "My periods".
+ */
+export function buildMyPeriods(me: any): MyPeriod[] {
+  if (me?.role !== "teacher") return [];
+  const rows: MyPeriod[] = [];
+  assignmentsOf(me).forEach((a, assignmentIndex) => {
+    for (const className of splitList(a.className)) for (const subject of splitList(a.subject)) {
+      rows.push({
+        key: `${assignmentIndex}:${nz(className)}:${nz(a.section)}:${nz(subject)}`,
+        className, section: String(a.section || "").trim(), subject,
+        period: periodNumber(a.period),
+      });
+    }
+  });
+  return rows.sort((a, b) => a.className.localeCompare(b.className, undefined, { numeric: true })
+    || a.section.localeCompare(b.section) || (a.period || 99) - (b.period || 99) || a.subject.localeCompare(b.subject));
+}
 
 /**
  * Builds timetable rows from the school's existing teacher/subject assignments.
- * School admins see everything, class teachers see their whole class plus their
- * own teaching elsewhere, and subject teachers see only their own assignments.
+ * School admins see every class; a class teacher sees only the class he is class
+ * teacher of (his own periods in other classes are listed separately), and a
+ * subject teacher gets no class timetable at all.
  * Period times live on the school-wide schedule, so they are not part of a row.
  */
 export function buildTimetableItems(teachers: any[], me: any): TimetableItem[] {
@@ -110,18 +141,13 @@ export function buildTimetableItems(teachers: any[], me: any): TimetableItem[] {
     });
   }
 
-  const myId = String(me?._id || "");
-  const myAssignments = assignmentsOf(me);
   const myClasses = classTeacherClasses(me);
-  const teachesClass = (item: TimetableItem) => myAssignments.some((a) =>
-    splitList(a.className).some((name) => nz(name) === nz(item.className)) && sectionMatches(a.section, item.section));
 
   return [...classes.values()].filter((item) => {
     if (me?.role === "school") return true;
-    const ownClass = myClasses.some((ct) => ownsClass(ct, item));
-    if (!ownClass && !teachesClass(item)) return false;
-    if (!ownClass) item.entries = item.entries.filter((entry) => entry.teacherId === myId);
-    return true;
+    // a class teacher sees his own class only - the periods he teaches in other
+    // classes are shown in the separate "My periods in other classes" table
+    return myClasses.some((ct) => ownsClass(ct, item));
   }).map((item) => ({
     ...item,
     classTeachers: item.classTeachers.sort(),

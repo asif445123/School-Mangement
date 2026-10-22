@@ -9,7 +9,7 @@ export const confirmDelete = async (text = "This cannot be undone.") =>
 export type Field = {
   name: string; label: string; type?: string;
   options?: string[]; // simple option list (value = label)
-  choices?: { value: string; label: string }[]; // options whose text differs from the saved value
+  choices?: { value: string; label: string; disabled?: boolean }[]; // options whose text differs from the saved value (disabled = cannot be picked)
   required?: boolean; hint?: string;
 };
 const esc = (v: any) => String(v ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
@@ -23,8 +23,8 @@ export async function formDialog(title: string, fields: Field[], values: any = {
     if (f.type === "image") return `${label}<div style="display:flex;align-items:center;gap:12px;margin-top:6px">${val ? `<img src="${esc(val)}" style="height:48px;border-radius:6px" alt="">` : ""}<input id="${id}" type="file" accept="image/*" style="font-size:13px"></div>`;
     if (f.type === "textarea") return `${label}<textarea id="${id}" class="swal2-textarea" style="width:100%;margin:4px 0">${esc(val)}</textarea>`;
     if (f.type === "select") {
-      const choices = f.choices || (f.options || []).map((o) => ({ value: o, label: o }));
-      return `${label}<select id="${id}" class="swal2-select" style="width:100%;margin:4px 0">${choices.map((o) => `<option value="${esc(o.value)}" ${String(o.value) === String(val ?? "") ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`;
+      const choices: { value: string; label: string; disabled?: boolean }[] = f.choices || (f.options || []).map((o) => ({ value: o, label: o }));
+      return `${label}<select id="${id}" class="swal2-select" style="width:100%;margin:4px 0">${choices.map((o) => `<option value="${esc(o.value)}" ${o.disabled ? "disabled" : ""} ${String(o.value) === String(val ?? "") ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`;
     }
     if (f.type === "password") return `${label}<div style="position:relative"><input id="${id}" type="password" value="${esc(val)}" class="swal2-input" style="width:100%;margin:4px 0;padding-right:44px"><button type="button" onclick="var i=document.getElementById('${id}');var s=i.type==='password';i.type=s?'text':'password';this.textContent=s?'👁️':'👁️‍🗨️'" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:18px;cursor:pointer">👁️‍🗨️</button></div>`;
     return `${label}<input id="${id}" type="${f.type || "text"}" value="${esc(val)}" class="swal2-input" style="width:100%;margin:4px 0">`;

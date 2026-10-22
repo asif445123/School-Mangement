@@ -1,7 +1,7 @@
 import { Swal } from "./alerts";
 import { nz, PERIOD_OPTIONS } from "./teacher-scope";
-import { BusySlot, conflictsFor, conflictText, Seat } from "./period-conflicts";
-import { periodTime, SchoolSchedule } from "./timetable";
+import { BusySlot, conflictsFor, conflictText, periodChoices, Seat } from "./period-conflicts";
+import { SchoolSchedule } from "./timetable";
 
 export type Directory = { items: any[]; hints: { classes: string[]; sections: string[]; subjects: string[] } };
 export const emptyDirectory: Directory = { items: [], hints: { classes: [], sections: [], subjects: [] } };
@@ -21,14 +21,10 @@ const inp = (k: string, v: any, list = "") => `<input data-k="${k}" ${list ? `li
 
 // Period options carry the school period time ("Period 3 · 09:20 – 10:00") and the
 // teacher who already has that period of the chosen class ("... (Kamran taken)").
+// A period that already belongs to another teacher of the class cannot be picked.
 const periodOptions = (selected: any, schedule?: SchoolSchedule, busy?: BusySlot[], seat?: Seat) =>
-  `<option value="">Select period</option>${PERIOD_OPTIONS.map((p) => {
-    const time = periodTime(schedule, p);
-    const taken = seat ? conflictsFor({ ...seat, period: p }, busy || []) : [];
-    const who = taken.length ? ` (${[...new Set(taken.map((t) => t.teacherName))].join(", ")} taken)` : "";
-    const label = `Period ${p}${time ? ` · ${time}` : ""}${who}`;
-    return `<option value="${p}" ${String(selected ?? "") === p ? "selected" : ""}>${esc(label)}</option>`;
-  }).join("")}`;
+  `<option value="">Select period</option>${periodChoices(schedule, busy || [], seat).map((choice) =>
+    `<option value="${choice.value}" ${choice.taken.length ? "disabled" : ""} ${String(selected ?? "") === choice.value ? "selected" : ""}>${esc(choice.label)}</option>`).join("")}`;
 const options = (id: string, values: string[]) => `<datalist id="${id}">${values.map((o) => `<option value="${esc(o)}"></option>`).join("")}</datalist>`;
 // saved classes / sections / subjects are offered when a field is clicked
 const hintLists = (d: Directory) => options("dl-class", d.hints.classes) + options("dl-section", d.hints.sections) + options("dl-subject", d.hints.subjects)
