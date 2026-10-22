@@ -37,6 +37,10 @@ export function anyMatch(t: any, ct: { className?: string; section?: string }): 
   return i >= 0 ? i + 1 : -1;
 }
 
+// Same class, section, subject and type (ignoring capitals and spaces)
+export const sameAssignment = (a: Assignment, b: Assignment) =>
+  nz(a.teacherType) === nz(b.teacherType) && nz(a.className) === nz(b.className) && nz(a.section) === nz(b.section) && nz(a.subject) === nz(b.subject);
+
 export const cleanAssignments = (x: any) => (Array.isArray(x) ? x.slice(0, 10).map((a: any) => ({
   teacherType: ["Class teacher", "Subject teacher"].includes(a?.teacherType) ? a.teacherType : "Subject teacher",
   className: String(a?.className || "").trim(), section: String(a?.section || "").trim(), subject: String(a?.subject || "").trim(),
