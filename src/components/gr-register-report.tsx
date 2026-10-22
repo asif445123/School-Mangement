@@ -29,8 +29,8 @@ export default function GrRegisterReport() {
   return (
     <div className="space-y-4">
       <div className="card flex flex-wrap items-end gap-4">
-        <div><label className={label}>Admission from</label><input type="date" className="input mt-1 w-44" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
-        <div><label className={label}>Admission to</label><input type="date" className="input mt-1 w-44" value={to} onChange={(e) => setTo(e.target.value)} /></div>
+        <div><label className={label}>Admission from</label><input type="date" className="input mt-1 w-full sm:w-44" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
+        <div><label className={label}>Admission to</label><input type="date" className="input mt-1 w-full sm:w-44" value={to} onChange={(e) => setTo(e.target.value)} /></div>
         <div><label className={label}>Class admitted</label><select className="input mt-1 w-36" value={cls} onChange={(e) => setCls(e.target.value)}><option value="">All classes</option>{classes.map((c: any) => <option key={c} value={c}>{c}</option>)}</select></div>
         <div><label className={label}>Students</label><select className="input mt-1 w-36" value={status} onChange={(e) => setStatus(e.target.value)}><option value="all">All</option><option value="present">Present</option><option value="left">Left</option></select></div>
         <button className="btn-light" onClick={() => printElement(title, document.getElementById("report-area"), user.schoolInfo, true)}>Print</button>
@@ -38,7 +38,7 @@ export default function GrRegisterReport() {
       <div className="card overflow-x-auto p-0">
         <h2 className="p-4 text-sm font-bold">{title}</h2>
         <div id="report-area">
-          <table className="w-full text-xs">
+          <table className="w-full min-w-[600px] text-xs">
             <thead><tr>{heads.map((h) => <th key={h} className="th !bg-cyan-100">{h}</th>)}</tr></thead>
             <tbody>
               {list.map((r) => (

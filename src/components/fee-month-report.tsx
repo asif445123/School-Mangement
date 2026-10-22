@@ -61,7 +61,7 @@ export default function FeeMonthReport() {
       <div className="card overflow-x-auto p-0">
         <h2 className="p-4 text-sm font-bold">{heading}</h2>
         <div id="report-area">
-          <table className="w-full text-xs">
+          <table className="w-full min-w-[600px] text-xs">
             <thead><tr className="bg-cyan-100">
               {["Class", "G.R. No", "Roll No", "Student Name", "Total", ...(receivable ? ["Opening"] : []), ...MONTHS].map((h) => <th key={h} className={`th !bg-cyan-100 ${["Class", "G.R. No", "Roll No", "Student Name"].includes(h) ? "" : "text-right"}`}>{h}</th>)}
             </tr></thead>

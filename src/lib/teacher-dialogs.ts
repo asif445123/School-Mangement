@@ -30,7 +30,7 @@ const options = (id: string, values: string[]) => `<datalist id="${id}">${values
 const hintLists = (d: Directory) => options("dl-class", d.hints.classes) + options("dl-section", d.hints.sections) + options("dl-subject", d.hints.subjects)
   + `<datalist id="dl-names">${d.items.map((t) => `<option value="${esc(t.name)}" label="${esc(t.email)}"></option>`).join("")}</datalist>`;
 const note = `<div id="t-existing-note" style="display:none;margin-top:10px;padding:8px 10px;border-radius:8px;background:#ecfdf5;color:#047857;font-size:13px;text-align:left">Saved teacher selected. His phone, email and password stay as they are - only the assignment below is added.</div>`;
-const pwRow = `<div id="pw-row">${lbl("Password (6+ chars) *")}<div style="position:relative"><input id="t-password" type="password" class="swal2-input" style="width:100%;margin:4px 0;padding-right:44px"><button type="button" onclick="var i=document.getElementById('t-password');var s=i.type==='password';i.type=s?'text':'password';this.textContent=s?'👁️':'👁️‍🗨️'" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:18px;cursor:pointer">👁️‍🗨️</button></div></div>`;
+const pwRow = `<div id="pw-row">${lbl("Password (6+ chars) *")}<div style="position:relative"><input id="t-password" type="password" class="swal2-input" style="width:100%;margin:4px 0;padding-right:44px"><button type="button" onclick="var i=document.getElementById('t-password');var s=i.type==='password';i.type=s?'text':'password';this.textContent=s?'👁️':'👁️‍🗨️'" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:16px;cursor:pointer">👁️‍🗨️</button></div></div>`;
 const val = (id: string) => (document.getElementById(id) as HTMLInputElement | null)?.value.trim() || "";
 // red warning shown inside an assignment block when that class period already has a teacher
 const warnBox = () => `<div class="asg-warn" style="display:none;margin-top:6px;padding:7px 10px;border-radius:8px;background:#fef2f2;color:#b91c1c;font-size:12px;text-align:left"></div>`;
@@ -38,7 +38,7 @@ const warnBox = () => `<div class="asg-warn" style="display:none;margin-top:6px;
 // one assignment = teacher type + class + section + subject + period
 function block(a: any, i: number, schedule?: SchoolSchedule, busy?: BusySlot[]) {
   return `<div class="asg" style="border:1px solid #e2e8f0;border-radius:8px;padding:4px 12px 10px;margin-top:12px;text-align:left">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><b style="font-size:13px">${i === 0 ? "Teacher assignment" : "Extra assignment"}</b>${i > 0 ? '<button type="button" class="asg-del" title="Remove" style="border:0;background:none;color:#dc2626;font-size:18px;cursor:pointer">✕</button>' : ""}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><b style="font-size:13px">${i === 0 ? "Teacher assignment" : "Extra assignment"}</b>${i > 0 ? '<button type="button" class="asg-del" title="Remove" style="border:0;background:none;color:#dc2626;font-size:16px;cursor:pointer">✕</button>' : ""}</div>
     ${lbl("Teacher type")}<select data-k="teacherType" class="swal2-select" style="width:100%;margin:4px 0">${TYPES.map((t) => `<option ${t === a.teacherType ? "selected" : ""}>${t}</option>`).join("")}</select>
     ${lbl("Teacher class (e.g. 5 or 5, 6)")}${inp("className", a.className, "dl-class")}
     ${lbl("Teacher section (e.g. A)")}${inp("section", a.section, "dl-section")}
@@ -134,7 +134,7 @@ export async function schoolTeacherDialog(title: string, t: any, isNew: boolean,
   let busyNow = busy; // a saved teacher's own assignments do not block his new entry
   let recheck: (relabel?: boolean) => void = () => {};
   const res = await Swal.fire({
-    title, focusConfirm: false, showCancelButton: true, confirmButtonText: "Save", confirmButtonColor: "#2563eb",
+    title, width: 620, focusConfirm: false, showCancelButton: true, confirmButtonText: "Save", confirmButtonColor: "#2563eb",
     html: `${hintLists(dir)}${lbl("Teacher name *")}<input id="t-name" ${isNew ? 'list="dl-names"' : ""} autocomplete="off" class="swal2-input" style="width:100%;margin:4px 0" value="${esc(t.name)}">${isNew ? note : ""}
       <div id="asg-list">${blocks.map((a, i) => block(a, i, ctx.schedule, busy)).join("")}</div>
       <button type="button" id="asg-add" style="margin-top:12px;border:1px dashed #94a3b8;background:#f8fafc;border-radius:8px;padding:8px 14px;color:#047857;font-weight:600;cursor:pointer">+ Add new entry</button>
@@ -179,7 +179,7 @@ export async function classTeacherDialog(dir: Directory, ctx: DialogContext = {}
   const seats = (a: any) => ({ className: a.className || myClass.className, section: a.section ?? myClass.section, period: a.period });
   let existing: any = null;
   const res = await Swal.fire({
-    title: "Add subject teacher", focusConfirm: false, showCancelButton: true, confirmButtonText: "Save", confirmButtonColor: "#2563eb",
+    title: "Add subject teacher", width: 520, focusConfirm: false, showCancelButton: true, confirmButtonText: "Save", confirmButtonColor: "#2563eb",
     html: `${hintLists(dir)}${lbl("Teacher name *")}<input id="t-name" list="dl-names" autocomplete="off" class="swal2-input" style="width:100%;margin:4px 0">${note}
       <div style="margin-top:10px;padding:8px 10px;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:13px;text-align:left">Your class: <b>${esc(myClass.className)}${myClass.section ? " " + esc(myClass.section) : ""}</b> - the teacher is added to this class.</div>
       ${lbl("Teacher subject *")}<input id="t-subject" list="dl-subject" autocomplete="off" class="swal2-input" style="width:100%;margin:4px 0">

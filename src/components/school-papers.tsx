@@ -71,7 +71,7 @@ export default function SchoolPapers() {
       </div>
 
       <div className="card overflow-x-auto p-0">
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
           <thead><tr><th className="th w-8"></th><th className="th">Class teacher</th><th className="th">Class</th><th className="th">Section</th><th className="th">Tests</th><th className="th">Exams</th><th className="th text-center">Papers</th></tr></thead>
           <tbody>
             {rows.map((r) => {

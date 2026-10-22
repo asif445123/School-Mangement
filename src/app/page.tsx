@@ -9,10 +9,10 @@ const features = [
 ];
 export default function Home() {
   return (
-    <main className="mx-auto max-w-5xl px-4 py-16 text-center">
-      <h1 className="text-3xl font-bold text-slate-900 sm:text-5xl">School Management System</h1>
+    <main className="mx-auto max-w-5xl px-4 py-10 text-center sm:py-16">
+      <h1 className="text-[26px] font-bold leading-tight text-slate-900 sm:text-5xl">School Management System</h1>
       <p className="mx-auto mt-4 max-w-2xl text-slate-600">Monthly fee chalan, fee receiving, daily diary, test and exam papers, marks entry and reports — all in one place.</p>
-      <div className="mt-8 flex justify-center gap-3">
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link href="/login" className="btn">Login</Link>
         <Link href="/demo" className="btn-light">View Demo</Link>
         <Link href="/contact" className="btn-light">Contact us</Link>

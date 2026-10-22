@@ -1,14 +1,177 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body { @apply bg-slate-50 text-slate-800; }
+
+/* ------------------------------------------------------------------ */
+/* Base — one clean, readable font everywhere (UI + all popups)        */
+/* ------------------------------------------------------------------ */
+:root {
+  --app-font: "Inter", ui-sans-system, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+  font-family: var(--app-font);
+  font-size: 14px;
+  line-height: 1.5;
+}
+img, svg, video { max-width: 100%; }
 /* public pages (home, login, signup, demo, contact...) have a fixed top navbar */
 body.has-public-nav { padding-top: 3.5rem; }
 body.has-public-nav main { min-height: calc(100vh - 3.5rem) !important; }
-.btn { @apply rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60; }
-.btn-light { @apply rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100; }
-.input { @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100; }
-.card { @apply rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200; }
-.th { @apply whitespace-nowrap bg-slate-100 px-3 py-2 text-left text-xs font-semibold uppercase text-slate-600; }
-.td { @apply px-3 py-2 text-sm; }
-.icon-btn { @apply rounded-md p-2 text-base hover:bg-slate-100; }
+/* keep the floating WhatsApp button clear of the PWA install banner */
+body.pwa-banner-visible .whatsapp-float { bottom: 8.5rem !important; }
+@media (min-width: 640px) {
+  body.pwa-banner-visible .whatsapp-float { bottom: 5rem !important; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Shared controls — comfortable, consistent sizes on every screen     */
+/* ------------------------------------------------------------------ */
+.btn {
+  @apply inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60;
+}
+.btn-light {
+  @apply inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-center text-sm font-medium text-slate-700 hover:bg-slate-100;
+}
+.input {
+  @apply h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100;
+}
+textarea.input { height: auto; }
+select.input { padding-right: 2rem; }
+.card { @apply rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5; }
+.th { @apply whitespace-nowrap bg-slate-100 px-2.5 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:px-3 sm:text-xs; }
+.td { @apply px-2.5 py-2 align-top text-[13px] leading-snug text-slate-700 sm:px-3 sm:text-sm; }
+.icon-btn {
+  @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[15px] hover:bg-slate-100;
+}
+/* any table inside a card scrolls sideways on small screens instead of
+   squashing / breaking the page layout */
+.table-scroll { @apply -mx-0 overflow-x-auto; -webkit-overflow-scrolling: touch; }
+.table-scroll > table { min-width: 560px; }
+.nested-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.nested-scroll > table { min-width: 520px; }
+
+/* page headings scale down a touch on phones */
+@media (max-width: 639px) {
+  h1 { font-size: 1.15rem !important; line-height: 1.35 !important; }
+  h2 { font-size: 1.02rem !important; }
+  /* 16px form text on phones stops iOS Safari zooming into every field */
+  .input, input, select, textarea { font-size: 16px; }
+  .td { word-break: break-word; }
+}
+
+/* ------------------------------------------------------------------ */
+/* SweetAlert2 popups (Add Teacher, Daily Diary, Papers, Tests,       */
+/* Marks, Students, Fees, Settings... every formDialog / Swal popup)  */
+/* Proper font (14px — not too big, not too small), suitable field    */
+/* height (40px), two short fields per row on wider screens.          */
+/* ------------------------------------------------------------------ */
+.swal2-popup {
+  font-family: var(--app-font) !important;
+  font-size: 14px !important;
+  border-radius: 16px !important;
+  padding: 1.25rem 1.25rem 1rem !important;
+  max-width: calc(100vw - 1.5rem) !important;
+  max-height: calc(100dvh - 1.5rem);
+  overflow-y: auto;
+}
+.swal2-title {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  color: #0f172a !important;
+  padding: 0.25rem 1.5rem 0.35rem !important;
+}
+.swal2-html-container {
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+  color: #334155;
+  margin: 0.35rem 0 0 !important;
+  padding: 0 0.15rem !important;
+  overflow: visible !important;
+}
+.swal2-html-container p, .swal2-html-container div { line-height: 1.55; }
+/* form layout built by formDialog() */
+.sms-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 14px;
+  text-align: left;
+}
+@media (min-width: 560px) {
+  .sms-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sms-field--wide { grid-column: 1 / -1; }
+}
+.sms-field { min-width: 0; }
+.sms-field > label, .swal2-popup label {
+  font-size: 13px !important;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.swal2-input, .swal2-select, .swal2-textarea, .swal2-file {
+  font-family: var(--app-font) !important;
+  font-size: 14px !important;
+  color: #1e293b !important;
+  background: #fff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  margin: 4px 0 2px !important;
+}
+.swal2-input, .swal2-select, .swal2-file {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 12px !important;
+}
+.swal2-textarea {
+  height: auto !important;
+  min-height: 84px !important;
+  padding: 9px 12px !important;
+  line-height: 1.5 !important;
+  resize: vertical;
+}
+.swal2-input:focus, .swal2-select:focus, .swal2-textarea:focus, .swal2-file:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+  outline: none !important;
+}
+.swal2-popup input[type="checkbox"], .swal2-popup input[type="radio"] {
+  width: 17px; height: 17px; flex: none; accent-color: #2563eb;
+}
+.swal2-actions { margin: 1rem 0 0 !important; gap: 0.5rem; flex-wrap: wrap; }
+.swal2-confirm, .swal2-cancel, .swal2-deny {
+  font-family: var(--app-font) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  min-height: 40px;
+  padding: 9px 22px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+.swal2-validation-message {
+  font-size: 12.5px !important;
+  border-radius: 8px;
+  margin-top: 0.75rem !important;
+}
+.swal2-toast { font-family: var(--app-font) !important; font-size: 14px !important; }
+.swal2-toast .swal2-title { font-size: 14px !important; padding: 0 !important; }
+@media (max-width: 639px) {
+  .swal2-popup { padding: 1rem 0.85rem 0.85rem !important; font-size: 14px !important; }
+  .swal2-title { font-size: 17px !important; }
+  /* 16px inside popups on phones prevents the iOS auto-zoom jump */
+  .swal2-input, .swal2-select, .swal2-textarea, .swal2-file { font-size: 16px !important; }
+  .swal2-actions { width: 100%; }
+  .swal2-confirm, .swal2-cancel { flex: 1 1 auto; }
+}
+
+/* print: never print the install banner / floating buttons */
+@media print {
+  .pwa-install-banner, .whatsapp-float { display: none !important; }
+}
