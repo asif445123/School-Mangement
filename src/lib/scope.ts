@@ -1,8 +1,9 @@
 import { fail, getSessionUser, schoolIdOf } from "./auth";
-import { canSeeStudents } from "./teacher-scope";
 import { access, resources } from "@/models";
 
 // Resolves the logged-in user, checks role permission and returns the school every query must be limited to.
+// Teachers are additionally limited to the classes (and sections) they are assigned to -
+// that filter is applied in /api/[resource] with studentRights() from ./student-scope.
 export async function scope(resource: string, write: boolean): Promise<any> {
   const cfg = resources[resource];
   if (!cfg) return { error: fail("Not found", 404) };
@@ -10,9 +11,5 @@ export async function scope(resource: string, write: boolean): Promise<any> {
   if (!user) return { error: fail("Not logged in", 401) };
   const schoolId = schoolIdOf(user);
   if (!schoolId || !access[resource][write ? "write" : "read"].includes(user.role)) return { error: fail("You do not have access", 403) };
-  // Student records (including the student logins shown on that page) belong to the
-  // school admin and to class teachers. A subject teacher is refused outright -
-  // not even their own class list, which lives behind /api/roster.
-  if (resource === "students" && !canSeeStudents(user)) return { error: fail("Subject teachers cannot access student records", 403) };
   return { cfg, user, schoolId };
 }

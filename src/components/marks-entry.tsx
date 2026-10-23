@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FaPen, FaTimes, FaTrash } from "react-icons/fa";
 import { api } from "@/lib/api";
 import { confirmDelete, toast } from "@/lib/alerts";
-import { nz, teacherClasses } from "@/lib/teacher-scope";
+import { studentRights } from "@/lib/student-scope";
 import { useSession } from "./session";
 
 export default function MarksEntry({ initialPaperId = "" }: { initialPaperId?: string }) {
@@ -16,16 +16,16 @@ export default function MarksEntry({ initialPaperId = "" }: { initialPaperId?: s
   const [editing, setEditing] = useState<string[]>([]); // students whose saved mark is being changed
   const [saving, setSaving] = useState(false);
   useEffect(() => { api("/api/papers").then((d) => setPapers(d.items)); }, []);
-  // A teacher only enters marks for the classes he teaches; the school sees every paper.
-  const mine = new Set(teacherClasses(user).map((c) => nz(c.className)));
-  const shownPapers = user?.role === "teacher" ? papers.filter((p) => mine.has(nz(p.className))) : papers;
+  // A teacher only enters marks for the classes (and sections) he teaches; the school sees every paper.
+  const shownPapers = user?.role === "teacher" ? papers.filter((p) => !!studentRights(user, { className: p.className, section: p.section })) : papers;
   const paper = shownPapers.find((p) => p._id === paperId);
 
   // students of the paper's class + the marks already stored on the server
   const load = useCallback(async (p: any) => {
     if (!p) return;
-    // roster = name / roll number of that class only (a teacher may not read full student records)
-    const [st, mk] = await Promise.all([api(`/api/roster?className=${encodeURIComponent(p.className)}`), api(`/api/marks?paper=${p._id}`)]);
+    // roster = name / roll number of that class + section only (a teacher may not read full student records)
+    const url = `/api/roster?className=${encodeURIComponent(p.className)}${p.section ? `&section=${encodeURIComponent(p.section)}` : ""}`;
+    const [st, mk] = await Promise.all([api(url), api(`/api/marks?paper=${p._id}`)]);
     setStudents(st.items.sort((a: any, b: any) => Number(a.rollNo) - Number(b.rollNo)));
     setSaved(Object.fromEntries(mk.items.map((m: any) => [m.student, { id: m._id, obtained: m.obtained }])));
     setValues(Object.fromEntries(mk.items.map((m: any) => [m.student, String(m.obtained)])));

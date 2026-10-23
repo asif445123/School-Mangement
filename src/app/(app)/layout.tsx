@@ -9,15 +9,15 @@ import { SessionContext } from "@/components/session";
 
 const all: [string, string, string[]][] = [
   ["/dashboard", "Dashboard", ["school"]],
-  ["/students", "Students", ["school", "classTeacher"]], // subject teachers have no access to student records
+  ["/students", "Students", ["school", "teacher"]], // a teacher sees only the classes and sections he teaches
   ["/gr-register", "GR Register", ["school"]],
   ["/fees", "Fee Chalan", ["school"]],
   ["/fee-receivable", "Fee Receivable", ["school"]],
   ["/diary", "Daily Diary", ["school", "teacher"]],
   ["/papers", "Papers", ["school", "teacher"]],
   ["/marks", "Marks", ["school", "teacher"]],
+  ["/teachers", "Subject Teachers", ["classTeacher"]], // first match wins, so this must come before the school's own label
   ["/teachers", "Teachers", ["school"]],
-  ["/teachers", "Subject Teachers", ["classTeacher"]],
   ["/timetable", "Set Timetable", ["school"]],
   ["/timetable", "Timetable", ["teacher"]],
   ["/account-types", "Account Types", ["school"]],
@@ -28,8 +28,8 @@ const all: [string, string, string[]][] = [
   ["/my", "My Portal", ["student"]],
 ];
 const home: any = { admin: "/users", school: "/dashboard", teacher: "/students", student: "/my" };
-// Where a role starts: a subject teacher never lands on Students, he starts on Marks.
-const landing = (u: any) => (u?.role === "teacher" && !classTeacherAssignment(u) ? "/marks" : home[u?.role]);
+// Where a role starts: every teacher now lands on Students, which opens on his own class.
+const landing = (u: any) => home[u?.role];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
