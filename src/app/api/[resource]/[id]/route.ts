@@ -8,8 +8,11 @@ import Account from "@/models/account";
 import Entry from "@/models/entry";
 import Fee from "@/models/fee";
 import { syncOpening } from "@/lib/student-opening";
+import { studentRights } from "@/lib/student-scope";
 
 type Ctx = { params: Promise<{ resource: string; id: string }> };
+// A teacher may only touch the students of the class (and section) he is class teacher of.
+const ownStudent = (s: any, id: string) => s.cfg.model.findOne({ _id: id, school: s.schoolId }).lean();
 
 export async function PUT(req: NextRequest, { params }: Ctx) {
   const { resource, id } = await params;
@@ -20,6 +23,11 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   delete body.school;
   if (resource === "students" && s.user.role !== "school") { delete body.previousPending; delete body.monthlyFee; delete body.discount; } // fees are set by the school only
   await connectDb();
+  if (resource === "students" && s.user.role === "teacher") {
+    const before: any = await ownStudent(s, id);
+    const after = studentRights(s.user, { ...before, ...body });
+    if (!before || !studentRights(s.user, before)?.own || !after?.own) return fail("You can only edit students of your own class and section", 403);
+  }
   const email = String(body.loginEmail || "").toLowerCase().trim();
   let login: any = null;
   if (resource === "students" && email) {
@@ -50,6 +58,10 @@ export async function DELETE(_: NextRequest, { params }: Ctx) {
   if (s.error) return s.error;
   if (resource === "fees" && s.user.role !== "school") return fail("Only the school can delete chalans", 403);
   await connectDb();
+  if (resource === "students" && s.user.role === "teacher") {
+    const row: any = await ownStudent(s, id);
+    if (!row || !studentRights(s.user, row)?.own) return fail("You can only delete students of your own class and section", 403);
+  }
   if (resource === "accountTypes" && (await Account.exists({ accountType: id, school: s.schoolId }))) return fail("This account type is used by accounts. Delete or change those accounts first.");
   if (resource === "accounts" && (await Entry.exists({ account: id, school: s.schoolId }))) return fail("This account has entries and cannot be deleted.");
   await s.cfg.model.findOneAndDelete({ _id: id, school: s.schoolId });
