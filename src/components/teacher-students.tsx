@@ -1,10 +1,9 @@
 "use client";
 import { useCallback, useMemo, useState } from "react";
-import { FaCertificate } from "react-icons/fa";
 import CrudPage from "@/components/crud-page";
 import ClassSectionFilter from "@/components/class-section-filter";
 import { useSession } from "@/components/session";
-import { leavingCertificate, loginBadge } from "@/lib/student-actions";
+import { loginBadge } from "@/lib/student-actions";
 import { teacherStudentFields } from "@/lib/student-fields";
 import { assignmentsOf, nz, splitList } from "@/lib/teacher-scope";
 import { scopeClasses, studentScopes } from "@/lib/student-scope";
@@ -87,10 +86,7 @@ export default function TeacherStudents() {
         defaults={{ gender: "Male" }}
         extra={addTarget || {}}
         canAdd={!!addTarget}
-        canEdit={(r) => !!r.own}
-        actions={(r) => (r.own
-          ? <button className="icon-btn text-purple-600" title="School leaving certificate" onClick={() => leavingCertificate(r, user)}><FaCertificate /></button>
-          : null)} />
+        canEdit={(r) => !!r.own} />
       <p className="px-1 text-xs text-slate-500">
         {classTeacherHere && chosen && <>You are the class teacher of <b>{where}</b> - you can add and edit these students.</>}
         {classTeacherHere && !chosen && <>You are the class teacher of <b>Class {current}</b>{ownScopes[0]?.section ? ` ${ownScopes[0].section}` : ""} - you can add students there and edit them. Students of another section are read-only.</>}
