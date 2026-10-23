@@ -5,6 +5,7 @@ export const studentFields: Field[] = [
   { name: "gender", label: "Gender", type: "radio", options: ["Male", "Female"], required: true },
   { name: "dob", label: "Date of birth", type: "date" },
   { name: "className", label: "Class", required: true },
+  { name: "section", label: "Section (leave empty if the school has none)" },
   { name: "rollNo", label: "Roll number" },
   { name: "phone", label: "Phone" },
   { name: "admissionDate", label: "Admission date", type: "date" },
@@ -15,3 +16,6 @@ export const studentFields: Field[] = [
   { name: "loginEmail", label: "Student login email (optional)", type: "email" },
   { name: "loginPassword", label: "Login password (6+ chars, leave empty to keep)", type: "password" },
 ];
+// Fees belong to the school, and a teacher's class + section are fixed by his account
+export const feeFieldNames = ["monthlyFee", "discount", "previousPending"];
+export const teacherStudentFields = studentFields.filter((f) => !feeFieldNames.includes(f.name) && f.name !== "className" && f.name !== "section");

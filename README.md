@@ -10,15 +10,21 @@
 |---|---|---|
 | **admin** | First account that signs up | Approve / reject / delete **schools** |
 | **school** (school admin) | Signs up at /signup, waits for admin approval | Everything in its school: students, fee chalans, diary, papers, marks, reports, create **teachers**, approve/disable teacher & student logins |
-| **teacher** | Created by school (Users page) | Diary, papers, enter marks, result reports, and their own timetable. No fees. **Class teachers** also get the Students page (add students + student login, leaving certificate). A **subject teacher** has **no access to student records** at all — the Students tab is hidden, `/api/students` answers 403 and they only get a name / roll-number roster of the classes they teach (`/api/roster`) so they can enter marks |
+| **teacher** | Created by school (Users page) | Diary, papers, enter marks, result reports, their own timetable, and the **Students** page — but only for the classes and sections they teach. No fees |
 | **student** | Created from Students page (school or teacher) with login email/password | Read-only **My Portal**: own fee chalans, class diary, test/exam marks |
 
 All data is separated per school. Pending / rejected / logged-out visitors can click **View Demo**.
 
 ### Who sees student data
-- **School admin**: every student of the school, with fees, phone, leaving certificate and student login approvals.
-- **Class teacher**: the Students page as before (a teacher is a class teacher when at least one of his assignments has type *Class teacher* with a class).
-- **Subject teacher** (no *Class teacher* assignment): no Students tab, no student records from the API. Marks entry and the marks status table use `/api/roster`, which returns only `name`, `rollNo`, `className` and `leftDate` for the classes that teacher is assigned to — never father name, phone, fees, admission data or the student's login email.
+Every role is limited to **its own** classes. The page always starts with a **Class** picker and then a **Section** picker — a teacher never sees a student of another class or section.
+
+- **School admin**: every student of the school, with fees, phone, leaving certificate and student login approvals. The Class / Section pickers on top of the table are only filters.
+- **Class teacher** (at least one assignment of type *Class teacher* with a class): the Students page opens on **his own class and section**. He can add students there, edit and delete them and print the leaving certificate. New students are saved into his class and section automatically — the Class and Section fields are not asked for, so he can never add a student to another class.
+- **A teacher who also teaches a subject in another class**: he changes the Class picker (then the Section picker) and sees that class. There the list is **read-only** — no Add, no Edit, no Delete, and the phone, admission data and the student's login email are not sent to his browser at all.
+- **Subject teacher** (no *Class teacher* assignment): the same Class → Section flow over exactly the classes and sections he is assigned to. Everything is read-only.
+- **Marks entry** and the marks status table use `/api/roster`, which returns only `name`, `rollNo`, `className`, `section` and `leftDate` for the classes (and sections) that teacher is assigned to — never father name, phone, fees, admission data or the student's login email.
+
+Sections are stored on the student (`section`, empty when the school does not use sections). A student saved **without** a section stays visible to every teacher of that class, so schools that do not use sections (and students added before this field existed) keep working. A teacher assigned to a class with **no** section on his assignment sees **every** section of that class.
 
 
 ## Install this app (PWA) + responsive layout
