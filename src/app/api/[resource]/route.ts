@@ -5,6 +5,8 @@ import { fail } from "@/lib/auth";
 import { scope } from "@/lib/scope";
 import User from "@/models/user";
 import { syncOpening } from "@/lib/student-opening";
+import { studentRights, studentScopes } from "@/lib/student-scope";
+import { nz } from "@/lib/teacher-scope";
 
 type Ctx = { params: Promise<{ resource: string }> };
 
@@ -31,6 +33,19 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     const byStudent = Object.fromEntries(logins.map((u: any) => [String(u.student), u]));
     items = items.map((i: any) => ({ ...i, loginEmail: byStudent[String(i._id)]?.email || "", loginUserId: byStudent[String(i._id)]?._id, loginStatus: byStudent[String(i._id)]?.status || "" }));
   }
+  if ((await params).resource === "students" && s.user.role === "teacher") {
+    // A teacher only ever sees the classes (and sections) he is assigned to.
+    // In the classes where he is only a subject teacher the list is reduced to a
+    // class list - no phone, no admission data and no student login.
+    items = items
+      .map((i: any) => ({ ...i, own: studentRights(s.user, i)?.own === true }))
+      .filter((i: any) => studentRights(s.user, i))
+      .map((i: any) => {
+        if (i.own) return i;
+        const { phone, dob, admissionDate, loginEmail, loginUserId, loginStatus, ...rest } = i;
+        return rest;
+      });
+  }
   if ((await params).resource === "students" && s.user.role !== "school") items = items.map(({ monthlyFee, discount, previousPending, ...rest }: any) => rest);
   return NextResponse.json({ items });
 }
@@ -44,6 +59,14 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   delete body.school;
   if (resource === "students" && s.user.role !== "school") { delete body.previousPending; delete body.monthlyFee; delete body.discount; } // fees are set by the school only
   await connectDb();
+  // A teacher may only add a student to the class (and section) he is class teacher of.
+  if (resource === "students" && s.user.role === "teacher") {
+    if (!String(body.section || "").trim()) {
+      const own = studentScopes(s.user).find((x) => x.own && nz(x.className) === nz(body.className) && x.section);
+      if (own) body.section = own.section;
+    }
+    if (!studentRights(s.user, body)?.own) return fail("You can only add students to your own class and section", 403);
+  }
   const email = String(body.loginEmail || "").toLowerCase().trim();
   if (resource === "students" && email) {
     if (!body.loginPassword || body.loginPassword.length < 6) return fail("Login password must be 6+ characters");

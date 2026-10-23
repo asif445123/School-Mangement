@@ -27,10 +27,9 @@ export const teacherClasses = (u: any): { className: string; section: string }[]
 export const classTeacherClasses = (u: any): { className: string; section: string }[] =>
   u?.role === "teacher" ? assignmentsOf(u).filter((a) => a.teacherType === "Class teacher" && a.className).flatMap((a) => splitList(a.className).map((c) => ({ className: c, section: a.section || "" }))) : [];
 
-// Student records belong to the school admin and to the class teacher of the class.
-// A subject teacher (a teacher who is not class teacher of any class) never sees them.
+// A teacher is a class teacher when at least one of his assignments is of type "Class teacher".
+// Which students he may open (and whether he may edit them) is decided by ./student-scope.
 export const isClassTeacher = (u: any) => classTeacherClasses(u).length > 0;
-export const canSeeStudents = (u: any) => u?.role === "school" || isClassTeacher(u);
 
 // Does this assignment teach in the class of the class teacher `ct`? No section on either side matches every section.
 const inClass = (a: any, ct: { className?: string; section?: string }) =>
