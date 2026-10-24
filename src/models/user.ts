@@ -18,6 +18,7 @@ const userSchema = new Schema({
   role: { type: String, enum: ["admin", "school", "teacher", "student"], default: "school" },
   status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
   school: { type: Schema.Types.ObjectId, ref: "User" },   // owning school account (teacher/student)
-  student: { type: Schema.Types.ObjectId, ref: "Student" }, // linked student record (student role)
+  student: { type: Schema.Types.ObjectId, ref: "Student" }, // first linked student record (student role, kept for older logins)
+  children: [{ type: Schema.Types.ObjectId, ref: "Student" }], // EVERY student this login may see: one guardian login for all his / her children (brothers & sisters). Older logins have this empty - readers fall back to `student` (see linkedStudentIds in lib/guardian)
 }, { timestamps: true });
 export default defineModel("User", userSchema);
