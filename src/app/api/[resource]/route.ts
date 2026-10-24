@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { connectDb } from "@/lib/db";
 import { fail } from "@/lib/auth";
 import { scope } from "@/lib/scope";
+import { attachStudentToLogin, createStudentLogin, guardianLoginForEmail, linkedStudentIds } from "@/lib/guardian";
 import User from "@/models/user";
 import { syncOpening } from "@/lib/student-opening";
 import { studentRights, studentScopes } from "@/lib/student-scope";
@@ -29,9 +29,26 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     });
   }
   if ((await params).resource === "students") {
-    const logins = await User.find({ student: { $in: items.map((i: any) => i._id) } }).select("student email status").lean();
-    const byStudent = Object.fromEntries(logins.map((u: any) => [String(u.student), u]));
-    items = items.map((i: any) => ({ ...i, loginEmail: byStudent[String(i._id)]?.email || "", loginUserId: byStudent[String(i._id)]?._id, loginStatus: byStudent[String(i._id)]?.status || "" }));
+    // A guardian login is shared by all his / her children, so one login can
+    // appear on several student rows. loginChildCount > 1 (with the names of
+    // the brothers / sisters in loginSiblings) marks such a shared login.
+    const ids = items.map((i: any) => i._id);
+    const logins = await User.find({ school: s.schoolId, $or: [{ student: { $in: ids } }, { children: { $in: ids } }] }).select("student children email status").lean();
+    const byStudent: Record<string, any> = {};
+    const linked = new Set<string>();
+    for (const u of logins as any[]) for (const sid of linkedStudentIds(u)) { linked.add(sid); byStudent[sid] ??= u; }
+    const names: Record<string, string> = linked.size
+      ? Object.fromEntries((await s.cfg.model.find({ _id: { $in: [...linked] }, school: s.schoolId }).select("name").lean()).map((r: any) => [String(r._id), r.name]))
+      : {};
+    items = items.map((i: any) => {
+      const u = byStudent[String(i._id)];
+      const kids = u ? linkedStudentIds(u) : [];
+      return {
+        ...i, loginEmail: u?.email || "", loginUserId: u?._id, loginStatus: u?.status || "",
+        loginChildCount: kids.length,
+        loginSiblings: kids.filter((k) => k !== String(i._id)).map((k) => names[k]).filter(Boolean),
+      };
+    });
   }
   if ((await params).resource === "students" && s.user.role === "teacher") {
     // A teacher only ever sees the classes (and sections) he is assigned to.
@@ -42,7 +59,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
       .filter((i: any) => studentRights(s.user, i))
       .map((i: any) => {
         if (i.own) return i;
-        const { phone, dob, admissionDate, loginEmail, loginUserId, loginStatus, ...rest } = i;
+        const { phone, dob, admissionDate, loginEmail, loginUserId, loginStatus, loginChildCount, loginSiblings, ...rest } = i;
         return rest;
       });
   }
@@ -68,15 +85,26 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     if (!studentRights(s.user, body)?.own) return fail("You can only add students to your own class and section", 403);
   }
   const email = String(body.loginEmail || "").toLowerCase().trim();
+  // The same login email on a brother / sister is NOT an error: it is the
+  // guardian's login, and the new child is attached to it so the guardian sees
+  // every child in one portal. No password is needed for the extra children -
+  // the guardian keeps the password set for the first child (typing one here
+  // changes the guardian's password). An email owned by any other kind of
+  // account stays a conflict.
+  let guardian: any = null;
   if (resource === "students" && email) {
-    if (!body.loginPassword || body.loginPassword.length < 6) return fail("Login password must be 6+ characters");
-    if (await User.findOne({ email })) return fail("Login email already in use", 409);
+    const g = await guardianLoginForEmail(email, s.schoolId);
+    if (g.conflict) return fail("Login email already in use", 409);
+    guardian = g.login;
+    if (body.loginPassword && body.loginPassword.length < 6) return fail("Login password must be 6+ characters");
+    if (!guardian && !body.loginPassword) return fail("Login password must be 6+ characters");
   }
   try {
     const item = await s.cfg.model.create({ ...body, school: s.schoolId });
     if (resource === "students") await syncOpening(item, s.schoolId);
     if (resource === "students" && email) {
-      await User.create({ name: item.name, email, phone: item.phone || "", password: await bcrypt.hash(body.loginPassword, 10), role: "student", status: "approved", school: s.schoolId, student: item._id });
+      if (guardian) await attachStudentToLogin(guardian, item, body.loginPassword || undefined);
+      else await createStudentLogin(item, email, body.loginPassword, s.schoolId);
     }
     return NextResponse.json({ item });
   } catch (e: any) { return fail(e.code === 11000 ? "Duplicate entry" : e.message); }
