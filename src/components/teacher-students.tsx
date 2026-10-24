@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import CrudPage from "@/components/crud-page";
 import ClassSectionFilter from "@/components/class-section-filter";
 import { useSession } from "@/components/session";
-import { loginBadge } from "@/lib/student-actions";
+import StudentLoginCell from "@/components/student-login-cell";
 import { teacherStudentFields } from "@/lib/student-fields";
 import { assignmentsOf, nz, splitList } from "@/lib/teacher-scope";
 import { scopeClasses, studentScopes } from "@/lib/student-scope";
@@ -63,7 +63,7 @@ export default function TeacherStudents() {
     { key: "section", label: "Section", render: (r: any) => r.section || "-" },
     { key: "phone", label: "Phone", render: (r: any) => r.phone || "-" },
     { key: "leftDate", label: "Left on", render: (r: any) => r.leftDate ? <span className="rounded bg-red-100 px-2 py-1 text-xs text-red-700">{r.leftDate}</span> : "-" },
-    { key: "loginEmail", label: "Student login", render: (r: any) => r.loginEmail ? <span>{r.loginEmail} <span className={`ml-1 rounded px-2 py-0.5 text-xs capitalize ${loginBadge[r.loginStatus]}`}>{r.loginStatus}</span></span> : "-" },
+    { key: "loginEmail", label: "Student / guardian login", render: (r: any) => <StudentLoginCell r={r} /> },
   ];
   const fields = teacherStudentFields;
 

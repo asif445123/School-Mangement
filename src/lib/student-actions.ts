@@ -4,9 +4,11 @@ import { printCertificate } from "./print";
 
 export const loginBadge: Record<string, string> = { approved: "bg-green-100 text-green-700", pending: "bg-amber-100 text-amber-700", rejected: "bg-red-100 text-red-700" };
 
-// Approve / disable the login the school (or the class teacher) created for a student
+// Approve / disable the login the school (or the class teacher) created for a
+// student. A guardian login is shared by all his / her children, so say so.
 export async function setStudentLogin(r: any, status: string, reload: () => void) {
-  try { await api(`/api/users/${r.loginUserId}`, { method: "PATCH", body: { status } }); toast("success", `Login ${status}`); reload(); }
+  const shared = (r.loginChildCount || 0) > 1 ? ` (guardian login of ${r.loginChildCount} children)` : "";
+  try { await api(`/api/users/${r.loginUserId}`, { method: "PATCH", body: { status } }); toast("success", `Login ${status}${shared}`); reload(); }
   catch (e: any) { toast("error", e.message); }
 }
 
