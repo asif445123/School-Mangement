@@ -13,8 +13,10 @@ export const studentFields: Field[] = [
   { name: "discount", label: "Monthly discount (Rs)", type: "number" },
   { name: "previousPending", label: "Previous pending fee (Rs)", type: "number" },
   { name: "leftDate", label: "Student left date (leave empty if studying)", type: "date" },
-  { name: "loginEmail", label: "Student login email (optional)", type: "email" },
-  { name: "loginPassword", label: "Login password (6+ chars, leave empty to keep)", type: "password" },
+  // Brothers / sisters: give every child of a guardian the SAME login email and
+  // that one login becomes the guardian portal for all of them (see lib/guardian).
+  { name: "loginEmail", label: "Guardian / student login email - use the SAME email for brothers & sisters so the guardian sees all children in ONE portal (optional)", type: "email" },
+  { name: "loginPassword", label: "Login password (6+ chars, leave empty to keep - brothers/sisters share the guardian's password)", type: "password" },
 ];
 // Fees belong to the school, and a teacher's class + section are fixed by his account
 export const feeFieldNames = ["monthlyFee", "discount", "previousPending"];
