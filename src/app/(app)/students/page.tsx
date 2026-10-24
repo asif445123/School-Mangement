@@ -5,7 +5,8 @@ import CrudPage from "@/components/crud-page";
 import ClassSectionFilter from "@/components/class-section-filter";
 import TeacherStudents from "@/components/teacher-students";
 import { money } from "@/lib/api";
-import { setStudentLogin, leavingCertificate, loginBadge } from "@/lib/student-actions";
+import { setStudentLogin, leavingCertificate } from "@/lib/student-actions";
+import StudentLoginCell from "@/components/student-login-cell";
 import { studentFields } from "@/lib/student-fields";
 import { nz } from "@/lib/teacher-scope";
 import { useSession } from "@/components/session";
@@ -42,14 +43,14 @@ export default function StudentsPage() {
         { key: "net", label: "Monthly fee", render: (r: any) => <b>{money((r.monthlyFee || 0) - (r.discount || 0))}</b> },
         { key: "previousPending", label: "Previous pending", render: (r: any) => money(r.previousPending) },
         { key: "leftDate", label: "Left on", render: (r) => r.leftDate ? <span className="rounded bg-red-100 px-2 py-1 text-xs text-red-700">{r.leftDate}</span> : "-" },
-        { key: "loginEmail", label: "Student login", render: (r) => r.loginEmail ? <span>{r.loginEmail} <span className={`ml-1 rounded px-2 py-0.5 text-xs capitalize ${loginBadge[r.loginStatus]}`}>{r.loginStatus}</span></span> : "-" },
+        { key: "loginEmail", label: "Student / guardian login", render: (r) => <StudentLoginCell r={r} /> },
       ]}
       fields={studentFields} defaults={{ gender: "Male", monthlyFee: 0, discount: 0, previousPending: 0 }}
       actions={(r, reload) => (<>
         <button className="icon-btn text-purple-600" title="School leaving certificate" onClick={() => leavingCertificate(r, user)}><FaCertificate /></button>
         {r.loginUserId && <>
-          <button className="icon-btn text-green-600" title="Enable login" onClick={() => setStudentLogin(r, "approved", reload)}><FaCheck /></button>
-          <button className="icon-btn text-amber-600" title="Disable login" onClick={() => setStudentLogin(r, "rejected", reload)}><FaTimes /></button>
+          <button className="icon-btn text-green-600" title={(r.loginChildCount || 0) > 1 ? `Enable guardian login (all ${r.loginChildCount} children)` : "Enable login"} onClick={() => setStudentLogin(r, "approved", reload)}><FaCheck /></button>
+          <button className="icon-btn text-amber-600" title={(r.loginChildCount || 0) > 1 ? `Disable guardian login (all ${r.loginChildCount} children)` : "Disable login"} onClick={() => setStudentLogin(r, "rejected", reload)}><FaTimes /></button>
         </>}
       </>)} />
   );

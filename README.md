@@ -11,9 +11,24 @@
 | **admin** | First account that signs up | Approve / reject / delete **schools** |
 | **school** (school admin) | Signs up at /signup, waits for admin approval | Everything in its school: students, fee chalans, diary, papers, marks, reports, create **teachers**, approve/disable teacher & student logins |
 | **teacher** | Created by school (Users page) | Diary, papers, enter marks, result reports, their own timetable, and the **Students** page — but only for the classes and sections they teach. No fees |
-| **student** | Created from Students page (school or teacher) with login email/password | Read-only **My Portal**: own fee chalans, class diary, test/exam marks |
+| **student** | Created from Students page (school or teacher) with login email/password | Read-only **My Portal**: own fee chalans, class diary, test/exam marks. The **same login email on brothers/sisters makes it a Guardian Portal** for all of them (see below) |
 
 All data is separated per school. Pending / rejected / logged-out visitors can click **View Demo**.
+
+### Guardian portal: one login for all his / her children
+A guardian with 2, 3, 4 or more children in the school does **not** need a separate login per child. In the Students form, type the **same "Guardian / student login email"** for every brother and sister. The first child creates the login (with its password); each further child with that email is attached to the same login — no password has to be typed again, the guardian keeps the first password (typing a new one changes the guardian's password).
+
+With that one login the portal opens as **Guardian Portal**:
+- an **All children** overview — combined family fee total / paid / balance with a per-child fee table, the daily diary of **all children for one chosen date**, and an exam-marks snapshot (First / Mid / Final term + overall %) for every child;
+- one tab per child with that child's full detail — month-by-month fee chalans, class daily diary by date, test papers with marks obtained, and subject-by-subject exam (paper) marks per term.
+
+Notes:
+- Only the email typed by the school/teacher links children — never the phone number or father name alone — so one family can never see another family's children. An email belonging to a teacher, another school or any non-student account still gives "Login email already in use".
+- Children who already have separate logins **merge**: edit the brother/sister, change his login email to the guardian's email and save. His old separate login is closed; the guardian's one login now shows him too. Students lists mark such a login with a **"Guardian · N children"** badge.
+- To give one child his own login later, edit him and type a **new** email: only that child moves to the new login (same password unless a new one is typed); the guardian keeps the old login for the remaining children. Changing the email of a login that belongs to a single child simply renames that login, as before.
+- Enabling/disabling (✓/✕) acts on the login, i.e. on the guardian and all his children at once. Deleting one child only unlinks him — the guardian login is removed only when its last child is deleted.
+- Diary and papers follow each child's class **and section**: a diary written for section B is not shown to a section A child (entries/students without a section behave as before).
+- Old single-student logins keep working with no migration: a login linked to only one student still shows the original My Portal, and `/api/my` still returns that child's `student / fees / diary / marks / papers` fields next to the new `children[]` / `family` data.
 
 ### Who sees student data
 Every role is limited to **its own** classes. The page always starts with a **Class** picker and then a **Section** picker — a teacher never sees a student of another class or section.
