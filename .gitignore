@@ -1,3 +1,9 @@
 node_modules
 .next
 config.bat
+
+!.env.example
+.tmp
+*.tsbuildinfo
+playwright-report
+test-results
