@@ -24,6 +24,8 @@ const all: [string, string, string[]][] = [
   ["/accounts", "Account Master", ["school"]],
   ["/entries", "Entries", ["school"]],
   ["/reports", "Reports", ["school"]],
+  ["/payment-accounts", "Payment accounts", ["school"]],
+  ["/whatsapp-settings", "WhatsApp settings", ["school"]],
   ["/users", "Schools", ["admin"]],
   ["/my", "My Portal", ["student"]],
 ];

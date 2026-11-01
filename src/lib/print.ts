@@ -1,9 +1,11 @@
 import { money } from "./api";
+import { chalanRows, accountLines } from "./chalan";
+import { accountTypeLabel } from "./payment-accounts";
 type School = { name?: string; logo?: string } | null | undefined;
 
-const esc = (v: any) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const esc = (v: any) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 const header = (s: School) =>
-  `<div style="text-align:center">${s?.logo ? `<img src="${s.logo}" style="height:70px;margin-bottom:4px"/>` : ""}<h2 style="margin:2px">${esc(s?.name || "School")}</h2></div>`;
+  `<div style="text-align:center">${/^data:image\/(png|jpeg|webp);base64,/.test(s?.logo || "") ? `<img src="${esc(s.logo)}" style="height:70px;margin-bottom:4px"/>` : ""}<h2 style="margin:2px">${esc(s?.name || "School")}</h2></div>`;
 
 function openPrint(title: string, body: string, css = "") {
   const w = window.open("", "_blank", "width=800,height=900");
@@ -13,18 +15,22 @@ function openPrint(title: string, body: string, css = "") {
   setTimeout(() => w.print(), 300); // let the logo load first
 }
 
-export function printChalan(f: any, school?: School) {
-  const prev = f.previous || 0, thisPending = f.amount - f.paid, balance = prev + thisPending;
+export function printChalan(f: any, school?: School, accounts: any[] = []) {
+  const r = chalanRows(f);
+  const paymentAccounts = accounts.filter((a) => a.active !== false);
   const copy = (label: string) => `<div class="copy">${header(school)}<h3>Fee Chalan (${label})</h3><h3>Chalan # ${esc(f.chalanNo)}</h3>
   <table>
-  <tr><th>Student</th><td>${esc(f.student?.name)}</td><th>Class</th><td>${esc(f.student?.className)}</td></tr>
+  <tr><th>Student</th><td>${esc(f.student?.name)}</td><th>Class / section</th><td>${esc(f.student?.className)} ${esc(f.student?.section)}</td></tr>
   <tr><th>Father</th><td>${esc(f.student?.fatherName)}</td><th>Roll #</th><td>${esc(f.student?.rollNo)}</td></tr>
-  <tr><th>Month</th><td>${esc(f.month)}</td><th>Actual fee</th><td>${money(f.actualFee)}</td></tr>
-  <tr><th>Discount</th><td>${money(f.discount)}</td><th>Net fee (this month)</th><td>${money(f.amount)}</td></tr>
-  <tr><th>Previous pending</th><td>${money(prev)}</td><th>Total payable</th><td>${money(prev + f.amount)}</td></tr>
-  <tr><th>Received</th><td>${money(f.paid)}</td><th>This month pending</th><td>${money(thisPending)}</td></tr>
-  <tr><th colspan="3">Balance</th><td><b>${money(balance)}</b></td></tr></table></div>`;
-  openPrint("Fee Chalan", copy("Student Copy") + copy("School Copy"));
+  <tr><th>Month</th><td>${esc(f.month)}</td><th>Monthly fee</th><td>${money(r.monthly)}</td></tr>
+  <tr><th>Discount</th><td>${money(r.discount)}</td><th>Admission fee</th><td>${money(r.admission)}</td></tr>
+  <tr><th>Annual charges</th><td>${money(r.annual)}</td><th>This voucher total</th><td>${money(f.amount)}</td></tr>
+  <tr><th>Previous pending</th><td>${money(r.previous)}</td><th>Total payable</th><td>${money(r.total)}</td></tr>
+  <tr><th>Received</th><td>${money(r.paid)}</td><th>Balance due</th><td><b>${money(r.balance)}</b></td></tr></table>
+  <h3 style="margin-top:14px">School payment accounts</h3>
+  ${paymentAccounts.length ? `<table>${paymentAccounts.map((a) => `<tr><th style="width:35%">${esc(accountTypeLabel(a.type))}<br>For online payment</th><td>${accountLines(a).slice(1).map((line) => esc(line)).join("<br>")}</td></tr>`).join("")}</table>` : '<p style="text-align:center">Contact the school office for payment details.</p>'}
+  <p style="font-size:11px;text-align:center">Verify the account title and number before paying. Keep your payment receipt and share it with the school office.</p></div>`;
+  openPrint("Fee Chalan", copy("Student Copy") + copy("School Copy"), ".copy{break-inside:avoid}.copy+.copy{break-before:page}@page{margin:10mm}");
 }
 
 export function printPaper(p: any, school?: School) {

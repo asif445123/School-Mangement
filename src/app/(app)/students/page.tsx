@@ -8,6 +8,7 @@ import { money } from "@/lib/api";
 import { setStudentLogin, leavingCertificate } from "@/lib/student-actions";
 import StudentLoginCell from "@/components/student-login-cell";
 import { studentFields } from "@/lib/student-fields";
+import { whatsappDisplay } from "@/lib/phone";
 import { nz } from "@/lib/teacher-scope";
 import { useSession } from "@/components/session";
 
@@ -40,6 +41,7 @@ export default function StudentsPage() {
       columns={[
         { key: "rollNo", label: "Roll #" }, { key: "name", label: "Name" }, { key: "fatherName", label: "Father" }, { key: "gender", label: "Gender", render: (r) => r.gender || "-" },
         { key: "className", label: "Class" }, { key: "section", label: "Section", render: (r) => r.section || "-" }, { key: "phone", label: "Phone" },
+        { key: "whatsapp", label: "WhatsApp", render: (r) => <div className="min-w-32"><span>{whatsappDisplay(r)}</span>{!r.whatsapp && r.phone && <span className="block text-xs text-slate-500">Same as phone</span>}</div> },
         { key: "net", label: "Monthly fee", render: (r: any) => <b>{money((r.monthlyFee || 0) - (r.discount || 0))}</b> },
         { key: "previousPending", label: "Previous pending", render: (r: any) => money(r.previousPending) },
         { key: "leftDate", label: "Left on", render: (r) => r.leftDate ? <span className="rounded bg-red-100 px-2 py-1 text-xs text-red-700">{r.leftDate}</span> : "-" },
