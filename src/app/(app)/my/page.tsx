@@ -2,6 +2,9 @@
 import { useEffect, useState } from "react";
 import { api, gradeOf, money, today } from "@/lib/api";
 import { toast } from "@/lib/alerts";
+import { FaDownload, FaPrint } from "react-icons/fa";
+import { printChalan } from "@/lib/print";
+import { accountTypeLabel } from "@/lib/payment-accounts";
 
 const TERMS = ["First term", "Mid term", "Final term"];
 const badge: any = { paid: "bg-green-100 text-green-700", partial: "bg-amber-100 text-amber-700", unpaid: "bg-red-100 text-red-700" };
@@ -48,7 +51,7 @@ function DatePick({ label, value, onChange }: { label: string; value: string; on
 
 // The full portal of ONE child: fee chalans, daily diary, tests and exam marks.
 // It keeps its own date pickers, so switching children never mixes their dates up.
-function ChildDetail({ bundle }: { bundle: any }) {
+function ChildDetail({ bundle, schoolInfo, accounts }: { bundle: any; schoolInfo?: any; accounts: any[] }) {
   const [showFees, setShowFees] = useState(false);
   const [diaryDate, setDiaryDate] = useState(today());
   const [testDate, setTestDate] = useState(today());
@@ -79,16 +82,17 @@ function ChildDetail({ bundle }: { bundle: any }) {
         {showFees && (
           <div className="card overflow-x-auto p-0">
             <table className="w-full min-w-[600px]">
-              <thead><tr>{["Month", "Chalan #", "Amount", "Paid", "Balance", "Status"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
+              <thead><tr>{["Month", "Chalan #", "Admission", "Annual charges", "Amount", "Paid", "Balance", "Status", "Voucher"].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
               <tbody>
                 {fees.map((f: any) => { const bal = f.amount - f.paid, st = feeStatus(f); return (
-                  <tr key={f._id} className="border-t"><td className="td">{f.month === "0000-00" ? "Previous pending" : f.month}</td><td className="td">{f.chalanNo}</td><td className="td">{money(f.amount)}</td><td className="td">{money(f.paid)}</td><td className="td">{money(bal)}</td>
-                    <td className="td"><span className={`rounded px-2 py-1 text-xs ${badge[st]}`}>{st === "paid" ? "Received" : st === "partial" ? "Part received" : "Pending"}</span></td></tr>); })}
-                {!fees.length && <tr><td colSpan={6} className="td py-6 text-center text-slate-400">No chalans yet</td></tr>}
+                  <tr key={f._id} className="border-t"><td className="td">{f.month === "0000-00" ? "Previous pending" : f.month}</td><td className="td">{f.chalanNo}</td><td className="td">{money(f.admissionFee)}</td><td className="td">{money(f.annualCharges)}</td><td className="td">{money(f.amount)}</td><td className="td">{money(f.paid)}</td><td className="td">{money(bal)}</td>
+                    <td className="td"><span className={`rounded px-2 py-1 text-xs ${badge[st]}`}>{st === "paid" ? "Received" : st === "partial" ? "Part received" : "Pending"}</span></td><td className="td whitespace-nowrap"><button className="icon-btn" title="Print voucher" onClick={() => printChalan({ ...f, student }, schoolInfo, accounts)}><FaPrint /></button><a className="icon-btn text-green-700" title="Download voucher image" href={`/api/fees/${f._id}/image?download=1`}><FaDownload /></a></td></tr>); })}
+                {!fees.length && <tr><td colSpan={9} className="td py-6 text-center text-slate-400">No chalans yet</td></tr>}
               </tbody>
             </table>
           </div>
         )}
+        {accounts.length > 0 && <div className="card"><h3 className="mb-3 font-semibold">School payment accounts</h3><div className="grid gap-3 sm:grid-cols-2">{accounts.map((a) => <div key={a._id} className="rounded-lg border bg-slate-50 p-3 text-sm"><p className="text-xs font-semibold text-blue-700">{accountTypeLabel(a.type)}</p><p className="font-semibold">{a.title}</p><p className="break-all">{a.accountNumber}</p>{a.bankName && <p>{a.bankName}</p>}{a.iban && <p className="break-all text-xs">IBAN: {a.iban}</p>}{a.instructions && <p className="mt-1 text-xs text-slate-500">{a.instructions}</p>}</div>)}</div><p className="mt-3 text-xs text-slate-500">Verify the account title and number before paying. Share your payment receipt with the school office.</p></div>}
       </section>
 
       <section className="space-y-3">
@@ -139,7 +143,7 @@ export default function MyPortalPage() {
 
   // One child (student using his own login, or a guardian with a single child):
   // exactly the portal as before, no tabs needed.
-  if (!multi) return <ChildDetail bundle={bundles[0]} />;
+  if (!multi) return <ChildDetail bundle={bundles[0]} schoolInfo={d.schoolInfo} accounts={d.paymentAccounts || []} />;
 
   const guardianName = d.guardian?.fatherName || d.guardian?.name || bundles[0].student.fatherName || "Guardian";
   const family = d.family || bundles.reduce((a: any, b: any) => { const t = totalsOf(b.fees); return { total: a.total + t.total, paid: a.paid + t.paid, balance: a.balance + t.balance }; }, { total: 0, paid: 0, balance: 0 });
@@ -161,7 +165,7 @@ export default function MyPortalPage() {
         ))}
       </nav>
 
-      {active ? <ChildDetail key={active.student._id} bundle={active} /> : (
+      {active ? <ChildDetail key={active.student._id} bundle={active} schoolInfo={d.schoolInfo} accounts={d.paymentAccounts || []} /> : (
         <div className="space-y-8">
           <section className="space-y-3">
             <h2 className="font-semibold">Family fee summary (all children)</h2>
