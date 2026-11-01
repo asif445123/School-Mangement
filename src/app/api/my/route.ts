@@ -7,6 +7,9 @@ import Fee from "@/models/fee";
 import Diary from "@/models/diary";
 import Mark from "@/models/mark";
 import Paper from "@/models/paper";
+import User from "@/models/user";
+import PaymentAccount from "@/models/payment-account";
+import { publicPaymentAccount } from "@/lib/payment-accounts";
 
 // Everything a student / guardian may see. A guardian login is linked to ALL
 // of his or her children in the school (see lib/guardian), so this returns
@@ -28,12 +31,14 @@ export async function GET() {
   const studentIds = students.map((s) => s._id);
   const classNames = [...new Set(students.map((s) => s.className))];
   const classLimit = 500 * classNames.length; // the old 500-per-child allowance, per class
-  const [fees, diary, marks, papers] = await Promise.all([
-    Fee.find({ student: { $in: studentIds }, school }).sort({ month: -1 }).lean(),
+  const [fees, diary, marks, papers, owner, accounts] = await Promise.all([
+    Fee.find({ student: { $in: studentIds }, school }).select("-whatsapp").sort({ month: -1 }).lean(),
     Diary.find({ className: { $in: classNames }, school }).sort({ date: -1 }).limit(classLimit).lean(),
     // paper questions are not sent to students
     Mark.find({ student: { $in: studentIds }, school }).populate({ path: "paper", select: "title type subject date totalMarks term className section" }).sort({ createdAt: -1 }).lean(),
     Paper.find({ className: { $in: classNames }, school }).select("title type subject date totalMarks term className section").sort({ date: -1 }).limit(classLimit).lean(),
+    User.findById(school).select("schoolName logo").lean(),
+    PaymentAccount.find({ school, active: true }).sort({ createdAt: 1 }).lean(),
   ]);
 
   const children = students.map((student) => {
@@ -53,6 +58,8 @@ export async function GET() {
   );
   const first = children[0];
   return NextResponse.json({
+    schoolInfo: { name: (owner as any)?.schoolName || "School", logo: (owner as any)?.logo || "" },
+    paymentAccounts: accounts.map(publicPaymentAccount),
     guardian: {
       name: me.name, email: me.email,
       fatherName: students.map((s) => s.fatherName).find(Boolean) || "",
