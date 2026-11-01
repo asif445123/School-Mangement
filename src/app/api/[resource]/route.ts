@@ -7,6 +7,9 @@ import User from "@/models/user";
 import { syncOpening } from "@/lib/student-opening";
 import { studentRights, studentScopes } from "@/lib/student-scope";
 import { nz } from "@/lib/teacher-scope";
+import { prepareFeeCreate } from "@/lib/fees-server";
+import { feeValues } from "@/lib/fee-calculation";
+import { normalizeWhatsAppNumber } from "@/lib/phone";
 
 type Ctx = { params: Promise<{ resource: string }> };
 
@@ -25,7 +28,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     items = items.map((i: any) => {
       const sid = String(i.student?._id || i.student);
       const previous = earlier.filter((e: any) => String(e.student) === sid && e.month < i.month).reduce((a: number, e: any) => a + Math.max(0, e.amount - e.paid), 0);
-      return { ...i, previous, actualFee: i.actualFee ?? i.amount, discount: i.discount ?? 0 };
+      return { ...i, previous, actualFee: i.actualFee ?? i.amount, discount: i.discount ?? 0, admissionFee: i.admissionFee ?? 0, annualCharges: i.annualCharges ?? 0 };
     });
   }
   if ((await params).resource === "students") {
@@ -59,7 +62,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
       .filter((i: any) => studentRights(s.user, i))
       .map((i: any) => {
         if (i.own) return i;
-        const { phone, dob, admissionDate, loginEmail, loginUserId, loginStatus, loginChildCount, loginSiblings, ...rest } = i;
+        const { phone, whatsapp, dob, admissionDate, loginEmail, loginUserId, loginStatus, loginChildCount, loginSiblings, ...rest } = i;
         return rest;
       });
   }
@@ -74,6 +77,10 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   if (resource === "fees" && s.user.role !== "school") return fail("Only the school can add chalans", 403);
   const body = await req.json();
   delete body.school;
+  if (resource === "students") {
+    for (const key of ["phone", "whatsapp"]) if (typeof body[key] === "string") body[key] = body[key].trim().slice(0, 30);
+    if (body.whatsapp && !normalizeWhatsAppNumber(body.whatsapp)) return fail("Enter a valid WhatsApp number, including country code for international numbers");
+  }
   if (resource === "students" && s.user.role !== "school") { delete body.previousPending; delete body.monthlyFee; delete body.discount; } // fees are set by the school only
   await connectDb();
   // A teacher may only add a student to the class (and section) he is class teacher of.
@@ -100,12 +107,13 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     if (!guardian && !body.loginPassword) return fail("Login password must be 6+ characters");
   }
   try {
-    const item = await s.cfg.model.create({ ...body, school: s.schoolId });
+    const data = resource === "fees" ? await prepareFeeCreate(s.schoolId, body) : { ...body, school: s.schoolId };
+    const item = await s.cfg.model.create(data);
     if (resource === "students") await syncOpening(item, s.schoolId);
     if (resource === "students" && email) {
       if (guardian) await attachStudentToLogin(guardian, item, body.loginPassword || undefined);
       else await createStudentLogin(item, email, body.loginPassword, s.schoolId);
     }
-    return NextResponse.json({ item });
+    return NextResponse.json({ item: resource === "fees" ? { ...item.toObject(), previous: 0, ...feeValues(item.toObject()) } : item });
   } catch (e: any) { return fail(e.code === 11000 ? "Duplicate entry" : e.message); }
 }

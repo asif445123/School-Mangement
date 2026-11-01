@@ -57,3 +57,55 @@ Sections are stored on the student (`section`, empty when the school does not us
 - A class teacher's **Timetable** page shows only the class he is class teacher of, followed by a separate **My periods in other classes** table (class, section, subject, period, Mon–Thu and Friday time), like the Daily Diary page.
 - A subject teacher's **My Timetable** page lists only his own periods (class, section, subject, period and school times) - other classes' timetables are never shown.
 - Only the school admin can change the school period times.
+
+## Student WhatsApp, fee voucher images and payment accounts
+
+### Students
+
+- **Students → Add / Edit** now has a separate **WhatsApp number**. School admins and class teachers can maintain it.
+- Leave WhatsApp empty to use the student's **Phone** number. Pakistani local numbers such as `0300…` are converted to `92300…`; international numbers should include `+countrycode`.
+- Subject-only teachers still cannot see phone, WhatsApp or login details. Class teachers only see contact details for their own class/section.
+
+### Fee chalans
+
+- **Generate monthly chalans** creates the regular monthly vouchers. **Create chalan** creates one student's voucher and immediately opens its WhatsApp/image preview.
+- The pencil button edits **Monthly fee, Discount, Admission fee and Annual charges** on any voucher. These extra charges default to zero and are not silently repeated on every monthly generation.
+- `Voucher total = monthly fee − discount + admission fee + annual charges`. Previous pending is shown separately. Existing vouchers without the new fields continue to work with zero extra charges.
+- Print includes both voucher copies, the charge breakdown and active school payment accounts. The PNG contains the same information in one readable image.
+- Families can print/download their own vouchers and see active school payment accounts in **My Portal**. They cannot see other children's vouchers or the school's WhatsApp credentials/send logs.
+
+### WhatsApp sending
+
+1. In Meta's developer console, create an app with WhatsApp Business Platform enabled.
+2. Set a long random `CREDENTIALS_ENCRYPTION_KEY` in the server environment (see `.env.example`) and restart. Keep this key stable and backed up securely; changing it requires re-entering saved tokens.
+3. Open the user menu → **WhatsApp settings**. Enter the **Phone Number ID** and a permanent System User access token with `whatsapp_business_messaging` and `whatsapp_business_management` permissions. Enable sending and save. Tokens are encrypted with AES-256-GCM, never returned to the browser after saving, and never included in voucher images.
+4. Recommended: create an approved **UTILITY** template with an **IMAGE header** and four body variables, in order: **student name, chalan number, month, balance due**. Enter its exact name and language in settings. The uploaded voucher image becomes the header. Without a template, ordinary image messages only work inside Meta's open 24-hour customer-service window.
+5. Open **Fee Chalan → WhatsApp icon**, check the recipient and image, then **Send image via WhatsApp**. Use **Send again** for reminders; there is no arbitrary two-send limit.
+
+Status is per voucher:
+
+- **Green tick / WhatsApp sent**: Meta accepted the image message, or an admin explicitly recorded a manual send. This is not a delivered/read receipt.
+- **Red cross / Not sent or Send failed**: no successful send, or the latest attempt failed. The error is shown for troubleshooting.
+- **Sent count** counts successful sends/confirmed manual sends; failed attempts are counted separately. The last recipient, sender and timestamps are stored.
+- **Updated · send again** means the charges changed after the last successful send. Editing fees cannot change paid amounts or send history.
+- A server-side send lease prevents accidental concurrent double sends. Network timeouts can still be ambiguous: check WhatsApp before retrying a timed-out message.
+
+**No Meta account yet?** Use **Download image** or **Share manually**. Browser sharing attaches the PNG where supported; otherwise download it and attach it in the WhatsApp chat. Opening a chat or the share sheet does **not** mark it sent. Only click **Record manual send** after actually sending the image. Meta may charge for API messages; this app does not bypass WhatsApp's rules.
+
+### School payment accounts
+
+User menu → **Add payment account** supports **Bank account, JazzCash, Easypaisa and Raast ID**. Enter the account title and account/mobile/ID number; bank accounts also accept bank name, IBAN and branch. **Payment accounts** lets admins edit, hide or delete destinations. Active accounts appear on printed vouchers, PNG images and the family portal. These destinations are separate from the accounting **Account Master**, so adding a wallet does not create a ledger entry or change accounting reports.
+
+### Verification
+
+```sh
+npm run typecheck
+npm test                 # calculations, fallback, encryption, PNG and mocked Meta API
+npm run build
+```
+
+Optional browser smoke test against a **disposable, seeded test school** (never production): run the app, install a Playwright Chromium browser (`npx playwright install chromium`), then set `E2E_EMAIL`, `E2E_PASSWORD`, `E2E_ALLOW_MUTATIONS=1` and run `npm run test:e2e`. Optional: `E2E_BASE_URL`, `E2E_STUDENT`, `E2E_PAYMENT_ACCOUNT`, `CHROMIUM_PATH`. The test edits a voucher and adds a payment account. External Meta sending is unit-tested with mocked responses; a real send requires the school's own credentials.
+
+### Startup safety
+
+The opaque, obfuscated payload appended to the original `init` startup file was removed. The small, readable initializer (which only creates `.tmp`) is preserved. Review startup scripts before deploying and keep `.env.local` and encryption keys out of Git.

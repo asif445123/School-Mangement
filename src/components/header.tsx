@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaCog, FaSignOutAlt } from "react-icons/fa";
+import { FaCog, FaSignOutAlt, FaUniversity, FaWhatsapp, FaPlus } from "react-icons/fa";
 import { api, initials } from "@/lib/api";
 import { formDialog, toast } from "@/lib/alerts";
 import { useSession } from "./session";
 import { InstallButton } from "./pwa-install";
+import { editPaymentAccount } from "./payment-account-dialog";
 
 export default function Header() {
   const { user, setUser } = useSession();
@@ -54,6 +55,7 @@ export default function Header() {
           <div className="absolute right-0 z-30 mt-2 w-56 max-w-[calc(100vw-1.5rem)] rounded-lg bg-white py-2 text-slate-700 shadow-lg ring-1 ring-slate-200">
             <div className="border-b px-4 pb-2"><p className="font-semibold">{user.name}</p><p className="truncate text-xs text-slate-500">{user.email}</p></div>
             <button onClick={settings} className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-slate-100"><FaCog /> Settings</button>
+            {user.role === "school" && <div className="my-1 border-y py-1"><button onClick={async () => { setOpen(false); await editPaymentAccount(); }} className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-slate-100"><FaPlus /> Add payment account</button><button onClick={() => { setOpen(false); router.push("/payment-accounts"); }} className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-slate-100"><FaUniversity /> Payment accounts</button><button onClick={() => { setOpen(false); router.push("/whatsapp-settings"); }} className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-slate-100"><FaWhatsapp /> WhatsApp settings</button></div>}
             <button onClick={logout} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-slate-100"><FaSignOutAlt /> Logout</button>
           </div>
         )}

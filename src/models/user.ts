@@ -6,6 +6,14 @@ const userSchema = new Schema({
   schoolName: { type: String, default: "" },
   resetTokenHash: String, resetExpires: Date, // password reset link (token stored hashed, valid 1 hour)
   logo: { type: String, default: "" }, // school logo as a small data URL (school role only)
+  whatsapp: {
+    enabled: { type: Boolean, default: false },
+    phoneNumberId: { type: String, default: "" },
+    accessToken: { type: String, default: "", select: false }, // encrypted, NEVER returned by an API
+    templateName: { type: String, default: "" },
+    templateLanguage: { type: String, default: "en_US" },
+    countryCallingCode: { type: String, default: "92" },
+  },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   phone: { type: String, default: "" },
   teacherType: { type: String, default: "" }, // class teacher / subject teacher

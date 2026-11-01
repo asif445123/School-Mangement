@@ -6,6 +6,7 @@ import { useSession } from "@/components/session";
 import StudentLoginCell from "@/components/student-login-cell";
 import { teacherStudentFields } from "@/lib/student-fields";
 import { assignmentsOf, nz, splitList } from "@/lib/teacher-scope";
+import { whatsappDisplay } from "@/lib/phone";
 import { scopeClasses, studentScopes } from "@/lib/student-scope";
 
 const byRoll = (a: any, b: any) => (Number(a.rollNo) || 0) - (Number(b.rollNo) || 0) || String(a.name).localeCompare(String(b.name));
@@ -62,6 +63,7 @@ export default function TeacherStudents() {
     { key: "gender", label: "Gender", render: (r: any) => r.gender || "-" },
     { key: "section", label: "Section", render: (r: any) => r.section || "-" },
     { key: "phone", label: "Phone", render: (r: any) => r.phone || "-" },
+    ...(scopes.some((s) => s.own) ? [{ key: "whatsapp", label: "WhatsApp", render: (r: any) => r.own ? <div className="min-w-32">{whatsappDisplay(r)}{!r.whatsapp && r.phone && <span className="block text-xs text-slate-500">Same as phone</span>}</div> : "—" }] : []),
     { key: "leftDate", label: "Left on", render: (r: any) => r.leftDate ? <span className="rounded bg-red-100 px-2 py-1 text-xs text-red-700">{r.leftDate}</span> : "-" },
     { key: "loginEmail", label: "Student / guardian login", render: (r: any) => <StudentLoginCell r={r} /> },
   ];
