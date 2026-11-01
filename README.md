@@ -109,3 +109,7 @@ Optional browser smoke test against a **disposable, seeded test school** (never 
 ### Startup safety
 
 The opaque, obfuscated payload appended to the original `init` startup file was removed. The small, readable initializer (which only creates `.tmp`) is preserved. Review startup scripts before deploying and keep `.env.local` and encryption keys out of Git.
+
+### Deployment dependency install
+
+Voucher PNG generation uses the native `@resvg/resvg-js` runtime dependency. `vercel.json` forces a clean `npm ci --include=dev` before each Vercel build so a cached `node_modules` directory cannot omit it. If your Vercel project has a custom Install Command override, use that same command (or remove the override), then redeploy **without the build cache**. For another host, run `npm ci` before `npm run build`; do not install only dev dependencies or copy a prebuilt `node_modules` from another platform.
