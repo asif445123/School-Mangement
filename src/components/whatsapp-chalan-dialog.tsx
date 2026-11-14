@@ -7,7 +7,7 @@ import WhatsAppStatus from "./whatsapp-status";
 import { api, money } from "@/lib/api";
 import { Swal, toast } from "@/lib/alerts";
 import { studentWhatsApp } from "@/lib/phone";
-import { chalanFileName } from "@/lib/chalan";
+import { downloadChalanFile, fetchChalanImageFile, shareChalanImage } from "@/lib/share-chalan";
 export default function WhatsAppChalanDialog({ fee, onClose, onChanged, configured, countryCode = "92" }: { fee: any; onClose: () => void; onChanged: (fee: any) => void; configured: boolean; countryCode?: string }) {
   const [busy, setBusy] = useState(false), [current, setCurrent] = useState(fee);
   const recipient = studentWhatsApp(fee.student, countryCode);
@@ -22,14 +22,12 @@ export default function WhatsAppChalanDialog({ fee, onClose, onChanged, configur
     catch (e: any) { if (e.data?.item) { setCurrent(e.data.item); onChanged(e.data.item); } toast("error", e.message); }
     finally { setBusy(false); }
   }
-  async function imageBlob() { const response = await fetch(src); if (!response.ok) throw new Error("Could not load the voucher image"); return response.blob(); }
-  async function download() { setBusy(true); try { const url = URL.createObjectURL(await imageBlob()); const a = document.createElement("a"); a.href = url; a.download = chalanFileName(fee); a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); toast("info", "Image downloaded. Attach it in WhatsApp, then confirm the manual send."); } catch (e: any) { toast("error", e.message); } finally { setBusy(false); } }
+  async function download() { setBusy(true); try { downloadChalanFile(await fetchChalanImageFile(fee)); toast("info", "Image downloaded. Attach it in WhatsApp, then confirm the manual send."); } catch (e: any) { toast("error", e.message); } finally { setBusy(false); } }
   async function share() {
     setBusy(true);
     try {
-      const file = new File([await imageBlob()], chalanFileName(fee), { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: "School fee chalan" }); toast("info", "If you sent the image, use Record manual send below."); }
-      else { const url = URL.createObjectURL(file); const a = document.createElement("a"); a.href = url; a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); window.open(`https://wa.me/${recipient.number}?text=${encodeURIComponent(`Fee chalan ${fee.chalanNo} - ${fee.student?.name}. Please find the voucher image attached.`)}`, "_blank", "noopener,noreferrer"); toast("info", "Attach the downloaded image in WhatsApp. Opening the chat is not a send."); }
+      const method = await shareChalanImage(fee, recipient.number);
+      toast("info", method === "native" ? "If you sent the image, use Record manual send below." : "Attach the downloaded image in WhatsApp. Opening the chat is not a send.");
     } catch (e: any) { if (e.name !== "AbortError") toast("error", e.message || "Sharing unavailable. Download the image instead."); }
     finally { setBusy(false); }
   }

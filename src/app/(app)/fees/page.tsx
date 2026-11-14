@@ -1,22 +1,36 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { FaDownload, FaMoneyBillWave, FaPen, FaPlus, FaPrint, FaTrash, FaWhatsapp } from "react-icons/fa";
+import { FaDownload, FaImage, FaMoneyBillWave, FaPen, FaPlus, FaPrint, FaShareAlt, FaSpinner, FaTrash, FaWhatsapp } from "react-icons/fa";
 import { api, currentMonth, money, today } from "@/lib/api";
-import { confirmDelete, formDialog, toast } from "@/lib/alerts";
+import { confirmDelete, formDialog, Swal, toast } from "@/lib/alerts";
 import { printChalan } from "@/lib/print";
+import { studentWhatsApp } from "@/lib/phone";
+import { shareChalanImage } from "@/lib/share-chalan";
 import { useSession } from "@/components/session";
 import ChalanDialog from "@/components/chalan-dialog";
 import WhatsAppChalanDialog from "@/components/whatsapp-chalan-dialog";
 import WhatsAppStatus from "@/components/whatsapp-status";
 
 const badge: any = { paid: "bg-green-100 text-green-700", partial: "bg-amber-100 text-amber-700", unpaid: "bg-red-100 text-red-700" };
-const head = ["Chalan #", "Student", "Class", "Monthly / discount", "Admission fee", "Annual charges", "Voucher total", "Previous pending", "Total payable", "Received", "Balance", "Status", "WhatsApp", "Last payment", "Actions"];
+const head = ["Chalan #", "Chalan image", "Student", "Class", "Monthly / discount", "Admission fee", "Annual charges", "Voucher total", "Previous pending", "Total payable", "Received", "Balance", "Status", "Share status", "Last payment", "Actions"];
+
+// Small preview of the actual chalan PNG in the table. Lazy-loaded, so the
+// server only renders images for rows scrolled into view; clicking the
+// thumbnail opens the full preview / send dialog.
+function ChalanThumb({ fee, onOpen }: { fee: any; onOpen: () => void }) {
+  const [failed, setFailed] = useState(false);
+  return <button type="button" onClick={onOpen} title="View fee chalan image" aria-label={`View fee chalan image for ${fee.student?.name || "student"}`} className="block overflow-hidden rounded border border-slate-200 bg-slate-50 transition hover:border-blue-400 hover:shadow">
+    {failed
+      ? <span className="flex h-14 w-14 items-center justify-center text-lg text-slate-400"><FaImage /></span>
+      : <img src={`/api/fees/${fee._id}/image`} alt={`Fee chalan ${fee.chalanNo}`} loading="lazy" decoding="async" onError={() => setFailed(true)} className="h-14 w-14 object-cover object-top" />}
+  </button>;
+}
 export default function FeesPage() {
   const { user } = useSession();
   const [month, setMonth] = useState(currentMonth());
   const [rows, setRows] = useState<any[]>([]), [students, setStudents] = useState<any[]>([]), [accounts, setAccounts] = useState<any[]>([]);
   const [configured, setConfigured] = useState(false), [countryCode, setCountryCode] = useState("92"), [loading, setLoading] = useState(true), [generating, setGenerating] = useState(false);
-  const [editor, setEditor] = useState<any>(null), [sending, setSending] = useState<any>(null), [q, setQ] = useState("");
+  const [editor, setEditor] = useState<any>(null), [sending, setSending] = useState<any>(null), [q, setQ] = useState(""), [sharingId, setSharingId] = useState("");
   const load = useCallback(async () => { setLoading(true); try { const d = await api(`/api/fees?month=${encodeURIComponent(month)}`); setRows(d.items); return d.items as any[]; } catch (e: any) { toast("error", e.message); return []; } finally { setLoading(false); } }, [month]);
   useEffect(() => { load(); }, [load]);
   useEffect(() => { Promise.all([api("/api/students"), api("/api/payment-accounts"), api("/api/settings/whatsapp")]).then(([s, a, w]) => { setStudents(s.items); setAccounts(a.items.filter((x: any) => x.active)); setConfigured(w.settings.enabled && w.settings.hasAccessToken); setCountryCode(w.settings.countryCallingCode || "92"); }).catch((e) => toast("error", e.message)); }, []);
@@ -36,16 +50,43 @@ export default function FeesPage() {
     try { await api("/api/fees/receive", { method: "POST", body: { fee: f._id, ...v } }); toast("success", "Fee received"); load(); } catch (e: any) { toast("error", e.message); }
   }
   async function remove(f: any) { if (!(await confirmDelete())) return; try { await api(`/api/fees/${f._id}`, { method: "DELETE" }); toast("success", "Deleted"); load(); } catch (e: any) { toast("error", e.message); } }
+  // Share icon in the table row: shares the chalan PNG directly (native share
+  // sheet, or download + WhatsApp chat where file sharing is unsupported).
+  // Sharing alone cannot prove delivery, so — exactly like the preview dialog —
+  // the row only counts as sent after the user confirms the manual send.
+  async function share(f: any) {
+    setSharingId(f._id);
+    try {
+      const recipient = studentWhatsApp(f.student, countryCode);
+      const method = await shareChalanImage(f, recipient.number);
+      const result = await Swal.fire({
+        title: "Did you send this chalan image?",
+        text: method === "download"
+          ? "The chalan image was downloaded. Only confirm after attaching and sending it in WhatsApp — this is what updates the Share status and the times-sent count."
+          : "Only confirm after actually sending the chalan image to the family — this is what updates the Share status and the times-sent count.",
+        icon: "question", showCancelButton: true, confirmButtonText: "Yes, I sent it", cancelButtonText: "Not yet", confirmButtonColor: "#15803d",
+      });
+      if (!result.isConfirmed) { toast("info", "Not marked as sent — Share status is unchanged."); return; }
+      const d = await api(`/api/fees/${f._id}/whatsapp`, { method: "POST", body: { mode: "manual", confirmed: true, expectedRevision: f.revision || 0 } });
+      updateRow(d.item);
+      const count = d.item.whatsapp?.sentCount || 0;
+      toast("success", `Chalan shared — sent ${count} ${count === 1 ? "time" : "times"} in total`);
+    } catch (e: any) {
+      if (e?.name === "AbortError") return; // user closed the share sheet without sharing
+      if (e?.data?.item) updateRow(e.data.item);
+      toast("error", e.message || "Could not share the chalan image");
+    } finally { setSharingId(""); }
+  }
   const shown = rows.filter((f) => `${f.chalanNo} ${f.student?.name} ${f.student?.className} ${f.student?.rollNo}`.toLowerCase().includes(q.toLowerCase()));
   const updateRow = (item: any) => setRows((old) => old.map((f) => f._id === item._id ? { ...f, ...item, student: f.student } : f));
   return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-xl font-bold">Fee Chalan & Receiving</h1><p className="mt-1 text-sm text-slate-500">Create, print and share fee vouchers with families.</p></div><div className="flex flex-wrap gap-2"><input aria-label="Chalan month" type="month" className="input w-full sm:w-44" value={month} onChange={(e) => setMonth(e.target.value)} /><button className="btn-light" disabled={generating || !month} onClick={generate}>{generating ? "Generating…" : "Generate monthly chalans"}</button><button className="btn" onClick={() => setEditor({})} disabled={!students.length}><FaPlus />Create chalan</button></div></div>
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-green-100 bg-green-50 p-3 text-sm text-green-900"><span>Send the voucher image once or as many times as needed. Each voucher keeps its own send count and status.</span><button className="shrink-0 font-semibold underline" onClick={async () => { try { const w = await api("/api/settings/whatsapp"); setConfigured(w.settings.enabled && w.settings.hasAccessToken); if (!w.settings.enabled) { window.location.href = "/whatsapp-settings"; } else toast("success", "WhatsApp is connected"); } catch (e: any) { toast("error", e.message); } }}>WhatsApp settings</button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-green-100 bg-green-50 p-3 text-sm text-green-900"><span>Every row shows the chalan image and a <b>Share</b> icon to send it to the family. The <b>Share status</b> column shows whether it was sent and <b>how many times</b> — send once or as many times as needed.</span><button className="shrink-0 font-semibold underline" onClick={async () => { try { const w = await api("/api/settings/whatsapp"); setConfigured(w.settings.enabled && w.settings.hasAccessToken); if (!w.settings.enabled) { window.location.href = "/whatsapp-settings"; } else toast("success", "WhatsApp is connected"); } catch (e: any) { toast("error", e.message); } }}>WhatsApp settings</button></div>
     <input className="input sm:max-w-sm" placeholder="Search student, class, roll or chalan…" value={q} onChange={(e) => setQ(e.target.value)} />
-    <div className="card overflow-x-auto p-0"><table className="w-full min-w-[1900px]"><thead><tr>{head.map((h) => <th key={h} className="th">{h}</th>)}</tr></thead><tbody>
+    <div className="card overflow-x-auto p-0"><table className="w-full min-w-[2100px]"><thead><tr>{head.map((h) => <th key={h} className="th">{h}</th>)}</tr></thead><tbody>
       {shown.map((f) => { const prev = f.previous || 0, balance = Math.max(0, prev + f.amount - f.paid), total = prev + f.amount; const st = balance <= 0 ? "paid" : f.paid > 0 || balance < total ? "partial" : "unpaid"; const last = (f.payments || []).at(-1); return <tr key={f._id} className="border-t hover:bg-slate-50/60">
-        <td className="td whitespace-nowrap">{f.chalanNo}</td><td className="td min-w-36 font-medium">{f.student?.name}</td><td className="td">{f.student?.className}{f.student?.section ? ` ${f.student.section}` : ""}</td><td className="td whitespace-nowrap">{money(f.actualFee)}<span className="block text-xs text-slate-500">Discount {money(f.discount)}</span></td><td className="td">{money(f.admissionFee)}</td><td className="td">{money(f.annualCharges)}</td><td className="td font-semibold">{money(f.amount)}</td><td className="td">{money(prev)}</td><td className="td">{money(total)}</td><td className="td">{money(f.paid)}</td><td className="td font-semibold">{money(balance)}</td><td className="td"><span className={`whitespace-nowrap rounded px-2 py-1 text-xs ${badge[st]}`}>{({ paid: "Received", partial: "Part received", unpaid: "Pending" } as any)[st]}</span></td><td className="td"><WhatsAppStatus fee={f} /></td><td className="td min-w-40 text-xs">{last ? <>{last.date}<br />{last.receivedBy}<br />{last.narration}</> : "—"}</td>
-        <td className="td whitespace-nowrap"><button className="icon-btn text-green-700" title="Preview / send WhatsApp image" aria-label={`WhatsApp ${f.student?.name}`} onClick={() => setSending(f)}><FaWhatsapp /></button><button className="icon-btn text-blue-600" title="Edit admission fee, annual charges and fees" onClick={() => setEditor(f)}><FaPen /></button><button className="icon-btn text-green-600" title="Receive fee" onClick={() => receive(f)}><FaMoneyBillWave /></button><button className="icon-btn text-slate-600" title="Print chalan" onClick={() => printChalan(f, user.schoolInfo, accounts)}><FaPrint /></button><a className="icon-btn text-slate-600" title="Download chalan image" href={`/api/fees/${f._id}/image?download=1`}><FaDownload /></a><button className="icon-btn text-red-600" title="Delete" onClick={() => remove(f)}><FaTrash /></button></td>
+        <td className="td whitespace-nowrap">{f.chalanNo}</td><td className="td"><ChalanThumb fee={f} onOpen={() => setSending(f)} /></td><td className="td min-w-36 font-medium">{f.student?.name}</td><td className="td">{f.student?.className}{f.student?.section ? ` ${f.student.section}` : ""}</td><td className="td whitespace-nowrap">{money(f.actualFee)}<span className="block text-xs text-slate-500">Discount {money(f.discount)}</span></td><td className="td">{money(f.admissionFee)}</td><td className="td">{money(f.annualCharges)}</td><td className="td font-semibold">{money(f.amount)}</td><td className="td">{money(prev)}</td><td className="td">{money(total)}</td><td className="td">{money(f.paid)}</td><td className="td font-semibold">{money(balance)}</td><td className="td"><span className={`whitespace-nowrap rounded px-2 py-1 text-xs ${badge[st]}`}>{({ paid: "Received", partial: "Part received", unpaid: "Pending" } as any)[st]}</span></td><td className="td"><WhatsAppStatus fee={f} /></td><td className="td min-w-40 text-xs">{last ? <>{last.date}<br />{last.receivedBy}<br />{last.narration}</> : "—"}</td>
+        <td className="td whitespace-nowrap"><button className="icon-btn text-indigo-600" title="Share chalan image" aria-label={`Share chalan image for ${f.student?.name}`} disabled={sharingId === f._id} onClick={() => share(f)}>{sharingId === f._id ? <FaSpinner className="animate-spin" /> : <FaShareAlt />}</button><button className="icon-btn text-green-700" title="Preview / send WhatsApp image" aria-label={`WhatsApp ${f.student?.name}`} onClick={() => setSending(f)}><FaWhatsapp /></button><button className="icon-btn text-blue-600" title="Edit admission fee, annual charges and fees" onClick={() => setEditor(f)}><FaPen /></button><button className="icon-btn text-green-600" title="Receive fee" onClick={() => receive(f)}><FaMoneyBillWave /></button><button className="icon-btn text-slate-600" title="Print chalan" onClick={() => printChalan(f, user.schoolInfo, accounts)}><FaPrint /></button><a className="icon-btn text-slate-600" title="Download chalan image" href={`/api/fees/${f._id}/image?download=1`}><FaDownload /></a><button className="icon-btn text-red-600" title="Delete" onClick={() => remove(f)}><FaTrash /></button></td>
       </tr>; })}
       {!shown.length && <tr><td colSpan={head.length} className="td py-8 text-center text-slate-400">{loading ? "Loading chalans…" : "No chalans found. Create one student voucher or generate monthly chalans."}</td></tr>}
     </tbody></table></div>
