@@ -62,7 +62,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
       .filter((i: any) => studentRights(s.user, i))
       .map((i: any) => {
         if (i.own) return i;
-        const { phone, whatsapp, dob, admissionDate, loginEmail, loginUserId, loginStatus, loginChildCount, loginSiblings, ...rest } = i;
+        const { phone, whatsapp, dob, admissionDate, address, previousSchool, previousClass, previousResult, leavingCertificateNumber, loginEmail, loginUserId, loginStatus, loginChildCount, loginSiblings, ...rest } = i;
         return rest;
       });
   }

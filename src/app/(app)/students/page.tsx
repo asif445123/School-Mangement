@@ -4,7 +4,7 @@ import { FaCertificate, FaCheck, FaTimes } from "react-icons/fa";
 import CrudPage from "@/components/crud-page";
 import ClassSectionFilter from "@/components/class-section-filter";
 import TeacherStudents from "@/components/teacher-students";
-import { money } from "@/lib/api";
+import { studentClassSection, studentStatus } from "@/lib/student-details";
 import { setStudentLogin, leavingCertificate } from "@/lib/student-actions";
 import StudentLoginCell from "@/components/student-login-cell";
 import { studentFields } from "@/lib/student-fields";
@@ -39,15 +39,13 @@ export default function StudentsPage() {
         onClass={(v) => { setClassName(v); setSection(""); }} onSection={setSection} />}
       filterRows={() => classRows.filter((r) => !chosen || nz(r.section) === nz(chosen))}
       columns={[
-        { key: "rollNo", label: "Roll #" }, { key: "name", label: "Name" }, { key: "fatherName", label: "Father" }, { key: "gender", label: "Gender", render: (r) => r.gender || "-" },
-        { key: "className", label: "Class" }, { key: "section", label: "Section", render: (r) => r.section || "-" }, { key: "phone", label: "Phone" },
+        { key: "rollNo", label: "Roll #" }, { key: "name", label: "Name" }, { key: "fatherName", label: "Father" },
+        { key: "className", label: "Class / Section", render: studentClassSection }, { key: "phone", label: "Phone" },
         { key: "whatsapp", label: "WhatsApp", render: (r) => <div className="min-w-32"><span>{whatsappDisplay(r)}</span>{!r.whatsapp && r.phone && <span className="block text-xs text-slate-500">Same as phone</span>}</div> },
-        { key: "net", label: "Monthly fee", render: (r: any) => <b>{money((r.monthlyFee || 0) - (r.discount || 0))}</b> },
-        { key: "previousPending", label: "Previous pending", render: (r: any) => money(r.previousPending) },
-        { key: "leftDate", label: "Left on", render: (r) => r.leftDate ? <span className="rounded bg-red-100 px-2 py-1 text-xs text-red-700">{r.leftDate}</span> : "-" },
+        { key: "status", label: "Status", render: studentStatus },
         { key: "loginEmail", label: "Student / guardian login", render: (r) => <StudentLoginCell r={r} /> },
       ]}
-      fields={studentFields} defaults={{ gender: "Male", monthlyFee: 0, discount: 0, previousPending: 0 }}
+      fields={studentFields} formValues={(r) => ({ ...r, status: studentStatus(r) })} defaults={{ status: "Active", gender: "Male", monthlyFee: 0, discount: 0, previousPending: 0 }}
       actions={(r, reload) => (<>
         <button className="icon-btn text-purple-600" title="School leaving certificate" onClick={() => leavingCertificate(r, user)}><FaCertificate /></button>
         {r.loginUserId && <>

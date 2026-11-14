@@ -4,6 +4,7 @@ import CrudPage from "@/components/crud-page";
 import ClassSectionFilter from "@/components/class-section-filter";
 import { useSession } from "@/components/session";
 import StudentLoginCell from "@/components/student-login-cell";
+import { studentClassSection, studentStatus } from "@/lib/student-details";
 import { teacherStudentFields } from "@/lib/student-fields";
 import { assignmentsOf, nz, splitList } from "@/lib/teacher-scope";
 import { whatsappDisplay } from "@/lib/phone";
@@ -60,11 +61,10 @@ export default function TeacherStudents() {
     { key: "rollNo", label: "Roll #" },
     { key: "name", label: "Name" },
     { key: "fatherName", label: "Father" },
-    { key: "gender", label: "Gender", render: (r: any) => r.gender || "-" },
-    { key: "section", label: "Section", render: (r: any) => r.section || "-" },
+    { key: "className", label: "Class / Section", render: studentClassSection },
     { key: "phone", label: "Phone", render: (r: any) => r.phone || "-" },
     ...(scopes.some((s) => s.own) ? [{ key: "whatsapp", label: "WhatsApp", render: (r: any) => r.own ? <div className="min-w-32">{whatsappDisplay(r)}{!r.whatsapp && r.phone && <span className="block text-xs text-slate-500">Same as phone</span>}</div> : "—" }] : []),
-    { key: "leftDate", label: "Left on", render: (r: any) => r.leftDate ? <span className="rounded bg-red-100 px-2 py-1 text-xs text-red-700">{r.leftDate}</span> : "-" },
+    { key: "status", label: "Status", render: studentStatus },
     { key: "loginEmail", label: "Student / guardian login", render: (r: any) => <StudentLoginCell r={r} /> },
   ];
   const fields = teacherStudentFields;
@@ -85,7 +85,8 @@ export default function TeacherStudents() {
         filterRows={() => shown}
         columns={columns}
         fields={fields}
-        defaults={{ gender: "Male" }}
+        defaults={{ gender: "Male", status: "Active" }}
+        formValues={(r) => ({ ...r, status: studentStatus(r) })}
         extra={addTarget || {}}
         canAdd={!!addTarget}
         canEdit={(r) => !!r.own} />
