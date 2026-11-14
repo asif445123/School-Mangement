@@ -1,4 +1,5 @@
 import { Field } from "./alerts";
+import { studentStatuses } from "./student-details";
 export const studentFields: Field[] = [
   { name: "name", label: "Student name", required: true },
   { name: "fatherName", label: "Father name" },
@@ -9,6 +10,12 @@ export const studentFields: Field[] = [
   { name: "rollNo", label: "Roll number" },
   { name: "phone", label: "Phone", type: "tel", hint: "Used as WhatsApp when no separate WhatsApp number is entered." },
   { name: "whatsapp", label: "WhatsApp number (optional)", type: "tel", hint: "Leave empty to use Phone. Pakistan: 0300…; other countries: +country code…" },
+  { name: "address", label: "Address", type: "textarea" },
+  { name: "previousSchool", label: "Previous school" },
+  { name: "previousClass", label: "Previous class" },
+  { name: "previousResult", label: "Previous result" },
+  { name: "leavingCertificateNumber", label: "Previous school leaving certificate number" },
+  { name: "status", label: "Status", type: "select", options: studentStatuses, required: true },
   { name: "admissionDate", label: "Admission date", type: "date" },
   { name: "monthlyFee", label: "Actual monthly fee", type: "number" },
   { name: "discount", label: "Monthly discount (Rs)", type: "number" },
