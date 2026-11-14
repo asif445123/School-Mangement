@@ -8,7 +8,6 @@ import { studentClassSection, studentStatus } from "@/lib/student-details";
 import { setStudentLogin, leavingCertificate } from "@/lib/student-actions";
 import StudentLoginCell from "@/components/student-login-cell";
 import { studentFields } from "@/lib/student-fields";
-import { whatsappDisplay } from "@/lib/phone";
 import { nz } from "@/lib/teacher-scope";
 import { useSession } from "@/components/session";
 
@@ -41,7 +40,6 @@ export default function StudentsPage() {
       columns={[
         { key: "rollNo", label: "Roll #" }, { key: "name", label: "Name" }, { key: "fatherName", label: "Father" },
         { key: "className", label: "Class / Section", render: studentClassSection }, { key: "phone", label: "Phone" },
-        { key: "whatsapp", label: "WhatsApp", render: (r) => <div className="min-w-32"><span>{whatsappDisplay(r)}</span>{!r.whatsapp && r.phone && <span className="block text-xs text-slate-500">Same as phone</span>}</div> },
         { key: "status", label: "Status", render: studentStatus },
         { key: "loginEmail", label: "Student / guardian login", render: (r) => <StudentLoginCell r={r} /> },
       ]}
