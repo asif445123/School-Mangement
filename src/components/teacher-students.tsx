@@ -7,7 +7,6 @@ import StudentLoginCell from "@/components/student-login-cell";
 import { studentClassSection, studentStatus } from "@/lib/student-details";
 import { teacherStudentFields } from "@/lib/student-fields";
 import { assignmentsOf, nz, splitList } from "@/lib/teacher-scope";
-import { whatsappDisplay } from "@/lib/phone";
 import { scopeClasses, studentScopes } from "@/lib/student-scope";
 
 const byRoll = (a: any, b: any) => (Number(a.rollNo) || 0) - (Number(b.rollNo) || 0) || String(a.name).localeCompare(String(b.name));
@@ -63,7 +62,6 @@ export default function TeacherStudents() {
     { key: "fatherName", label: "Father" },
     { key: "className", label: "Class / Section", render: studentClassSection },
     { key: "phone", label: "Phone", render: (r: any) => r.phone || "-" },
-    ...(scopes.some((s) => s.own) ? [{ key: "whatsapp", label: "WhatsApp", render: (r: any) => r.own ? <div className="min-w-32">{whatsappDisplay(r)}{!r.whatsapp && r.phone && <span className="block text-xs text-slate-500">Same as phone</span>}</div> : "—" }] : []),
     { key: "status", label: "Status", render: studentStatus },
     { key: "loginEmail", label: "Student / guardian login", render: (r: any) => <StudentLoginCell r={r} /> },
   ];

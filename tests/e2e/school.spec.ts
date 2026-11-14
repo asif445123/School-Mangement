@@ -10,7 +10,8 @@ test('school can edit charges, preview image and manage payment accounts', async
   await page.getByRole('button', { name: 'Login', exact: true }).click();
   await expect(page).toHaveURL(/dashboard/);
   await page.goto('/students');
-  await expect(page.getByRole('columnheader', { name: 'WhatsApp', exact: true })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Phone', exact: true })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'WhatsApp', exact: true })).toHaveCount(0);
   await page.goto('/fees');
   await expect(page.getByText(process.env.E2E_STUDENT || 'Ali Raza', { exact: true })).toBeVisible();
   await page.getByTitle('Edit admission fee, annual charges and fees').first().click();
