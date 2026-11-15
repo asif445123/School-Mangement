@@ -72,7 +72,7 @@ Sections are stored on the student (`section`, empty when the school does not us
 - The pencil button edits **Monthly fee, Discount, Admission fee and Annual charges** on any voucher. These extra charges default to zero and are not silently repeated on every monthly generation.
 - `Voucher total = monthly fee − discount + admission fee + annual charges`. Previous pending is shown separately. Existing vouchers without the new fields continue to work with zero extra charges.
 - Print includes both voucher copies, the charge breakdown and active school payment accounts. The PNG contains the same information in one readable image.
-- Every table row shows a **Chalan image** thumbnail (click it for the full preview), a **Share icon** that shares the chalan PNG directly — native share sheet, or download + WhatsApp chat where file sharing is unsupported — and a **Share status** column (below).
+- The fee table omits the chalan image thumbnail to keep the list compact. Use the WhatsApp action to preview the voucher, or the **Share icon** to share the chalan PNG directly — native share sheet, or download + WhatsApp chat where file sharing is unsupported. Share status details are expandable per row.
 - Families can print/download their own vouchers and see active school payment accounts in **My Portal**. They cannot see other children's vouchers or the school's WhatsApp credentials/send logs.
 
 ### WhatsApp sending
@@ -87,7 +87,7 @@ Status is per voucher, in the table's **Share status** column:
 
 - **Green tick / WhatsApp sent**: Meta accepted the image message, or an admin explicitly recorded a manual send. This is not a delivered/read receipt.
 - **Red cross / Not sent or Send failed**: no successful send, or the latest attempt failed. The error is shown for troubleshooting.
-- **How many times sent** is shown under the status (e.g. "3 times sent"), with failed attempts counted separately. The column also shows the **last sent date & time**, the recipient number and who sent it (WhatsApp API or manually confirmed). The same status appears inside the WhatsApp preview dialog.
+- **How many times sent** is shown under the status (e.g. "3 times sent"), with failed attempts counted separately. Open **Details** to see the last sent date & time, the recipient number and who sent it (WhatsApp API or manually confirmed). The same status appears inside the WhatsApp preview dialog.
 - The table's **Share icon** (and the dialog's Share manually) only counts towards that total after the user confirms "Yes, I sent it" — closing the share sheet or opening a chat changes nothing.
 - **Updated · send again** means the charges changed after the last successful send. Editing fees cannot change paid amounts or send history.
 - A server-side send lease prevents accidental concurrent double sends. Network timeouts can still be ambiguous: check WhatsApp before retrying a timed-out message.

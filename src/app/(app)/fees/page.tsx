@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { FaDownload, FaImage, FaMoneyBillWave, FaPen, FaPlus, FaPrint, FaShareAlt, FaSpinner, FaTrash, FaWhatsapp } from "react-icons/fa";
+import { FaDownload, FaMoneyBillWave, FaPen, FaPlus, FaPrint, FaShareAlt, FaSpinner, FaTrash, FaWhatsapp } from "react-icons/fa";
 import { api, currentMonth, money, today } from "@/lib/api";
 import { confirmDelete, formDialog, Swal, toast } from "@/lib/alerts";
 import { printChalan } from "@/lib/print";
@@ -12,7 +12,7 @@ import WhatsAppChalanDialog from "@/components/whatsapp-chalan-dialog";
 import WhatsAppStatus from "@/components/whatsapp-status";
 
 const badge: any = { paid: "bg-green-100 text-green-700", partial: "bg-amber-100 text-amber-700", unpaid: "bg-red-100 text-red-700" };
-const head = ["Chalan #", "Chalan image", "Student", "Class", "Month", "Payable", "Previous pending", "Total payable", "Received", "Balance", "Status", "Share status", "Last payment", "Actions"];
+const head = ["Chalan #", "Student", "Class", "Month", "Payable", "Previous pending", "Total payable", "Received", "Balance", "Status", "Share status", "Last payment", "Actions"];
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 function formatMonth(month: string) {
   if (!month) return "—";
@@ -25,17 +25,6 @@ function formatMonth(month: string) {
   return `${MONTHS_SHORT[idx]} ${year}`;
 }
 
-// Small preview of the actual chalan PNG in the table. Lazy-loaded, so the
-// server only renders images for rows scrolled into view; clicking the
-// thumbnail opens the full preview / send dialog.
-function ChalanThumb({ fee, onOpen }: { fee: any; onOpen: () => void }) {
-  const [failed, setFailed] = useState(false);
-  return <button type="button" onClick={onOpen} title="View fee chalan image" aria-label={`View fee chalan image for ${fee.student?.name || "student"}`} className="block overflow-hidden rounded border border-slate-200 bg-slate-50 transition hover:border-blue-400 hover:shadow">
-    {failed
-      ? <span className="flex h-14 w-14 items-center justify-center text-lg text-slate-400"><FaImage /></span>
-      : <img src={`/api/fees/${fee._id}/image`} alt={`Fee chalan ${fee.chalanNo}`} loading="lazy" decoding="async" onError={() => setFailed(true)} className="h-14 w-14 object-cover object-top" />}
-  </button>;
-}
 export default function FeesPage() {
   const { user } = useSession();
   const [month, setMonth] = useState(currentMonth());
@@ -92,11 +81,11 @@ export default function FeesPage() {
   const updateRow = (item: any) => setRows((old) => old.map((f) => f._id === item._id ? { ...f, ...item, student: f.student } : f));
   return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-xl font-bold">Fee Chalan & Receiving</h1><p className="mt-1 text-sm text-slate-500">Create, print and share fee vouchers with families.</p></div><div className="flex flex-wrap gap-2"><input aria-label="Chalan month" type="month" className="input w-full sm:w-44" value={month} onChange={(e) => setMonth(e.target.value)} /><button className="btn-light" disabled={generating || !month} onClick={generate}>{generating ? "Generating…" : "Generate monthly chalans"}</button><button className="btn" onClick={() => setEditor({})} disabled={!students.length}><FaPlus />Create chalan</button></div></div>
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-green-100 bg-green-50 p-3 text-sm text-green-900"><span>Every row shows the chalan image and a <b>Share</b> icon to send it to the family. The <b>Share status</b> column shows whether it was sent and <b>how many times</b> — send once or as many times as needed.</span><button className="shrink-0 font-semibold underline" onClick={async () => { try { const w = await api("/api/settings/whatsapp"); setConfigured(w.settings.enabled && w.settings.hasAccessToken); if (!w.settings.enabled) { window.location.href = "/whatsapp-settings"; } else toast("success", "WhatsApp is connected"); } catch (e: any) { toast("error", e.message); } }}>WhatsApp settings</button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-green-100 bg-green-50 p-3 text-sm text-green-900"><span>Use the <b>Share</b> or WhatsApp action to share or preview a chalan. The <b>Share status</b> column shows whether it was sent and how many times; open its details for the last-send information.</span><button className="shrink-0 font-semibold underline" onClick={async () => { try { const w = await api("/api/settings/whatsapp"); setConfigured(w.settings.enabled && w.settings.hasAccessToken); if (!w.settings.enabled) { window.location.href = "/whatsapp-settings"; } else toast("success", "WhatsApp is connected"); } catch (e: any) { toast("error", e.message); } }}>WhatsApp settings</button></div>
     <input className="input sm:max-w-sm" placeholder="Search student, class, roll or chalan…" value={q} onChange={(e) => setQ(e.target.value)} />
-    <div className="card overflow-x-auto p-0"><table className="w-full min-w-[1600px]"><thead><tr>{head.map((h) => <th key={h} className="th">{h}</th>)}</tr></thead><tbody>
+    <div className="card overflow-x-auto p-0"><table className="w-full min-w-[1400px]"><thead><tr>{head.map((h) => <th key={h} className="th !whitespace-normal break-words">{h}</th>)}</tr></thead><tbody>
       {shown.map((f) => { const prev = f.previous || 0, balance = Math.max(0, prev + f.amount - f.paid), total = prev + f.amount; const st = balance <= 0 ? "paid" : f.paid > 0 || balance < total ? "partial" : "unpaid"; const last = (f.payments || []).at(-1); return <tr key={f._id} className="border-t hover:bg-slate-50/60">
-        <td className="td whitespace-nowrap">{f.chalanNo}</td><td className="td"><ChalanThumb fee={f} onOpen={() => setSending(f)} /></td><td className="td min-w-36"><div className="font-medium">{f.student?.name}</div>{f.student?.fatherName ? <div className="text-xs text-slate-500">{f.student.fatherName}</div> : null}</td><td className="td">{f.student?.className}{f.student?.section ? ` ${f.student.section}` : ""}</td><td className="td whitespace-nowrap">{formatMonth(f.month)}</td><td className="td font-semibold">{money(f.amount)}</td><td className="td">{money(prev)}</td><td className="td">{money(total)}</td><td className="td">{money(f.paid)}</td><td className="td font-semibold">{money(balance)}</td><td className="td"><span className={`whitespace-nowrap rounded px-2 py-1 text-xs ${badge[st]}`}>{({ paid: "Received", partial: "Part received", unpaid: "Pending" } as any)[st]}</span></td><td className="td"><WhatsAppStatus fee={f} /></td><td className="td min-w-40 text-xs">{last ? <>{last.date}<br />{last.receivedBy}<br />{last.narration}</> : "—"}</td>
+        <td className="td whitespace-nowrap">{f.chalanNo}</td><td className="td min-w-36"><div className="font-medium">{f.student?.name}</div>{f.student?.fatherName ? <div className="text-xs text-slate-500">{f.student.fatherName}</div> : null}</td><td className="td">{f.student?.className}{f.student?.section ? ` ${f.student.section}` : ""}</td><td className="td whitespace-nowrap">{formatMonth(f.month)}</td><td className="td font-semibold">{money(f.amount)}</td><td className="td">{money(prev)}</td><td className="td">{money(total)}</td><td className="td">{money(f.paid)}</td><td className="td font-semibold">{money(balance)}</td><td className="td"><span className={`whitespace-nowrap rounded px-2 py-1 text-xs ${badge[st]}`}>{({ paid: "Received", partial: "Part received", unpaid: "Pending" } as any)[st]}</span></td><td className="td"><WhatsAppStatus fee={f} /></td><td className="td min-w-40 text-xs">{last ? <>{last.date}<br />{last.receivedBy}<br />{last.narration}</> : "—"}</td>
         <td className="td whitespace-nowrap"><button className="icon-btn text-indigo-600" title="Share chalan image" aria-label={`Share chalan image for ${f.student?.name}`} disabled={sharingId === f._id} onClick={() => share(f)}>{sharingId === f._id ? <FaSpinner className="animate-spin" /> : <FaShareAlt />}</button><button className="icon-btn text-green-700" title="Preview / send WhatsApp image" aria-label={`WhatsApp ${f.student?.name}`} onClick={() => setSending(f)}><FaWhatsapp /></button><button className="icon-btn text-blue-600" title="Edit admission fee, annual charges and fees" onClick={() => setEditor(f)}><FaPen /></button><button className="icon-btn text-green-600" title="Receive fee" onClick={() => receive(f)}><FaMoneyBillWave /></button><button className="icon-btn text-slate-600" title="Print chalan" onClick={() => printChalan(f, user.schoolInfo, accounts)}><FaPrint /></button><a className="icon-btn text-slate-600" title="Download chalan image" href={`/api/fees/${f._id}/image?download=1`}><FaDownload /></a><button className="icon-btn text-red-600" title="Delete" onClick={() => remove(f)}><FaTrash /></button></td>
       </tr>; })}
       {!shown.length && <tr><td colSpan={head.length} className="td py-8 text-center text-slate-400">{loading ? "Loading chalans…" : "No chalans found. Create one student voucher or generate monthly chalans."}</td></tr>}
