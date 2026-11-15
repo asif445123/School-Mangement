@@ -9,11 +9,14 @@ type Props = { resource: string; title: string; columns: Column[]; fields: Field
   toolbar?: React.ReactNode; // class / section pickers etc., shown next to the title
   onLoaded?: (rows: any[]) => void; // lets the parent build its pickers from the loaded rows
   filterRows?: (rows: any[]) => any[]; // narrows the table (class + section selection)
+  searchPlaceholder?: string;
+  searchRow?: (row: any, query: string) => boolean;
+  showCount?: boolean;
   canAdd?: boolean; // false hides the Add button (a read-only list)
   canEdit?: (row: any) => boolean; // false hides Edit / Delete for that row
 };
 
-export default function CrudPage({ resource, title, columns, fields, defaults = {}, formValues, extra, editFields, transform, actions, toolbar, onLoaded, filterRows, canAdd = true, canEdit }: Props) {
+export default function CrudPage({ resource, title, columns, fields, defaults = {}, formValues, extra, editFields, transform, actions, toolbar, onLoaded, filterRows, searchPlaceholder = "Search...", searchRow, showCount = false, canAdd = true, canEdit }: Props) {
   const [rows, setRows] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const loaded = useRef(onLoaded);
@@ -35,14 +38,14 @@ export default function CrudPage({ resource, title, columns, fields, defaults = 
     catch (e: any) { toast("error", e.message); }
   }
   const picked = filterRows ? filterRows(rows) : rows;
-  const shown = picked.filter((r) => JSON.stringify(r).toLowerCase().includes(q.toLowerCase()));
+  const shown = picked.filter((r) => (searchRow ? searchRow(r, q) : JSON.stringify(r).toLowerCase().includes(q.toLowerCase())));
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-3"><h1 className="text-xl font-bold">{title}s</h1>{toolbar}</div>
+        <div className="flex flex-wrap items-center gap-3"><h1 className="text-xl font-bold">{title}s{showCount ? ` (${shown.length})` : ""}</h1>{toolbar}</div>
         <div className="flex w-full gap-2 sm:w-auto">
-          <input className="input min-w-0 flex-1 sm:w-48 sm:flex-none" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="input min-w-0 flex-1 sm:w-64 sm:flex-none" placeholder={searchPlaceholder} value={q} onChange={(e) => setQ(e.target.value)} />
           {canAdd && <button className="btn shrink-0" onClick={() => save()}><FaPlus /> Add</button>}
         </div>
       </div>

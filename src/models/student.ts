@@ -1,6 +1,6 @@
 import { defineModel } from "@/lib/define-model";
 import { Schema } from "mongoose";
-import { studentStatuses } from "@/lib/student-details";
+import { normalizeStudentStatus, studentStatuses } from "@/lib/student-details";
 const studentSchema = new Schema({
   school: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true},
   name: { type: String, required: true }, fatherName: String, className: { type: String, required: true },
@@ -12,7 +12,7 @@ const studentSchema = new Schema({
   previousClass: { type: String, trim: true },
   previousResult: { type: String, trim: true },
   leavingCertificateNumber: { type: String, trim: true },
-  status: { type: String, enum: studentStatuses, required: true, default: function () { return this.leftDate ? "Left" : "Active"; } },
+  status: { type: String, enum: [...studentStatuses, "Passed out"], set: normalizeStudentStatus, required: true, default: function () { return this.leftDate ? "Left" : "Active"; } },
   gender: String, dob: String, admissionDate: String, leftDate: String,
 }, { timestamps: true });
 export default defineModel("Student", studentSchema);
