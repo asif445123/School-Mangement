@@ -5,7 +5,8 @@ import { api } from "@/lib/api";
 import { Field, confirmDelete, formDialog, toast } from "@/lib/alerts";
 
 type Column = { key: string; label: string; render?: (row: any) => React.ReactNode };
-type Props = { resource: string; title: string; columns: Column[]; fields: Field[]; defaults?: any; formValues?: (row: any) => any; extra?: any; editFields?: Field[]; transform?: (v: any, isNew: boolean) => any; actions?: (row: any, reload: () => void) => React.ReactNode;
+type Props = { resource: string; title: string; heading?: string; // heading overrides the default "${title}s" heading
+  columns: Column[]; fields: Field[]; defaults?: any; formValues?: (row: any) => any; extra?: any; editFields?: Field[]; transform?: (v: any, isNew: boolean) => any; actions?: (row: any, reload: () => void) => React.ReactNode;
   toolbar?: React.ReactNode; // class / section pickers etc., shown next to the title
   onLoaded?: (rows: any[]) => void; // lets the parent build its pickers from the loaded rows
   filterRows?: (rows: any[]) => any[]; // narrows the table (class + section selection)
@@ -16,7 +17,7 @@ type Props = { resource: string; title: string; columns: Column[]; fields: Field
   canEdit?: (row: any) => boolean; // false hides Edit / Delete for that row
 };
 
-export default function CrudPage({ resource, title, columns, fields, defaults = {}, formValues, extra, editFields, transform, actions, toolbar, onLoaded, filterRows, searchPlaceholder = "Search...", searchRow, showCount = false, canAdd = true, canEdit }: Props) {
+export default function CrudPage({ resource, title, heading, columns, fields, defaults = {}, formValues, extra, editFields, transform, actions, toolbar, onLoaded, filterRows, searchPlaceholder = "Search...", searchRow, showCount = false, canAdd = true, canEdit }: Props) {
   const [rows, setRows] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const loaded = useRef(onLoaded);
@@ -43,7 +44,7 @@ export default function CrudPage({ resource, title, columns, fields, defaults = 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-3"><h1 className="text-xl font-bold">{title}s{showCount ? ` (${shown.length})` : ""}</h1>{toolbar}</div>
+        <div className="flex flex-wrap items-center gap-3"><h1 className="text-xl font-bold">{heading ?? `${title}s`}{showCount ? ` (${shown.length})` : ""}</h1>{toolbar}</div>
         <div className="flex w-full gap-2 sm:w-auto">
           <input className="input min-w-0 flex-1 sm:w-64 sm:flex-none" placeholder={searchPlaceholder} value={q} onChange={(e) => setQ(e.target.value)} />
           {canAdd && <button className="btn shrink-0" onClick={() => save()}><FaPlus /> Add</button>}
