@@ -20,6 +20,22 @@ const userSchema = new Schema({
   className: { type: String, default: "" }, // teacher class
   section: { type: String, default: "" },   // teacher section
   subject: { type: String, default: "" },   // teacher subject
+  empCode: { type: String, default: "" },   // auto employee code, e.g. EMP-0001 (per school)
+  fatherName: { type: String, default: "" },
+  cnic: { type: String, default: "" },
+  designation: { type: String, default: "" },
+  type: { type: String, default: "Teacher" }, // Teacher / Staff
+  joiningDate: { type: String, default: "" }, // YYYY-MM-DD
+  monthlySalary: { type: Number, default: 0 },
+  fixedAllowance: { type: Number, default: 0 },
+  qualification: { type: String, default: "" },
+  activeStatus: { type: String, default: "Active" }, // Active / Inactive
+  address: { type: String, default: "" },
+  // documents (small data URLs)
+  cnicCopy: { type: String, default: "" },
+  degree: { type: String, default: "" },
+  experienceLetter: { type: String, default: "" },
+  notes: { type: String, default: "" },
   period: { type: Number, min: 1, max: 8 }, // timetable period for the main class / subject assignment
   assignments: [{ _id: false, teacherType: String, className: String, section: String, subject: String, period: { type: Number, min: 1, max: 8 } }], // extra assignments (e.g. class teacher of 9 A and subject teacher of 8 B)
   password: { type: String, required: true },

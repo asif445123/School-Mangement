@@ -7,6 +7,17 @@ import Student from "@/models/student";
 import { anyMatch, assignmentsOf, classTeacherAssignment, classTeacherClasses, cleanAssignments, periodNumber, sameAssignment, splitList, subjectMatch } from "@/lib/teacher-scope";
 import { assignmentConflict, busySlots, conflictsFor, conflictText } from "@/lib/period-conflicts";
 
+// Auto employee code per school: EMP-0001, EMP-0002 ... (highest existing number + 1, never reused)
+async function nextEmpCode(schoolId: any) {
+  const teachers = await User.find({ school: schoolId, role: "teacher" }).select("empCode").lean();
+  let max = 0;
+  for (const t of teachers) { const m = /(\d+)/.exec(String((t as any)?.empCode || "")); if (m) max = Math.max(max, Number(m[1])); }
+  for (let i = max + 1; ; i++) {
+    const code = `EMP-${String(i).padStart(4, "0")}`;
+    if (!(await User.findOne({ school: schoolId, role: "teacher", empCode: code }).lean())) return code;
+  }
+}
+
 // admin -> schools | school -> its teachers / student logins (?role=) | class teacher -> subject teachers of his class
 export async function GET(req: NextRequest) {
   const me = await getSessionUser();
@@ -17,7 +28,7 @@ export async function GET(req: NextRequest) {
   if (req.nextUrl.searchParams.get("view") === "directory" && (me.role === "school" || ct)) {
     const schoolId = me.role === "school" ? me._id : me.school;
     const [teachers, students] = await Promise.all([
-      User.find({ school: schoolId, role: "teacher", _id: { $ne: me._id } }).select("name email phone teacherType className section subject period assignments").sort({ name: 1 }),
+      User.find({ school: schoolId, role: "teacher", _id: { $ne: me._id } }).select("name email phone teacherType className section subject period assignments designation").sort({ name: 1 }),
       Student.find({ school: schoolId }).select("className").lean(),
     ]);
     const asg = [...teachers.flatMap((t: any) => assignmentsOf(t)), ...(me.role === "teacher" ? assignmentsOf(me) : [])];
@@ -48,7 +59,9 @@ export async function POST(req: NextRequest) {
   const me = await getSessionUser();
   const ct: any = classTeacherAssignment(me);
   if (!me || (me.role !== "school" && !ct)) return fail("You cannot create teachers", 403);
-  const { existingId, name, teacherType, email, phone, className, section, subject, period, extras, password } = await req.json();
+  const { existingId, name, teacherType, email, phone, className, section, subject, period, extras, password,
+    fatherName, cnic, designation, type, joiningDate, monthlySalary, fixedAllowance, qualification, activeStatus, address,
+    cnicCopy, degree, experienceLetter, notes } = await req.json();
   await connectDb();
   const extraList = Array.isArray(extras) ? extras : [];
   const requested = me.role === "school"
@@ -105,8 +118,14 @@ export async function POST(req: NextRequest) {
 
   if (!name || !email || !password || password.length < 6) return fail("Name, email and a password of 6+ characters are required");
   if (await User.findOne({ email: email.toLowerCase() })) return fail("Email already registered", 409);
+  const empCode = await nextEmpCode(schoolId);
   await User.create({
     name, email, phone, subject, period: periodNumber(period), password: await bcrypt.hash(password, 10), role: "teacher", status: "approved",
+    empCode,
+    fatherName: fatherName || "", cnic: cnic || "", designation: designation || "", type: type || "Teacher",
+    joiningDate: joiningDate || "", monthlySalary: Number(monthlySalary) || 0, fixedAllowance: Number(fixedAllowance) || 0,
+    qualification: qualification || "", activeStatus: activeStatus || "Active", address: address || "",
+    cnicCopy: cnicCopy || "", degree: degree || "", experienceLetter: experienceLetter || "", notes: notes || "",
     ...(me.role === "school"
       ? { teacherType, className, section, assignments: cleanAssignments(extras), school: me._id }
       : { teacherType: "Subject teacher", className: ct.className, section: ct.section || "", school: me.school }),

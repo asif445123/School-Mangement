@@ -1,7 +1,7 @@
 "use client";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { FaChevronDown, FaChevronRight, FaPlus } from "react-icons/fa";
-import { api } from "@/lib/api";
+import { api, money } from "@/lib/api";
 import { Field, formDialog, toast } from "@/lib/alerts";
 import { assignmentsOf, classTeacherAssignment, classTeacherClasses } from "@/lib/teacher-scope";
 import { Directory, classTeacherDialog, emptyDirectory, schoolTeacherDialog } from "@/lib/teacher-dialogs";
@@ -120,7 +120,7 @@ export default function TeachersPage() {
     catch (e: any) { toast("error", e.message); }
   }
   const heads = isSchool
-    ? ["", "Name", "Type", "Class", "Section", "Subject", "Period", "Phone", "Email", "Status", "Actions"]
+    ? ["", "Emp code", "Name", "CNIC", "Phone", "Designation", "Type", "Joining", "Salary", "Active status", "Email", "Actions"]
     : ["", "Name", "Subject", "Period", "Phone", "Email", "Status", "Actions"];
   return (
     <div className="space-y-4">
@@ -141,12 +141,28 @@ export default function TeachersPage() {
                 <Fragment key={u._id}>
                   <tr className="cursor-pointer border-t hover:bg-slate-50" onClick={() => setOpen(isOpen ? null : u._id)}>
                     <td className="td text-slate-400">{isOpen ? <FaChevronDown /> : <FaChevronRight />}</td>
-                    <td className="td">{u.name}</td>
-                    {isSchool && <><td className="td">{u.teacherType || "-"}</td><td className="td">{u.className || "-"}</td><td className="td">{u.section || "-"}</td></>}
-                    <td className="td">{(u.matchedSubject ?? u.subject) || "-"}{isSchool && all.length > 1 && <span className="ml-2 rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">+{all.length - 1} more</span>}</td>
-                    <td className="td"><PeriodCell period={u.matchedPeriod ?? u.period} schedule={schedule} /></td>
-                    <td className="td">{u.phone}</td><td className="td">{u.email}</td>
-                    <td className="td"><span className={`rounded px-2 py-1 text-xs capitalize ${badge[u.status]}`}>{u.status}</span></td>
+                    {isSchool ? (
+                      <>
+                        <td className="td font-mono text-xs">{u.empCode || "-"}</td>
+                        <td className="td">{u.name}</td>
+                        <td className="td">{u.cnic || "-"}</td>
+                        <td className="td">{u.phone || "-"}</td>
+                        <td className="td">{u.designation || "-"}</td>
+                        <td className="td">{u.type || "-"}</td>
+                        <td className="td whitespace-nowrap">{u.joiningDate || "-"}</td>
+                        <td className="td whitespace-nowrap">{u.monthlySalary ? money(u.monthlySalary) : "-"}</td>
+                        <td className="td"><span className={`rounded px-2 py-1 text-xs capitalize ${badge[String(u.activeStatus || "").toLowerCase()]}`}>{u.activeStatus || "-"}</span></td>
+                        <td className="td">{u.email}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="td">{u.name}</td>
+                        <td className="td">{(u.matchedSubject ?? u.subject) || "-"}{all.length > 1 && <span className="ml-2 rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">+{all.length - 1} more</span>}</td>
+                        <td className="td"><PeriodCell period={u.matchedPeriod ?? u.period} schedule={schedule} /></td>
+                        <td className="td">{u.phone}</td><td className="td">{u.email}</td>
+                        <td className="td"><span className={`rounded px-2 py-1 text-xs capitalize ${badge[u.status]}`}>{u.status}</span></td>
+                      </>
+                    )}
                     <td className="td whitespace-nowrap" onClick={(e) => e.stopPropagation()}><AccountActions u={u} reload={load} onEdit={edit} /></td>
                   </tr>
                   {isOpen && (

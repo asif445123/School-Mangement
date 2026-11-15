@@ -1,4 +1,4 @@
-import { Swal } from "./alerts";
+import { Swal, resizeImage } from "./alerts";
 import { nz, PERIOD_OPTIONS } from "./teacher-scope";
 import { BusySlot, conflictsFor, conflictText, periodChoices, Seat } from "./period-conflicts";
 import { SchoolSchedule } from "./timetable";
@@ -28,8 +28,20 @@ const periodOptions = (selected: any, schedule?: SchoolSchedule, busy?: BusySlot
 const options = (id: string, values: string[]) => `<datalist id="${id}">${values.map((o) => `<option value="${esc(o)}"></option>`).join("")}</datalist>`;
 // saved classes / sections / subjects are offered when a field is clicked
 const hintLists = (d: Directory) => options("dl-class", d.hints.classes) + options("dl-section", d.hints.sections) + options("dl-subject", d.hints.subjects)
-  + `<datalist id="dl-names">${d.items.map((t) => `<option value="${esc(t.name)}" label="${esc(t.email)}"></option>`).join("")}</datalist>`;
+  + `<datalist id="dl-names">${d.items.map((t) => `<option value="${esc(t.name)}" label="${esc(t.email)}"></option>`).join("")}</datalist>`
+  + `<datalist id="dl-designation">${[...new Set(d.items.map((t) => String(t.designation || "").trim()).filter(Boolean))].map((o) => `<option value="${esc(o)}"></option>`).join("")}</datalist>`;
 const note = `<div id="t-existing-note" style="display:none;margin-top:10px;padding:8px 10px;border-radius:8px;background:#ecfdf5;color:#047857;font-size:13px;text-align:left">Saved teacher selected. His phone, email and password stay as they are - only the assignment below is added.</div>`;
+
+// Teacher / Staff and Active / Inactive dropdowns (first option is the default)
+const TYPE_OPTIONS = [{ value: "Teacher", label: "Teacher" }, { value: "Staff", label: "Staff" }];
+const STATUS_OPTIONS = [{ value: "Active", label: "Active" }, { value: "Inactive", label: "Inactive" }];
+const sel = (id: string, options: { value: string; label: string }[], value: string) =>
+  `<select id="${id}" class="swal2-select" style="width:100%;margin:4px 0">${options.map((o) =>
+    `<option value="${o.value}" ${o.value === value ? "selected" : ""}>${o.label}</option>`).join("")}</select>`;
+
+// One document upload: shows the saved image (if any) and lets it be replaced
+const docField = (k: string, label: string, v: string) =>
+  `${lbl(label)}<div style="display:flex;align-items:center;gap:12px;margin-top:6px">${v ? `<img src="${esc(v)}" style="height:44px;border-radius:6px" alt="">` : ""}<input id="t-${k}" type="file" accept="image/*" style="font-size:13px;min-width:0"></div>`;
 const pwRow = `<div id="pw-row">${lbl("Password (6+ chars) *")}<div style="position:relative"><input id="t-password" type="password" class="swal2-input" style="width:100%;margin:4px 0;padding-right:44px"><button type="button" onclick="var i=document.getElementById('t-password');var s=i.type==='password';i.type=s?'text':'password';this.textContent=s?'👁️':'👁️‍🗨️'" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:16px;cursor:pointer">👁️‍🗨️</button></div></div>`;
 const val = (id: string) => (document.getElementById(id) as HTMLInputElement | null)?.value.trim() || "";
 // red warning shown inside an assignment block when that class period already has a teacher
@@ -138,8 +150,22 @@ export async function schoolTeacherDialog(title: string, t: any, isNew: boolean,
     html: `${hintLists(dir)}${lbl("Teacher name *")}<input id="t-name" ${isNew ? 'list="dl-names"' : ""} autocomplete="off" class="swal2-input" style="width:100%;margin:4px 0" value="${esc(t.name)}">${isNew ? note : ""}
       <div id="asg-list">${blocks.map((a, i) => block(a, i, ctx.schedule, busy)).join("")}</div>
       <button type="button" id="asg-add" style="margin-top:12px;border:1px dashed #94a3b8;background:#f8fafc;border-radius:8px;padding:8px 14px;color:#047857;font-weight:600;cursor:pointer">+ Add new entry</button>
+      ${lbl("Father name")}${inp("fatherName", t.fatherName)}
+      ${lbl("CNIC")}${inp("cnic", t.cnic)}
+      ${lbl("Designation")}${inp("designation", t.designation, "dl-designation")}
+      ${lbl("Type")}${sel("t-type", TYPE_OPTIONS, t.type || "Teacher")}
       ${lbl("Phone")}<input id="t-phone" class="swal2-input" style="width:100%;margin:4px 0" value="${esc(t.phone)}">
-      ${lbl("Email (login) *")}<input id="t-email" type="email" class="swal2-input" style="width:100%;margin:4px 0" value="${esc(t.email)}">${isNew ? pwRow : ""}`,
+      ${lbl("Email (login) *")}<input id="t-email" type="email" class="swal2-input" style="width:100%;margin:4px 0" value="${esc(t.email)}">${isNew ? pwRow : ""}
+      ${lbl("Joining date")}<input id="t-joiningDate" type="date" class="swal2-input" style="width:100%;margin:4px 0" value="${esc(t.joiningDate || "")}">
+      ${lbl("Monthly salary (Rs)")}<input id="t-monthlySalary" type="number" min="0" class="swal2-input" style="width:100%;margin:4px 0" value="${esc(t.monthlySalary ?? "")}">
+      ${lbl("Fixed allowance (Rs)")}<input id="t-fixedAllowance" type="number" min="0" class="swal2-input" style="width:100%;margin:4px 0" value="${esc(t.fixedAllowance ?? "")}">
+      ${lbl("Qualification")}${inp("qualification", t.qualification)}
+      ${lbl("Status")}${sel("t-activeStatus", STATUS_OPTIONS, t.activeStatus || "Active")}
+      ${lbl("Address")}<textarea id="t-address" class="swal2-textarea" style="width:100%;margin:4px 0">${esc(t.address)}</textarea>
+      ${docField("cnicCopy", "CNIC copy", t.cnicCopy || "")}
+      ${docField("degree", "Degree", t.degree || "")}
+      ${docField("experienceLetter", "Experience letter", t.experienceLetter || "")}
+      ${lbl("Notes")}<textarea id="t-notes" class="swal2-textarea" style="width:100%;margin:4px 0">${esc(t.notes)}</textarea>`,
     didOpen: () => {
       const list = document.getElementById("asg-list")!;
       recheck = wireConflicts(() => busyNow, seats, undefined, ctx.schedule);
@@ -154,7 +180,7 @@ export async function schoolTeacherDialog(title: string, t: any, isNew: boolean,
         recheck(true);
       });
     },
-    preConfirm: () => {
+    preConfirm: async () => {
       const all = readBlocks();
       const clash = firstConflict(all, busyNow, seats);
       if (clash) { Swal.showValidationMessage(clash); return false; }
@@ -166,7 +192,23 @@ export async function schoolTeacherDialog(title: string, t: any, isNew: boolean,
       if (!val("t-name")) { Swal.showValidationMessage("Teacher name is required"); return false; }
       if (!val("t-email")) { Swal.showValidationMessage("Email is required"); return false; }
       if (isNew && val("t-password").length < 6) { Swal.showValidationMessage("Password must be 6+ characters"); return false; }
-      return { name: val("t-name"), phone: val("t-phone"), email: val("t-email"), ...(isNew ? { password: val("t-password") } : {}), ...all[0], extras: all.slice(1) };
+      // documents: a picked file is resized to a small data URL, an untouched one keeps its saved value
+      const doc = async (k: string, keep: string) => {
+        const el = document.getElementById(`t-${k}`) as HTMLInputElement | null;
+        return el?.files?.[0] ? await resizeImage(el.files[0]) : keep || "";
+      };
+      const num = (v: string) => v === "" ? 0 : Number(v) || 0;
+      return {
+        name: val("t-name"), phone: val("t-phone"), email: val("t-email"), ...(isNew ? { password: val("t-password") } : {}),
+        fatherName: val("t-fatherName"), cnic: val("t-cnic"), designation: val("t-designation"),
+        type: val("t-type") || "Teacher", joiningDate: val("t-joiningDate"),
+        monthlySalary: num(val("t-monthlySalary")), fixedAllowance: num(val("t-fixedAllowance")),
+        qualification: val("t-qualification"), activeStatus: val("t-activeStatus") || "Active",
+        address: val("t-address"), notes: val("t-notes"),
+        cnicCopy: await doc("cnicCopy", t.cnicCopy), degree: await doc("degree", t.degree),
+        experienceLetter: await doc("experienceLetter", t.experienceLetter),
+        ...all[0], extras: all.slice(1),
+      };
     },
   });
   return res.isConfirmed ? res.value : null;
