@@ -1,5 +1,5 @@
 import { money } from "./api";
-import { chalanRows, accountLines } from "./chalan";
+import { chalanRows, accountLines, formatMonth } from "./chalan";
 import { accountTypeLabel } from "./payment-accounts";
 type School = { name?: string; logo?: string } | null | undefined;
 
@@ -18,15 +18,28 @@ function openPrint(title: string, body: string, css = "") {
 export function printChalan(f: any, school?: School, accounts: any[] = []) {
   const r = chalanRows(f);
   const paymentAccounts = accounts.filter((a) => a.active !== false);
+  const financialEntries: [string, string][] = [
+    ["Month", esc(formatMonth(f.month))],
+    ["Monthly fee", money(r.monthly)],
+    ...(r.discount > 0 ? [["Discount", money(r.discount)] as [string, string]] : []),
+    ["Admission fee", money(r.admission)],
+    ["Annual charges", money(r.annual)],
+    ["Payable", money(f.amount)],
+    ["Previous pending", money(r.previous)],
+    ["Total payable", money(r.total)],
+    ["Received", money(r.paid)],
+    ["Balance due", `<b>${money(r.balance)}</b>`],
+  ];
+  let financialRows = "";
+  for (let i = 0; i < financialEntries.length; i += 2) {
+    const a = financialEntries[i], b = financialEntries[i + 1];
+    financialRows += `<tr><th>${esc(a[0])}</th><td>${a[1]}</td>${b ? `<th>${esc(b[0])}</th><td>${b[1]}</td>` : `<th></th><td></td>`}</tr>`;
+  }
   const copy = (label: string) => `<div class="copy">${header(school)}<h3>Fee Chalan (${label})</h3><h3>Chalan # ${esc(f.chalanNo)}</h3>
   <table>
   <tr><th>Student</th><td>${esc(f.student?.name)}</td><th>Class / section</th><td>${esc(f.student?.className)} ${esc(f.student?.section)}</td></tr>
   <tr><th>Father</th><td>${esc(f.student?.fatherName)}</td><th>Roll #</th><td>${esc(f.student?.rollNo)}</td></tr>
-  <tr><th>Month</th><td>${esc(f.month)}</td><th>Monthly fee</th><td>${money(r.monthly)}</td></tr>
-  <tr><th>Discount</th><td>${money(r.discount)}</td><th>Admission fee</th><td>${money(r.admission)}</td></tr>
-  <tr><th>Annual charges</th><td>${money(r.annual)}</td><th>This voucher total</th><td>${money(f.amount)}</td></tr>
-  <tr><th>Previous pending</th><td>${money(r.previous)}</td><th>Total payable</th><td>${money(r.total)}</td></tr>
-  <tr><th>Received</th><td>${money(r.paid)}</td><th>Balance due</th><td><b>${money(r.balance)}</b></td></tr></table>
+  ${financialRows}</table>
   <h3 style="margin-top:14px">School payment accounts</h3>
   ${paymentAccounts.length ? `<table>${paymentAccounts.map((a) => `<tr><th style="width:35%">${esc(accountTypeLabel(a.type))}<br>For online payment</th><td>${accountLines(a).slice(1).map((line) => esc(line)).join("<br>")}</td></tr>`).join("")}</table>` : '<p style="text-align:center">Contact the school office for payment details.</p>'}
   <p style="font-size:11px;text-align:center">Verify the account title and number before paying. Keep your payment receipt and share it with the school office.</p></div>`;

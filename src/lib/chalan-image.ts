@@ -1,7 +1,7 @@
 import "server-only";
 import { Resvg } from "@resvg/resvg-js";
 import { join } from "node:path";
-import { chalanRows, accountLines, rupees } from "./chalan";
+import { chalanRows, accountLines, rupees, formatMonth } from "./chalan";
 export const xml = (value: any) => String(value ?? "").replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" }[c]!));
 const wrap = (value: any, max: number) => {
   const lines: string[] = [];
@@ -27,7 +27,7 @@ export async function renderChalan(fee: any, school: any, accounts: any[]) {
   if (/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(school.logo || "")) { out.push(`<image href="${school.logo}" x="410" y="24" width="80" height="80" preserveAspectRatio="xMidYMid meet"/>`); y += 82; }
   centered(school.name || "School", 29, true);
   centered("FEE CHALAN", 20, true);
-  centered(`Chalan # ${fee.chalanNo || "—"}  ·  ${fee.month === "0000-00" ? "Opening balance" : fee.month}`, 16);
+  centered(`Chalan # ${fee.chalanNo || "—"}  ·  ${formatMonth(fee.month)}`, 16);
   y += 26;
   const details = [
     ["Student", student.name], ["Father", student.fatherName || "—"],
@@ -40,7 +40,7 @@ export async function renderChalan(fee: any, school: any, accounts: any[]) {
   }
   y += 20;
   for (const [label, amount] of rows.lines) {
-    const important = ["This voucher total", "Total payable", "Balance due"].includes(label);
+    const important = ["Payable", "Total payable", "Balance due"].includes(label);
     rect(36, y, 828, 40, important ? "#eff6ff" : "#ffffff", "#cbd5e1");
     text(50, y + 26, label, 17, important); text(848, y + 26, rupees(amount), 18, important, "#1e293b", "end"); y += 40;
   }
