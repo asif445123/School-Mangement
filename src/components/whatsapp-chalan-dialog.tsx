@@ -38,7 +38,7 @@ export default function WhatsAppChalanDialog({ fee, onClose, onChanged, configur
       <button className="btn w-full !bg-green-700 hover:!bg-green-800" disabled={busy || !recipient.number || !configured} onClick={() => send("api")}><FaWhatsapp />{busy ? "Please wait…" : current.whatsapp?.sentCount ? "Send again via WhatsApp" : "Send image via WhatsApp"}</button>
       {!configured && <p className="text-xs text-slate-500">Automatic sending is not connected. <Link className="text-blue-700 underline" href="/whatsapp-settings">Open WhatsApp settings</Link>, or share the image manually below.</p>}
       <div className="space-y-2 border-t pt-4"><button className="btn-light w-full" disabled={busy} onClick={download}><FaDownload />Download image</button><button className="btn-light w-full" disabled={busy || !recipient.number} onClick={share}><FaShare />Share manually</button><button className="text-sm font-medium text-green-700 underline disabled:opacity-50" disabled={busy || !recipient.number} onClick={() => send("manual")}>Record manual send</button><p className="text-xs text-slate-500">Manual sharing never marks a voucher sent until you confirm it.</p></div>
-      <p className="text-xs text-slate-500">Voucher total: {money(fee.amount)}. Previous balances and payment accounts are included in the image. A green tick confirms acceptance, not delivery or reading.</p>
+      <p className="text-xs text-slate-500">Payable: {money(fee.amount)}. Previous balances and payment accounts are included in the image. A green tick confirms acceptance, not delivery or reading.</p>
     </div></div>
   </Modal>;
 }
