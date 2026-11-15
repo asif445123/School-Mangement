@@ -42,7 +42,7 @@ export default function StudentsPage() {
 
   return (
     <>
-      <CrudPage resource="students" title="Student"
+      <CrudPage resource="students" title="Student" heading="Student Data"
         showCount
         searchPlaceholder="Student name / Roll # / Phone..."
         searchRow={matchesStudentSearch}

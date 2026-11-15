@@ -10,10 +10,20 @@
 |---|---|---|
 | **admin** | First account that signs up | Approve / reject / delete **schools** |
 | **school** (school admin) | Signs up at /signup, waits for admin approval | Everything in its school: students, fee chalans, diary, papers, marks, reports, create **teachers**, approve/disable teacher & student logins |
-| **teacher** | Created by school (Users page) | Diary, papers, enter marks, result reports, their own timetable, and the **Students** page — but only for the classes and sections they teach. No fees |
-| **student** | Created from Students page (school or teacher) with login email/password | Read-only **My Portal**: own fee chalans, class diary, test/exam marks. The **same login email on brothers/sisters makes it a Guardian Portal** for all of them (see below) |
+| **teacher** | Created by school (Users page) | Diary, papers, enter marks, result reports, their own timetable, and the **Student Data** page — but only for the classes and sections they teach. No fees |
+| **student** | Created from the Student Data page (school or teacher) with login email/password | Read-only **My Portal**: own fee chalans, class diary, test/exam marks. The **same login email on brothers/sisters makes it a Guardian Portal** for all of them (see below) |
 
 All data is separated per school. Pending / rejected / logged-out visitors can click **View Demo**.
+
+### Navigation: one **Student Data** page with tabs
+The navbar has a single **Student Data** item for every student-related work. Opening it shows a tab strip (same style as the Fee Management tabs):
+
+- **Student Data** — the student list, with Class / Section / Status filters, Add / Edit / Delete, the student fee ledger, the school leaving certificate and student-login approvals.
+- **GR Register** — the G.R. Register entries (school admin only).
+- **Fee Chalan** — create, print, receive and share fee chalans (school admin only).
+- **Fee Receivable** — the month-wise fee receivable report (school admin only).
+
+The three school-only tabs used to be separate navbar items. They are now tabs, and their old links (`/gr-register`, `/fees`, `/fee-receivable`) still work, keep the same tab selected and open straight on that tab. A teacher only sees the **Student Data** tab (his own class and section, no fees).
 
 ### Guardian portal: one login for all his / her children
 A guardian with 2, 3, 4 or more children in the school does **not** need a separate login per child. In the Students form, type the **same "Guardian / student login email"** for every brother and sister. The first child creates the login (with its password); each further child with that email is attached to the same login — no password has to be typed again, the guardian keeps the first password (typing a new one changes the guardian's password).
