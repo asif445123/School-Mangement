@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node init && next dev",
-    "build": "node init && next build",
-    "start": "node init && next start",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "test": "tsx --conditions=react-server --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test"

@@ -1,9 +1,27 @@
 "use client";
+import { studentStatusSelectOptions } from "@/lib/student-details";
 
-// Class -> Section pickers shared by the Students pages (school and teacher portals).
-export default function ClassSectionFilter({ classes, sections, className, section, onClass, onSection, allClasses = "All classes" }: {
-  classes: string[]; sections: string[]; className: string; section: string;
-  onClass: (v: string) => void; onSection: (v: string) => void; allClasses?: string;
+// Class -> Section (+ optional Status) pickers shared by the Students pages (school and teacher portals).
+export default function ClassSectionFilter({
+  classes,
+  sections,
+  className,
+  section,
+  onClass,
+  onSection,
+  allClasses = "All classes",
+  status,
+  onStatus,
+}: {
+  classes: string[];
+  sections: string[];
+  className: string;
+  section: string;
+  onClass: (v: string) => void;
+  onSection: (v: string) => void;
+  allClasses?: string;
+  status?: string;
+  onStatus?: (v: string) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -15,6 +33,15 @@ export default function ClassSectionFilter({ classes, sections, className, secti
         <option value="">{sections.length ? "All sections" : "No section"}</option>
         {sections.map((s) => <option key={s} value={s}>{s}</option>)}
       </select>
+      {onStatus && (
+        <select className="input w-auto min-w-[132px] py-2" aria-label="Status" value={status ?? "Active"} onChange={(e) => onStatus(e.target.value)}>
+          {studentStatusSelectOptions.map((st) => (
+            <option key={st} value={st}>
+              {st}
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }

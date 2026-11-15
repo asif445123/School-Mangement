@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { FaTimes } from "react-icons/fa";
-export default function Modal({ title, children, onClose, wide = false }: { title: string; children: React.ReactNode; onClose: () => void; wide?: boolean }) {
+export default function Modal({ title, children, onClose, wide = false, extraWide = false }: { title: string; children: React.ReactNode; onClose: () => void; wide?: boolean; extraWide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose); close.current = onClose;
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function Modal({ title, children, onClose, wide = false }: { titl
     return () => { document.body.style.overflow = overflow; document.removeEventListener("keydown", key); previous?.focus(); };
   }, []);
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-    <div ref={ref} role="dialog" aria-modal="true" aria-label={title} className={`max-h-[94dvh] w-full overflow-y-auto rounded-xl bg-white shadow-xl ${wide ? "max-w-3xl" : "max-w-xl"}`}>
+    <div ref={ref} role="dialog" aria-modal="true" aria-label={title} className={`max-h-[94dvh] w-full overflow-y-auto rounded-xl bg-white shadow-xl ${extraWide ? "max-w-5xl" : wide ? "max-w-3xl" : "max-w-xl"}`}>
       <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-white px-5 py-3"><h2 className="text-lg font-bold">{title}</h2><button className="icon-btn" aria-label="Close dialog" onClick={onClose}><FaTimes /></button></div>
       <div className="p-5">{children}</div>
     </div>

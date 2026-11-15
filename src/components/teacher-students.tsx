@@ -2,9 +2,15 @@
 import { useCallback, useMemo, useState } from "react";
 import CrudPage from "@/components/crud-page";
 import ClassSectionFilter from "@/components/class-section-filter";
+import StudentStatusBadge from "@/components/student-status-badge";
 import { useSession } from "@/components/session";
 import StudentLoginCell from "@/components/student-login-cell";
-import { studentClassSection, studentStatus } from "@/lib/student-details";
+import {
+  matchesStudentSearch,
+  matchesStudentStatusFilter,
+  studentClassSection,
+  studentStatus,
+} from "@/lib/student-details";
 import { teacherStudentFields } from "@/lib/student-fields";
 import { assignmentsOf, nz, splitList } from "@/lib/teacher-scope";
 import { scopeClasses, studentScopes } from "@/lib/student-scope";
@@ -20,6 +26,7 @@ export default function TeacherStudents() {
   const [rows, setRows] = useState<any[]>([]);
   const [className, setClassName] = useState("");
   const [section, setSection] = useState("");
+  const [status, setStatus] = useState("Active");
   const onLoaded = useCallback((items: any[]) => setRows(items), []);
 
   // his assigned classes are always offered, even before a single student is added to them
@@ -38,7 +45,13 @@ export default function TeacherStudents() {
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true })), [classRows]);
   const chosen = sections.find((s) => nz(s) === nz(section)) || ""; // "" = every section of the class
 
-  const shown = useMemo(() => classRows.filter((r) => !chosen || nz(r.section) === nz(chosen)).sort(byRoll), [classRows, chosen]);
+  const shown = useMemo(
+    () =>
+      classRows
+        .filter((r) => (!chosen || nz(r.section) === nz(chosen)) && matchesStudentStatusFilter(r, status))
+        .sort(byRoll),
+    [classRows, chosen, status],
+  );
 
   // what he teaches in the selected class
   const subjects = useMemo(() => [...new Set(assignmentsOf(user)
@@ -62,7 +75,7 @@ export default function TeacherStudents() {
     { key: "fatherName", label: "Father" },
     { key: "className", label: "Class / Section", render: studentClassSection },
     { key: "phone", label: "Phone", render: (r: any) => r.phone || "-" },
-    { key: "status", label: "Status", render: studentStatus },
+    { key: "status", label: "Status", render: (r: any) => <StudentStatusBadge student={r} /> },
     { key: "loginEmail", label: "Student / guardian login", render: (r: any) => <StudentLoginCell r={r} /> },
   ];
   const fields = teacherStudentFields;
@@ -77,8 +90,22 @@ export default function TeacherStudents() {
   return (
     <div className="space-y-3">
       <CrudPage resource="students" title="Student"
-        toolbar={<ClassSectionFilter classes={classList} sections={sections} className={current} section={chosen}
-          onClass={(v) => { setClassName(v); setSection(""); }} onSection={setSection} allClasses="Select class" />}
+        showCount
+        searchPlaceholder="Student name / Roll # / Phone..."
+        searchRow={matchesStudentSearch}
+        toolbar={
+          <ClassSectionFilter
+            classes={classList}
+            sections={sections}
+            className={current}
+            section={chosen}
+            onClass={(v) => { setClassName(v); setSection(""); }}
+            onSection={setSection}
+            allClasses="Select class"
+            status={status}
+            onStatus={setStatus}
+          />
+        }
         onLoaded={onLoaded}
         filterRows={() => shown}
         columns={columns}

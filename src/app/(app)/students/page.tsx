@@ -1,10 +1,17 @@
 "use client";
 import { useMemo, useState } from "react";
-import { FaCertificate, FaCheck, FaTimes } from "react-icons/fa";
+import { FaCertificate, FaCheck, FaFileInvoiceDollar, FaTimes } from "react-icons/fa";
 import CrudPage from "@/components/crud-page";
 import ClassSectionFilter from "@/components/class-section-filter";
 import TeacherStudents from "@/components/teacher-students";
-import { studentClassSection, studentStatus } from "@/lib/student-details";
+import StudentStatusBadge from "@/components/student-status-badge";
+import StudentLedgerDialog from "@/components/student-ledger-dialog";
+import {
+  matchesStudentSearch,
+  matchesStudentStatusFilter,
+  studentClassSection,
+  studentStatus,
+} from "@/lib/student-details";
 import { setStudentLogin, leavingCertificate } from "@/lib/student-actions";
 import StudentLoginCell from "@/components/student-login-cell";
 import { studentFields } from "@/lib/student-fields";
@@ -17,6 +24,8 @@ export default function StudentsPage() {
   const [rows, setRows] = useState<any[]>([]);
   const [className, setClassName] = useState("");
   const [section, setSection] = useState("");
+  const [status, setStatus] = useState("Active");
+  const [ledgerStudent, setLedgerStudent] = useState<any>(null);
   const isSchool = user.role === "school";
 
   const classList = useMemo(() => {
@@ -32,24 +41,64 @@ export default function StudentsPage() {
   if (!isSchool) return <TeacherStudents />;
 
   return (
-    <CrudPage resource="students" title="Student"
-      onLoaded={setRows}
-      toolbar={<ClassSectionFilter classes={classList} sections={sections} className={className} section={chosen}
-        onClass={(v) => { setClassName(v); setSection(""); }} onSection={setSection} />}
-      filterRows={() => classRows.filter((r) => !chosen || nz(r.section) === nz(chosen))}
-      columns={[
-        { key: "rollNo", label: "Roll #" }, { key: "name", label: "Name" }, { key: "fatherName", label: "Father" },
-        { key: "className", label: "Class / Section", render: studentClassSection }, { key: "phone", label: "Phone" },
-        { key: "status", label: "Status", render: studentStatus },
-        { key: "loginEmail", label: "Student / guardian login", render: (r) => <StudentLoginCell r={r} /> },
-      ]}
-      fields={studentFields} formValues={(r) => ({ ...r, status: studentStatus(r) })} defaults={{ status: "Active", gender: "Male", monthlyFee: 0, discount: 0, previousPending: 0 }}
-      actions={(r, reload) => (<>
-        <button className="icon-btn text-purple-600" title="School leaving certificate" onClick={() => leavingCertificate(r, user)}><FaCertificate /></button>
-        {r.loginUserId && <>
-          <button className="icon-btn text-green-600" title={(r.loginChildCount || 0) > 1 ? `Enable guardian login (all ${r.loginChildCount} children)` : "Enable login"} onClick={() => setStudentLogin(r, "approved", reload)}><FaCheck /></button>
-          <button className="icon-btn text-amber-600" title={(r.loginChildCount || 0) > 1 ? `Disable guardian login (all ${r.loginChildCount} children)` : "Disable login"} onClick={() => setStudentLogin(r, "rejected", reload)}><FaTimes /></button>
-        </>}
-      </>)} />
+    <>
+      <CrudPage resource="students" title="Student"
+        showCount
+        searchPlaceholder="Student name / Roll # / Phone..."
+        searchRow={matchesStudentSearch}
+        onLoaded={setRows}
+        toolbar={
+          <ClassSectionFilter
+            classes={classList}
+            sections={sections}
+            className={className}
+            section={chosen}
+            onClass={(v) => { setClassName(v); setSection(""); }}
+            onSection={setSection}
+            status={status}
+            onStatus={setStatus}
+          />
+        }
+        filterRows={() =>
+          classRows.filter(
+            (r) => (!chosen || nz(r.section) === nz(chosen)) && matchesStudentStatusFilter(r, status),
+          )
+        }
+        columns={[
+          { key: "rollNo", label: "Roll #" },
+          { key: "name", label: "Name" },
+          { key: "fatherName", label: "Father" },
+          { key: "className", label: "Class / Section", render: studentClassSection },
+          { key: "phone", label: "Phone" },
+          { key: "status", label: "Status", render: (r) => <StudentStatusBadge student={r} /> },
+          { key: "loginEmail", label: "Student / guardian login", render: (r) => <StudentLoginCell r={r} /> },
+        ]}
+        fields={studentFields}
+        formValues={(r) => ({ ...r, status: studentStatus(r) })}
+        defaults={{ status: "Active", gender: "Male", monthlyFee: 0, discount: 0, previousPending: 0 }}
+        actions={(r, reload) => (<>
+          <button
+            className="icon-btn text-indigo-600"
+            title="Student fee ledger"
+            aria-label={`Student fee ledger for ${r.name}`}
+            onClick={() => setLedgerStudent(r)}
+          >
+            <FaFileInvoiceDollar />
+          </button>
+          <button className="icon-btn text-purple-600" title="School leaving certificate" onClick={() => leavingCertificate(r, user)}><FaCertificate /></button>
+          {r.loginUserId && <>
+            <button className="icon-btn text-green-600" title={(r.loginChildCount || 0) > 1 ? `Enable guardian login (all ${r.loginChildCount} children)` : "Enable login"} onClick={() => setStudentLogin(r, "approved", reload)}><FaCheck /></button>
+            <button className="icon-btn text-amber-600" title={(r.loginChildCount || 0) > 1 ? `Disable guardian login (all ${r.loginChildCount} children)` : "Disable login"} onClick={() => setStudentLogin(r, "rejected", reload)}><FaTimes /></button>
+          </>}
+        </>)}
+      />
+      {ledgerStudent && (
+        <StudentLedgerDialog
+          student={ledgerStudent}
+          schoolInfo={user?.schoolInfo}
+          onClose={() => setLedgerStudent(null)}
+        />
+      )}
+    </>
   );
 }
