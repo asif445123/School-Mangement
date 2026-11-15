@@ -136,7 +136,7 @@ export default function PwaInstall() {
 }
 
 /** Small header button (every page's top bar) that reopens the install banner. */
-export function InstallButton({ className = "" }: { className?: string }) {
+export function InstallButton({ className = "", variant = "dark" }: { className?: string; variant?: "dark" | "light" }) {
   const [gone, setGone] = useState(false);
   useEffect(() => {
     const check = () => setGone(isStandalone());
@@ -146,9 +146,12 @@ export function InstallButton({ className = "" }: { className?: string }) {
     return () => window.removeEventListener("appinstalled", onInstalled);
   }, []);
   if (gone) return null;
+  const theme = variant === "light"
+    ? "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+    : "bg-white/15 text-white ring-1 ring-white/40 hover:bg-white/25";
   return (
     <button type="button" onClick={() => window.dispatchEvent(new Event("sms:show-install"))}
-      className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-[13px] font-semibold text-white ring-1 ring-white/40 hover:bg-white/25 ${className}`}
+      className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-lg px-2.5 py-1 text-[13px] font-semibold ${theme} ${className}`}
       title="Install this app on your mobile, PC or laptop">
       <FaDownload className="text-xs" /> Install App
     </button>
