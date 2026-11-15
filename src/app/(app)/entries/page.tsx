@@ -55,7 +55,7 @@ export default function EntriesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold">Entries</h1>
+      <h1 className="text-xl font-bold">Enter Expenses</h1>
       <div className="card space-y-4">
         <h2 className="font-semibold">Add entry</h2>
         <div><label className="text-sm text-slate-600">Date</label><input type="date" className="input mt-1 w-full sm:w-48" value={date} onChange={(e) => setDate(e.target.value)} /></div>

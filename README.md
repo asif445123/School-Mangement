@@ -25,6 +25,15 @@ The navbar has a single **Student Data** item for every student-related work. Op
 
 The three school-only tabs used to be separate navbar items. They are now tabs, and their old links (`/gr-register`, `/fees`, `/fee-receivable`) still work, keep the same tab selected and open straight on that tab. A teacher only sees the **Student Data** tab (his own class and section, no fees).
 
+### Navigation: one **Enter Expenses** page with tabs
+The navbar has a single **Enter Expenses** item for all accounting setup and expense entry (school admin only). Opening it shows a tab strip (same style as Student Data / Teacher Data):
+
+- **Account Types** — the account type list (receivable / payable / income / expense flags).
+- **Account Master** — the account master file (code, name and account type).
+- **Enter Expenses** — the expense entries page (add entry rows by date, with Code / Date / Narration / Account wise search).
+
+Account Types and Account Master used to be separate navbar items. They are now tabs inside Enter Expenses, and their old links (`/account-types`, `/accounts`) still work, keep the same tab selected and open straight on that tab. The navbar **Enter Expenses** item stays highlighted on all three tabs.
+
 ### Guardian portal: one login for all his / her children
 A guardian with 2, 3, 4 or more children in the school does **not** need a separate login per child. In the Students form, type the **same "Guardian / student login email"** for every brother and sister. The first child creates the login (with its password); each further child with that email is attached to the same login — no password has to be typed again, the guardian keeps the first password (typing a new one changes the guardian's password).
 
