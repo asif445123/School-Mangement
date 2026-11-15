@@ -3,7 +3,7 @@ import { FaCheck, FaKey, FaPen, FaTimes, FaTrash } from "react-icons/fa";
 import { api } from "@/lib/api";
 import { confirmDelete, formDialog, toast } from "@/lib/alerts";
 
-export const badge: any = { approved: "bg-green-100 text-green-700", pending: "bg-amber-100 text-amber-700", rejected: "bg-red-100 text-red-700" };
+export const badge: any = { approved: "bg-green-100 text-green-700", pending: "bg-amber-100 text-amber-700", rejected: "bg-red-100 text-red-700", active: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200", inactive: "bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200" };
 
 // Icon buttons shared by the Teachers, Student Logins and School Approvals pages
 export default function AccountActions({ u, reload, onEdit }: { u: any; reload: () => void; onEdit?: (u: any) => void }) {
