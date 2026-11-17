@@ -215,7 +215,7 @@ export default function StudentAttendance() {
                 <button className="btn-light !min-h-[36px] !px-3 !py-1.5 !text-[13px]" onClick={() => setAll("Present")}>All Present</button>
                 <button className="btn-light !min-h-[36px] !px-3 !py-1.5 !text-[13px]" onClick={() => setAll("Absent")}>All Absent</button>
                 <button className="inline-flex min-h-[36px] items-center gap-2 rounded-lg bg-green-600 px-3 py-1.5 text-[13px] font-medium text-white hover:bg-green-700 disabled:opacity-60" onClick={save} disabled={!students.length || saving}>
-                  <FaSave /> {saving ? "Saving..." : "Save Attendance"}
+                  <FaSave /> {saving ? "Saving..." : ""}
                 </button>
               </div>
             </div>
@@ -223,8 +223,7 @@ export default function StudentAttendance() {
               <table className="w-full min-w-[600px]">
                 <thead>
                   <tr>
-                    <th className="th w-10">#</th>
-                    <th className="th">Adm</th>
+                    <th className="th w-10">Roll No</th>
                     <th className="th">Name</th>
                     <th className="th">Father</th>
                     <th className="th">Attendance</th>
@@ -234,7 +233,7 @@ export default function StudentAttendance() {
                   {students.map((s, i) => (
                     <tr key={s._id} className="border-t">
                       <td className="td">{i + 1}</td>
-                      <td className="td whitespace-nowrap">{s.rollNo || "-"}</td>
+                      
                       <td className="td whitespace-nowrap">{s.name}</td>
                       <td className="td whitespace-nowrap">{s.fatherName || "-"}</td>
                       <td className="td">
@@ -384,7 +383,7 @@ export default function StudentAttendance() {
                               rel="noreferrer"
                               className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1 text-[13px] font-medium text-white hover:bg-green-700"
                             >
-                              <FaWhatsapp /> WhatsApp
+                              <FaWhatsapp />
                             </a>
                           ) : (
                             <span className="text-xs text-slate-400">No number</span>
