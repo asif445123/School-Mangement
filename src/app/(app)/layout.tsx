@@ -15,6 +15,7 @@ import ExpenseTabs, { expenseRoutes, expenseTabRoutes } from "@/components/expen
 const all: [string, string, string[]][] = [
   ["/dashboard", "Dashboard", ["school"]],
   ["/students", "Student Data", ["school", "teacher"]], // a teacher sees only the classes and sections he teaches
+  ["/attendance", "Student Attendance", ["school", "classTeacher"]], // a class teacher marks attendance of his own class only
   // G.R. Register, Fee Chalan and Fee Receivable are tabs inside Student Data,
   // so they keep working as pages but are not repeated in the navbar.
   ["/gr-register", "GR Register", ["school"]],

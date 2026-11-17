@@ -21,6 +21,18 @@ export function NavIcon({ href }: { href: string }) {
           <circle cx="20.5" cy="17.5" r="1.6" fill="#f59e0b" />
         </svg>
       );
+    case "/attendance":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <rect x="3.5" y="3.5" width="17" height="18" rx="2.5" fill="#ffffff" />
+          <rect x="3.5" y="3.5" width="17" height="5" rx="2" fill="#2563eb" />
+          <rect x="7" y="1.8" width="2.4" height="4" rx="1" fill="#fbbf24" />
+          <rect x="14.6" y="1.8" width="2.4" height="4" rx="1" fill="#fbbf24" />
+          <path d="M7 11.5H7.5M10.5 11.5H11M14 11.5H14.5M17 11.5H17.5M7 15H7.5M10.5 15H11M14 15H14.5" stroke="#94a3b8" strokeWidth="2.2" strokeLinecap="round" />
+          <circle cx="17" cy="17.5" r="4.2" fill="#22c55e" />
+          <path d="M15 17.6L16.3 18.9L19 16.2" stroke="#ffffff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
     case "/gr-register":
       return (
         <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
