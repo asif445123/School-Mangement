@@ -9,8 +9,8 @@
 | Role | How created | Can do |
 |---|---|---|
 | **admin** | First account that signs up | Approve / reject / delete **schools** |
-| **school** (school admin) | Signs up at /signup, waits for admin approval | Everything in its school: students, fee chalans, diary, papers, marks, reports, create **teachers**, approve/disable teacher & student logins |
-| **teacher** | Created by school (Users page) | Diary, papers, enter marks, result reports, their own timetable, and the **Student Data** page — but only for the classes and sections they teach. No fees |
+| **school** (school admin) | Signs up at /signup, waits for admin approval | Everything in its school: students, fee chalans, diary, papers, marks, reports, **student attendance** (all classes, with the class-wise summary), create **teachers**, approve/disable teacher & student logins |
+| **teacher** | Created by school (Users page) | Diary, papers, enter marks, result reports, their own timetable, the **Student Data** page — but only for the classes and sections they teach — and **Student Attendance** for the class he is class teacher of. No fees |
 | **student** | Created from the Student Data page (school or teacher) with login email/password | Read-only **My Portal**: own fee chalans, class diary, test/exam marks. The **same login email on brothers/sisters makes it a Guardian Portal** for all of them (see below) |
 
 All data is separated per school. Pending / rejected / logged-out visitors can click **View Demo**.
@@ -24,6 +24,16 @@ The navbar has a single **Student Data** item for every student-related work. Op
 - **Fee Receivable** — the month-wise fee receivable report (school admin only).
 
 The three school-only tabs used to be separate navbar items. They are now tabs, and their old links (`/gr-register`, `/fees`, `/fee-receivable`) still work, keep the same tab selected and open straight on that tab. A teacher only sees the **Student Data** tab (his own class and section, no fees).
+
+### Navigation: **Student Attendance** (school admin + class teachers)
+**Student Attendance** is its own navbar item, directly below **Student Data**. It is shown to the school admin and to every teacher who is a **class teacher** of at least one class (a subject-only teacher does not see it, and no other role does). It has up to four tabs:
+
+- **Mark Attendance** — Date / Class / Section with a Load button, one **Present / Absent / Leave** radio per student, **All Present** / **All Absent** shortcuts and the green **Save Attendance** button. Saving writes one row per student for that date, and opening the date again shows what was already marked.
+- **Monthly Report** — Month / Class / Section, a day-by-day register (P / A / L, absent days highlighted) with per-student **P / A / L** totals and attendance %, printable.
+- **Absent List** — Date and Class (or **All**), listing the admission number, name, father, class and phone of every absent student with a **WhatsApp** button to message the parent, printable.
+- **Class Summary** — school admin only: for the selected day or month, one row per class and section with the present / absent / leave counts and attendance %, plus school totals.
+
+Attendance is stored per student per day (unique per student + date). A class teacher can only mark and read attendance of the classes he is class teacher of; the class and section saved with each day are kept as a snapshot so an old register still shows the class the student was in then.
 
 ### Navigation: one **Enter Expenses** page with tabs
 The navbar has a single **Enter Expenses** item for all accounting setup and expense entry (school admin only). Opening it shows a tab strip (same style as Student Data / Teacher Data):
