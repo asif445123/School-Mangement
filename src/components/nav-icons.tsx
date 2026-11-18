@@ -157,6 +157,15 @@ export function NavIcon({ href }: { href: string }) {
           <path d="M8.8 7.6C8.5 7.6 8 7.8 7.7 8.2C7.3 8.6 6.8 9.3 6.8 10.6C6.8 11.9 7.8 13.3 8 13.5C8.2 13.7 9.9 16.4 12.7 17.5C15 18.4 15.5 18.2 16 18.1C16.5 18 17.6 17.4 17.8 16.8C18 16.2 18 15.7 17.9 15.6C17.8 15.5 17.6 15.4 17.2 15.2C16.8 15 15.4 14.3 15.1 14.2C14.8 14.1 14.6 14 14.4 14.3C14.2 14.6 13.7 15.2 13.5 15.4C13.3 15.6 13.1 15.6 12.8 15.4C12.5 15.2 11.4 14.9 10.2 13.8C9.3 13 8.7 12 8.5 11.6C8.3 11.3 8.5 11.1 8.7 10.9C8.9 10.7 9.1 10.5 9.2 10.3C9.4 10.1 9.4 9.9 9.5 9.7C9.6 9.5 9.5 9.3 9.4 9.1C9.3 8.9 8.9 7.9 8.8 7.6Z" fill="#ffffff" />
         </svg>
       );
+    case "/staff-attendance":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <rect x="3" y="4" width="18" height="17" rx="2" fill="#ffffff" />
+          <circle cx="12" cy="9" r="2" fill="#2563eb" />
+          <path d="M5 12H10M14 12H19M6 15.5H11M14 15.5H18" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
+          <path d="M12 19V22" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
     case "/users":
       return (
         <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
