@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   const g = await guard((await params).id); if (g.error) return g.error;
   const { status, password, name, teacherType, email, phone, className, section, subject, period, extras,
     fatherName, cnic, designation, type, joiningDate, monthlySalary, fixedAllowance, qualification, activeStatus, address,
-    cnicCopy, degree, experienceLetter, notes } = await req.json();
+    cnicCopyReceived, degreeReceived, experienceLetterReceived, notes } = await req.json();
   const t = g.target;
   if (period !== undefined && period !== "" && !periodNumber(period)) return fail("Period must be from 1 to 8");
 
@@ -78,9 +78,9 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     if (qualification !== undefined) t.qualification = qualification;
     if (activeStatus !== undefined) t.activeStatus = activeStatus;
     if (address !== undefined) t.address = address;
-    if (cnicCopy !== undefined) t.cnicCopy = cnicCopy;
-    if (degree !== undefined) t.degree = degree;
-    if (experienceLetter !== undefined) t.experienceLetter = experienceLetter;
+    if (typeof cnicCopyReceived === "boolean") t.cnicCopyReceived = cnicCopyReceived;
+    if (typeof degreeReceived === "boolean") t.degreeReceived = degreeReceived;
+    if (typeof experienceLetterReceived === "boolean") t.experienceLetterReceived = experienceLetterReceived;
     if (notes !== undefined) t.notes = notes;
   }
   if (g.classTeacher) { // a class teacher may only change the subject / period he teaches in his own class

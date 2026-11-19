@@ -75,3 +75,13 @@ export function printCertificate(s: any, d: any, school?: School) {
     <div style="display:flex;justify-content:space-between;margin-top:70px"><div>Date of Issue: ${val(ddmmyyyy(d.issueDate), 120)}</div><div style="text-align:center"><div style="border-top:1px solid #000;padding-top:4px;min-width:200px">Principal's Signature<br><b>${esc(school?.name || "")}</b></div></div></div>
   </div>`);
 }
+
+export function printPayroll(rows: any[], month: string, school: School, voucher = false) {
+  const title = voucher ? "Salary payment voucher" : "Salary slip";
+  const fields = [["Basic salary", "basic"], ["Allowances", "allowances"], ["Bonus", "bonus"], ["Overtime", "overtime"],
+    ["Attendance deduction", "attendance"], ["Advance recovery", "advance"], ["Other deduction", "other"], ["Net salary", "net"]];
+  openPrint(title, rows.map(r => `<section>${header(school)}<h3>${title} · ${esc(month)}</h3><p><b>${esc(r.name)}</b> · ${esc(r.designation)}</p>
+    <p>${r.paidOn ? `Paid on ${esc(String(r.paidOn).slice(0,10))} · Ref: ${esc(r._id)}` : "Draft — not paid"}</p>
+    <table>${fields.map(([label,key]) => `<tr><th>${label}</th><td>${money(r[key])}</td></tr>`).join("")}</table>
+    ${voucher ? '<p style="margin-top:56px">Received by: ____________________</p>' : ""}</section>`).join(""), "section:not(:last-child){break-after:page}");
+}

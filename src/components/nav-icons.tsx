@@ -51,6 +51,7 @@ export function NavIcon({ href }: { href: string }) {
           <path d="M12 9.5V17.5M14.2 11.2C14.2 10.3 13.2 9.8 12 9.8C10.8 9.8 9.8 10.4 9.8 11.3C9.8 12.3 10.8 12.7 12 13.1C13.2 13.5 14.2 14 14.2 15.1C14.2 16.1 13.2 16.8 12 16.8C10.7 16.8 9.7 16.2 9.7 15.2" stroke="#14532d" strokeWidth="1.7" strokeLinecap="round" />
         </svg>
       );
+    case "/payroll":
     case "/fee-receivable":
       return (
         <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">

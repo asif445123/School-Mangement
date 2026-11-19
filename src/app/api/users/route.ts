@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
   if (!me || (me.role !== "school" && !ct)) return fail("You cannot create teachers", 403);
   const { existingId, name, teacherType, email, phone, className, section, subject, period, extras, password,
     fatherName, cnic, designation, type, joiningDate, monthlySalary, fixedAllowance, qualification, activeStatus, address,
-    cnicCopy, degree, experienceLetter, notes } = await req.json();
+    cnicCopyReceived, degreeReceived, experienceLetterReceived, notes } = await req.json();
   await connectDb();
   const extraList = Array.isArray(extras) ? extras : [];
   const requested = me.role === "school"
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
     fatherName: fatherName || "", cnic: cnic || "", designation: designation || "", type: type || "Teacher",
     joiningDate: joiningDate || "", monthlySalary: Number(monthlySalary) || 0, fixedAllowance: Number(fixedAllowance) || 0,
     qualification: qualification || "", activeStatus: activeStatus || "Active", address: address || "",
-    cnicCopy: cnicCopy || "", degree: degree || "", experienceLetter: experienceLetter || "", notes: notes || "",
+    cnicCopyReceived: cnicCopyReceived === true, degreeReceived: degreeReceived === true, experienceLetterReceived: experienceLetterReceived === true, notes: notes || "",
     ...(me.role === "school"
       ? { teacherType, className, section, assignments: cleanAssignments(extras), school: me._id }
       : { teacherType: "Subject teacher", className: ct.className, section: ct.section || "", school: me.school }),

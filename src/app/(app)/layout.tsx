@@ -29,6 +29,7 @@ const all: [string, string, string[]][] = [
   ["/teachers", "Teacher Data", ["classTeacher"]], // first match wins, so this must come before the school's own label
   ["/teachers", "Teacher Data", ["school"]],
   ["/staff-attendance", "Staff Attendance", ["school"]],
+  ["/payroll", "Payroll & Salary", ["school"]],
   ["/timetable", "Set Timetable", ["school"]],
   ["/timetable", "Timetable", ["teacher"]],
   // Account Types and Account Master are tabs inside Enter Expenses,

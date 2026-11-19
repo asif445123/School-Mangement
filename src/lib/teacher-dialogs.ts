@@ -1,4 +1,4 @@
-import { Swal, resizeImage } from "./alerts";
+import { Swal } from "./alerts";
 import { nz, PERIOD_OPTIONS } from "./teacher-scope";
 import { BusySlot, conflictsFor, conflictText, periodChoices, Seat } from "./period-conflicts";
 import { SchoolSchedule } from "./timetable";
@@ -39,9 +39,9 @@ const sel = (id: string, options: { value: string; label: string }[], value: str
   `<select id="${id}" class="swal2-select" style="width:100%;margin:4px 0">${options.map((o) =>
     `<option value="${o.value}" ${o.value === value ? "selected" : ""}>${o.label}</option>`).join("")}</select>`;
 
-// One document upload: shows the saved image (if any) and lets it be replaced
-const docField = (k: string, label: string, v: string) =>
-  `${lbl(label)}<div style="display:flex;align-items:center;gap:12px;margin-top:6px">${v ? `<img src="${esc(v)}" style="height:44px;border-radius:6px" alt="">` : ""}<input id="t-${k}" type="file" accept="image/*" style="font-size:13px;min-width:0"></div>`;
+// Old profiles with an uploaded document start checked unless explicitly changed.
+const docField = (k: string, label: string, checked: boolean) =>
+  `<label style="display:flex;align-items:center;gap:8px;margin-top:10px"><input id="t-${k}" type="checkbox" ${checked ? "checked" : ""}>${label}</label>`;
 const pwRow = `<div id="pw-row">${lbl("Password (6+ chars) *")}<div style="position:relative"><input id="t-password" type="password" class="swal2-input" style="width:100%;margin:4px 0;padding-right:44px"><button type="button" onclick="var i=document.getElementById('t-password');var s=i.type==='password';i.type=s?'text':'password';this.textContent=s?'👁️':'👁️‍🗨️'" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:16px;cursor:pointer">👁️‍🗨️</button></div></div>`;
 const val = (id: string) => (document.getElementById(id) as HTMLInputElement | null)?.value.trim() || "";
 // red warning shown inside an assignment block when that class period already has a teacher
@@ -162,9 +162,10 @@ export async function schoolTeacherDialog(title: string, t: any, isNew: boolean,
       ${lbl("Qualification")}${inp("qualification", t.qualification)}
       ${lbl("Status")}${sel("t-activeStatus", STATUS_OPTIONS, t.activeStatus || "Active")}
       ${lbl("Address")}<textarea id="t-address" class="swal2-textarea" style="width:100%;margin:4px 0">${esc(t.address)}</textarea>
-      ${docField("cnicCopy", "CNIC copy", t.cnicCopy || "")}
-      ${docField("degree", "Degree", t.degree || "")}
-      ${docField("experienceLetter", "Experience letter", t.experienceLetter || "")}
+      <fieldset style="margin:14px 0 0;text-align:left"><legend style="font-weight:600">Documents received</legend>
+      ${docField("cnicCopy", "CNIC copy", t.cnicCopyReceived ?? !!t.cnicCopy)}
+      ${docField("degree", "Degree", t.degreeReceived ?? !!t.degree)}
+      ${docField("experienceLetter", "Experience letter", t.experienceLetterReceived ?? !!t.experienceLetter)}</fieldset>
       ${lbl("Notes")}<textarea id="t-notes" class="swal2-textarea" style="width:100%;margin:4px 0">${esc(t.notes)}</textarea>`,
     didOpen: () => {
       const list = document.getElementById("asg-list")!;
@@ -192,21 +193,18 @@ export async function schoolTeacherDialog(title: string, t: any, isNew: boolean,
       if (!val("t-name")) { Swal.showValidationMessage("Teacher name is required"); return false; }
       if (!val("t-email")) { Swal.showValidationMessage("Email is required"); return false; }
       if (isNew && val("t-password").length < 6) { Swal.showValidationMessage("Password must be 6+ characters"); return false; }
-      // documents: a picked file is resized to a small data URL, an untouched one keeps its saved value
-      const doc = async (k: string, keep: string) => {
-        const el = document.getElementById(`t-${k}`) as HTMLInputElement | null;
-        return el?.files?.[0] ? await resizeImage(el.files[0]) : keep || "";
-      };
+      const profile = (k: string) => document.querySelector<HTMLInputElement>(`[data-k="${k}"]`)?.value.trim() || "";
+      const checked = (k: string) => (document.getElementById(`t-${k}`) as HTMLInputElement).checked;
       const num = (v: string) => v === "" ? 0 : Number(v) || 0;
       return {
         name: val("t-name"), phone: val("t-phone"), email: val("t-email"), ...(isNew ? { password: val("t-password") } : {}),
-        fatherName: val("t-fatherName"), cnic: val("t-cnic"), designation: val("t-designation"),
+        fatherName: profile("fatherName"), cnic: profile("cnic"), designation: profile("designation"),
         type: val("t-type") || "Teacher", joiningDate: val("t-joiningDate"),
         monthlySalary: num(val("t-monthlySalary")), fixedAllowance: num(val("t-fixedAllowance")),
-        qualification: val("t-qualification"), activeStatus: val("t-activeStatus") || "Active",
+        qualification: profile("qualification"), activeStatus: val("t-activeStatus") || "Active",
         address: val("t-address"), notes: val("t-notes"),
-        cnicCopy: await doc("cnicCopy", t.cnicCopy), degree: await doc("degree", t.degree),
-        experienceLetter: await doc("experienceLetter", t.experienceLetter),
+        cnicCopyReceived: checked("cnicCopy"), degreeReceived: checked("degree"),
+        experienceLetterReceived: checked("experienceLetter"),
         ...all[0], extras: all.slice(1),
       };
     },

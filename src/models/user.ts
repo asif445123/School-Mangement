@@ -35,6 +35,9 @@ const userSchema = new Schema({
   cnicCopy: { type: String, default: "" },
   degree: { type: String, default: "" },
   experienceLetter: { type: String, default: "" },
+  cnicCopyReceived: Boolean,
+  degreeReceived: Boolean,
+  experienceLetterReceived: Boolean,
   notes: { type: String, default: "" },
   period: { type: Number, min: 1, max: 8 }, // timetable period for the main class / subject assignment
   assignments: [{ _id: false, teacherType: String, className: String, section: String, subject: String, period: { type: Number, min: 1, max: 8 } }], // extra assignments (e.g. class teacher of 9 A and subject teacher of 8 B)
