@@ -5,7 +5,7 @@ import User from "@/models/user";
 import StaffAttendance from "@/models/staff-attendance";
 import StaffTiming from "@/models/staff-timing";
 import { isValidDate, isValidMonth } from "@/lib/attendance";
-import { deductionDays, deductionAmount, lateMinutesOf, earlyMinutesOf, dayCode } from "@/lib/staff-attendance";
+import { lateMinutesOf, earlyMinutesOf, monthlyRows, timingKey, withTiming } from "@/lib/staff-attendance";
 
 // Staff Attendance (school admin only): daily marking, monthly sheet &
 // deduction, and per-staff monthly arrival/departure detail.
@@ -17,21 +17,16 @@ async function schoolScope() {
   return { me, schoolId: me._id };
 }
 
-const escRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-// Expected arrival/departure times for one staff member, from his designation timing.
-async function timingOf(schoolId: any, designation: string) {
-  if (!designation) return null;
-  return StaffTiming.findOne({
-    school: schoolId,
-    designation: new RegExp(`^${escRe(designation)}$`, "i"),
-  }).lean();
+// Load timings once per request and match designations case-insensitively.
+async function schoolTimings(schoolId: any) {
+  const timings = await StaffTiming.find({ school: schoolId }).lean();
+  return new Map<string, any>(timings.map((t: any) => [timingKey(t.designation), t]));
 }
 
 export async function GET(req: NextRequest) {
   const s = await schoolScope();
   if (s.error) return s.error;
-  const { me, schoolId } = s as any;
+  const { schoolId } = s as any;
   const q = req.nextUrl.searchParams;
   const mode = q.get("mode") || "day";
   const date = String(q.get("date") || "").trim();
@@ -45,19 +40,15 @@ export async function GET(req: NextRequest) {
       .select(FIELDS)
       .sort({ name: 1 })
       .lean();
-    const byId = new Map(staffs.map((st: any) => [String(st._id), st]));
-    const timings = new Map<string, any>();
-    for (const st of staffs) {
-      if (!timings.has(String(st.designation))) timings.set(String(st.designation), await timingOf(schoolId, String(st.designation || "")));
-    }
+    const timings = await schoolTimings(schoolId);
     const records = await StaffAttendance.find({ school: schoolId, date, staff: { $in: staffs.map((st: any) => st._id) } }).lean();
     const recordOf = new Map(records.map((r: any) => [String(r.staff), r]));
     return NextResponse.json({
       date,
       staffs: staffs.map((st: any) => {
-        const timing = timings.get(String(st.designation)) || null;
+        const timing = timings.get(timingKey(st.designation)) || null;
         const record = recordOf.get(String(st._id)) || null;
-        return { ...st, timing, record };
+        return { ...st, timing, record: record ? withTiming(record, timing) : null };
       }),
     });
   }
@@ -71,35 +62,8 @@ export async function GET(req: NextRequest) {
       staff: { $in: staffIds },
       date: { $gte: `${month}-01`, $lte: `${month}-31` },
     }).lean();
-    const byStaff = new Map<string, any>();
-    for (const st of staffs) {
-      byStaff.set(String(st._id), {
-        ...st,
-        present: 0, absent: 0, leave: 0,
-        lateDays: 0, earlyDays: 0, lateMinutes: 0, earlyMinutes: 0,
-        byDay: new Map<number, any>(),
-      });
-    }
-    for (const r of records) {
-      const row = byStaff.get(String(r.staff));
-      if (!row) continue;
-      const day = Number(String(r.date).slice(8, 10));
-      if (!day) continue;
-      row.byDay.set(day, r);
-      if (r.status === "Present") row.present++;
-      else if (r.status === "Absent") row.absent++;
-      else if (r.status === "Leave") row.leave++;
-      if (r.lateArrival) { row.lateDays++; row.lateMinutes += Number(r.lateMinutes || 0); }
-      if (r.earlyDeparture) { row.earlyDays++; row.earlyMinutes += Number(r.earlyMinutes || 0); }
-    }
-    const rows = [...byStaff.values()].map((row: any) => {
-      const dedDays = deductionDays(row.absent, row.lateDays, row.earlyDays);
-      return {
-        ...row,
-        dedDays,
-        deduction: deductionAmount(dedDays, row.monthlySalary || 0),
-      };
-    });
+    const timings = await schoolTimings(schoolId);
+    const rows = monthlyRows(staffs, records, timings);
     return NextResponse.json({ month, rows, days: new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).getUTCDate() });
   }
 
@@ -112,7 +76,9 @@ export async function GET(req: NextRequest) {
       school: schoolId, staff: staffId,
       date: { $gte: `${month}-01`, $lte: `${month}-31` },
     }).sort({ date: 1 }).lean();
-    return NextResponse.json({ month, staff, records });
+    const timings = await schoolTimings(schoolId);
+    const timing = timings.get(timingKey((staff as any).designation));
+    return NextResponse.json({ month, staff, timing: timing || null, records: records.map((r: any) => withTiming(r, timing)) });
   }
 
   return fail("Unknown mode", 400);
@@ -132,7 +98,7 @@ export async function POST(req: NextRequest) {
   const staffIds = [...new Set(rows.map((r: any) => r?.staff).filter(Boolean))];
   const staffs = await User.find({ school: schoolId, role: "teacher", _id: { $in: staffIds } }).select(FIELDS).lean();
   const byId = new Map(staffs.map((st: any) => [String(st._id), st]));
-  const timings = new Map<string, any>();
+  const timings = await schoolTimings(schoolId);
   const ops: any[] = [];
   for (const r of rows) {
     const st = byId.get(String(r?.staff || ""));
@@ -141,8 +107,7 @@ export async function POST(req: NextRequest) {
     let lateArrival = !!r.lateArrival, earlyDeparture = !!r.earlyDeparture;
     let lateMinutes = Number(r.lateMinutes || 0) || 0;
     let earlyMinutes = Number(r.earlyMinutes || 0) || 0;
-    const timing = timings.get(String(st.designation)) || (await timingOf(schoolId, String(st.designation || "")));
-    timings.set(String(st.designation), timing);
+    const timing = timings.get(timingKey(st.designation));
     if (r.arrivalTime) {
       lateMinutes = lateMinutesOf(String(r.arrivalTime), timing?.arrivalTime || "");
       lateArrival = lateArrival || lateMinutes > 0;
