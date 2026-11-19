@@ -6,7 +6,7 @@ import { confirmDelete, toast } from "@/lib/alerts";
 import { useSession } from "@/components/session";
 import { printElement } from "@/lib/print";
 import { isValidDate, isValidMonth } from "@/lib/attendance";
-import { dayCode } from "@/lib/staff-attendance";
+import { dayCode, earlyMinutesOf, lateMinutesOf } from "@/lib/staff-attendance";
 
 type Tab = "daily" | "monthly" | "timing" | "report";
 type StaffMark = { status: string; arrivalTime: string; departureTime: string; lateArrival: boolean; earlyDeparture: boolean };
@@ -57,7 +57,7 @@ export default function StaffAttendance() {
     } catch (e: any) { toast("error", e.message); } finally { setLoading(false); }
   }, [date]);
 
-  useEffect(() => { loadDay(); }, [loadDay]);
+  useEffect(() => { if (isSchool && tab === "daily") loadDay(); }, [isSchool, tab, loadDay]);
 
   const setAll = (status: string) => setMarks(Object.fromEntries(staffs.map((s) => [String(s._id), { ...marks[String(s._id)], status }])));
 
@@ -90,7 +90,7 @@ export default function StaffAttendance() {
     } catch (e: any) { toast("error", e.message); } finally { setLoading(false); }
   }, [month]);
 
-  useEffect(() => { loadMonth(); }, [loadMonth]);
+  useEffect(() => { if (isSchool && tab === "monthly") loadMonth(); }, [isSchool, tab, loadMonth]);
 
   const printMonthly = () => printElement(
     `Staff Attendance - ${month}`,
@@ -112,7 +112,7 @@ export default function StaffAttendance() {
     } catch (e: any) { toast("error", e.message); }
   }, []);
 
-  useEffect(() => { loadTimings(); }, [loadTimings]);
+  useEffect(() => { if (isSchool) loadTimings(); }, [isSchool, loadTimings]);
 
   const designationOptions = useMemo(() => [...new Set(timings.map((t) => t.designation))].sort(), [timings]);
 
@@ -142,6 +142,7 @@ export default function StaffAttendance() {
   const [reportStaff, setReportStaff] = useState("");
   const [reportMonth, setReportMonth] = useState(today().slice(0, 7));
   const [reportRecords, setReportRecords] = useState<any[]>([]);
+  const [reportTiming, setReportTiming] = useState<any>(null);
   const [reportStaffs, setReportStaffs] = useState<any[]>([]);
   const [reportLoading, setReportLoading] = useState(false);
 
@@ -152,18 +153,19 @@ export default function StaffAttendance() {
     } catch (e: any) { toast("error", e.message); }
   }, []);
 
-  useEffect(() => { loadReportStaffs(); }, [loadReportStaffs]);
+  useEffect(() => { if (isSchool) loadReportStaffs(); }, [isSchool, loadReportStaffs]);
 
   const loadReport = useCallback(async () => {
-    if (!reportStaff || !isValidMonth(reportMonth)) return;
+    if (!reportStaff || !isValidMonth(reportMonth)) { setReportRecords([]); return; }
     try {
       setReportLoading(true);
       const d = await api(`/api/staff-attendance?mode=staff-report&staff=${encodeURIComponent(reportStaff)}&month=${encodeURIComponent(reportMonth)}`);
       setReportRecords(d.records || []);
-    } catch (e: any) { toast("error", e.message); } finally { setReportLoading(false); }
+      setReportTiming(d.timing || null);
+    } catch (e: any) { setReportRecords([]); toast("error", e.message); } finally { setReportLoading(false); }
   }, [reportStaff, reportMonth]);
 
-  useEffect(() => { loadReport(); }, [loadReport]);
+  useEffect(() => { if (isSchool && tab === "report") loadReport(); }, [isSchool, tab, loadReport]);
 
   const reportStaffOpt = reportStaffs.find((s) => String(s._id) === reportStaff);
 
@@ -271,7 +273,7 @@ export default function StaffAttendance() {
                             type="time"
                             className="input w-full text-[12px]"
                             value={m.arrivalTime}
-                            onChange={(e) => setMarks({ ...marks, [String(s._id)]: { ...m, arrivalTime: e.target.value } })}
+                            onChange={(e) => setMarks({ ...marks, [String(s._id)]: { ...m, arrivalTime: e.target.value, lateArrival: lateMinutesOf(m.arrivalTime, timing?.arrivalTime || "") > 0 ? lateMinutesOf(e.target.value, timing?.arrivalTime || "") > 0 : m.lateArrival } })}
                             placeholder={timing?.arrivalTime ? `scheduled ${timing.arrivalTime}` : "arrival time"}
                           />
                         </td>
@@ -280,7 +282,7 @@ export default function StaffAttendance() {
                             type="time"
                             className="input w-full text-[12px]"
                             value={m.departureTime}
-                            onChange={(e) => setMarks({ ...marks, [String(s._id)]: { ...m, departureTime: e.target.value } })}
+                            onChange={(e) => setMarks({ ...marks, [String(s._id)]: { ...m, departureTime: e.target.value, earlyDeparture: earlyMinutesOf(m.departureTime, timing?.departureTime || "") > 0 ? earlyMinutesOf(e.target.value, timing?.departureTime || "") > 0 : m.earlyDeparture } })}
                             placeholder={timing?.departureTime ? `scheduled ${timing.departureTime}` : "departure time"}
                           />
                         </td>
@@ -304,7 +306,7 @@ export default function StaffAttendance() {
               </table>
             </div>
             <p className="px-4 pb-3 text-xs text-slate-500">
-              Late arrival / early departure minutes are computed against the school timing set for the staff designation in <b>Set School Timing</b>.
+              Late arrival / early departure minutes are computed against the current school timing for the staff designation in <b>Set School Timing</b>. Manually checked flags also count toward deductions.
             </p>
           </div>
         </div>
@@ -352,13 +354,13 @@ export default function StaffAttendance() {
                 </thead>
                 <tbody>
                   {monthRows.map((row) => {
-                    const byDay = row.byDay || new Map();
+                    const byDay = row.byDay || {};
                     return (
                       <tr key={row._id} className="border-t">
                         <td className="td whitespace-nowrap">{row.name}</td>
                         <td className="td whitespace-nowrap">{row.designation || "Teacher"}</td>
                         {Array.from({ length: monthDays }, (_, i) => i + 1).map((d) => {
-                          const r = byDay.get(d);
+                          const r = byDay[d];
                           const code = r ? dayCode(r.status, !!r.lateArrival, !!r.earlyDeparture) : "";
                           const title = r
                             ? `${r.status} - ${month}-${String(d).padStart(2, "0")}${
@@ -390,7 +392,7 @@ export default function StaffAttendance() {
               </table>
             </div>
             <p className="px-4 pb-3 text-xs text-slate-500">
-              "* = Late, ^ = Early departure. Salary deduction = (Absent + Late/Early days as per rule) × (Salary / 30); default rule: 3 late / early = 1 day."
+              * = Late, ^ = Early departure. Deduction = (Absent + one day per 3 late/early occurrences) × (monthly salary / 30). Minutes use the current designation timing; set a monthly salary on the staff profile.
             </p>
           </div>
         </div>
@@ -480,7 +482,7 @@ export default function StaffAttendance() {
           <div className="card flex flex-wrap items-end gap-3">
             <div>
               <h2 className="text-base font-bold">Monthly staff arrival &amp; departure times</h2>
-              <p className="text-xs text-slate-500">Select a staff member to see his day-wise arrival and departure times for the month.</p>
+              <p className="text-xs text-slate-500">Select a staff member to see day-wise times and minutes. Minutes use the current timing for the staff designation.</p>
             </div>
             <div className="flex items-end gap-2">
               <label className={label} htmlFor="rs-staff">Name</label>
@@ -508,6 +510,9 @@ export default function StaffAttendance() {
                     { month: "long", year: "numeric", timeZone: "UTC" },
                   )}
                 </h2>
+                {!reportLoading && (!reportTiming?.arrivalTime || !reportTiming?.departureTime) && (
+                  <p className="px-4 pb-2 text-xs text-amber-700">Set both arrival and departure times for this staff member’s designation in Set School Timing to calculate minutes from recorded times.</p>
+                )}
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[600px] text-sm">
                     <thead>
