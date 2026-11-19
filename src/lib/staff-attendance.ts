@@ -25,12 +25,61 @@ export const earlyMinutesOf = (actualDeparture: string, scheduledDeparture: stri
   return Math.max(0, s - a);
 };
 
-// Default rule: 3 late arrivals / early departures count as 1 deductible day.
-export const deductionDays = (absent: number, lateDays: number, earlyDays: number): number =>
-  absent + Math.floor((lateDays + earlyDays) / 3);
+// Fallback school-day length (8 hours) when a designation has no usable
+// arrival/departure timing. Per-minute deduction divides the daily salary
+// (monthly salary / 30) by this many minutes.
+export const DEFAULT_SCHOOL_DAY_MINUTES = 480;
+
+// Length of one school day in minutes from the designation timing
+// (departure - arrival). Falls back to 480 when timing is missing/invalid.
+export const schoolDayMinutes = (timing: Timing): number => {
+  const a = hhmmToMinutes(timing?.arrivalTime || "");
+  const d = hhmmToMinutes(timing?.departureTime || "");
+  if (a < 0 || d < 0 || d <= a) return DEFAULT_SCHOOL_DAY_MINUTES;
+  return d - a;
+};
+
+// Deduction is per minute: absent days count in full, while every late /
+// early minute counts as 1 / school-day-minutes of a day. E.g. 30 minutes
+// late on a 300-minute day = 0.1 deduction day. A manually flagged
+// late/early with 0 recorded minutes therefore deducts 0.
+export const deductionDays = (
+  absent: number,
+  lateMinutes: number,
+  earlyMinutes: number,
+  dayMinutes: number = DEFAULT_SCHOOL_DAY_MINUTES,
+): number => {
+  const dm = Number(dayMinutes) > 0 ? Number(dayMinutes) : DEFAULT_SCHOOL_DAY_MINUTES;
+  return (Number(absent) || 0) + ((Number(lateMinutes) || 0) + (Number(earlyMinutes) || 0)) / dm;
+};
 
 export const deductionAmount = (dedDays: number, monthlySalary: number): number =>
   Math.round((dedDays * (Number(monthlySalary) || 0)) / 30 * 100) / 100;
+
+const round2 = (n: number): number => Math.round(n * 100) / 100;
+
+// Full monthly deduction with breakdown so the sheet can show where the
+// deduction came from:
+//   absentDeduction = absent × (salary / 30)
+//   lateDeduction   = lateMinutes  × (salary / 30) / school-day-minutes
+//   earlyDeduction  = earlyMinutes × (salary / 30) / school-day-minutes
+//   deduction       = sum of the three (rounded components, so columns add up)
+export function deductionBreakdown(
+  absent: number,
+  lateMinutes: number,
+  earlyMinutes: number,
+  monthlySalary: number,
+  dayMinutes: number = DEFAULT_SCHOOL_DAY_MINUTES,
+) {
+  const dm = Number(dayMinutes) > 0 ? Number(dayMinutes) : DEFAULT_SCHOOL_DAY_MINUTES;
+  const daily = (Number(monthlySalary) || 0) / 30;
+  const absentDeduction = round2((Number(absent) || 0) * daily);
+  const lateDeduction = round2(((Number(lateMinutes) || 0) * daily) / dm);
+  const earlyDeduction = round2(((Number(earlyMinutes) || 0) * daily) / dm);
+  const deduction = round2(absentDeduction + lateDeduction + earlyDeduction);
+  const dedDays = deductionDays(absent, lateMinutes, earlyMinutes, dm);
+  return { dedDays, absentDeduction, lateDeduction, earlyDeduction, deduction, dayMinutes: dm };
+}
 
 export const dayCode = (status: StaffAttendanceStatus, late: boolean, early: boolean): string =>
   shortOf[status] + (late ? "*" : "") + (early ? "^" : "");
@@ -56,11 +105,15 @@ export function withTiming<T extends AttendanceRecord>(record: T, timing: Timing
 
 export function monthlyRows(staffs: any[], records: any[], timings: Map<string, Timing>) {
   const rows = new Map<string, any>();
-  for (const st of staffs) rows.set(String(st._id), {
-    ...st, present: 0, absent: 0, leave: 0,
-    lateDays: 0, earlyDays: 0, lateMinutes: 0, earlyMinutes: 0,
-    byDay: {} as Record<number, any>,
-  });
+  for (const st of staffs) {
+    const timing = timings.get(timingKey(st.designation));
+    rows.set(String(st._id), {
+      ...st, present: 0, absent: 0, leave: 0,
+      lateDays: 0, earlyDays: 0, lateMinutes: 0, earlyMinutes: 0,
+      dayMinutes: schoolDayMinutes(timing),
+      byDay: {} as Record<number, any>,
+    });
+  }
   for (const record of records) {
     const row = rows.get(String(record.staff));
     if (!row) continue;
@@ -75,7 +128,7 @@ export function monthlyRows(staffs: any[], records: any[], timings: Map<string, 
     if (r.earlyDeparture) { row.earlyDays++; row.earlyMinutes += r.earlyMinutes; }
   }
   return [...rows.values()].map((row) => {
-    const dedDays = deductionDays(row.absent, row.lateDays, row.earlyDays);
-    return { ...row, dedDays, deduction: deductionAmount(dedDays, row.monthlySalary || 0) };
+    const b = deductionBreakdown(row.absent, row.lateMinutes, row.earlyMinutes, row.monthlySalary || 0, row.dayMinutes);
+    return { ...row, ...b };
   });
 }
