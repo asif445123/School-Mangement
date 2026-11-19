@@ -306,7 +306,7 @@ export default function StaffAttendance() {
               </table>
             </div>
             <p className="px-4 pb-3 text-xs text-slate-500">
-              Late arrival / early departure minutes are computed against the current school timing for the staff designation in <b>Set School Timing</b>. Manually checked flags also count toward deductions.
+              Late arrival / early departure minutes are computed against the current school timing for the staff designation in <b>Set School Timing</b>. In the Monthly Sheet, late/early minutes are deducted per minute (a manually flagged late/early with no recorded minutes deducts 0).
             </p>
           </div>
         </div>
@@ -333,7 +333,7 @@ export default function StaffAttendance() {
               )}
             </h2>
             <div id="monthly-area" className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-xs">
+              <table className="w-full min-w-[1150px] text-xs">
                 <thead>
                   <tr>
                     <th className="th">Name</th>
@@ -348,6 +348,9 @@ export default function StaffAttendance() {
                     <th className="th text-center">Late Min</th>
                     <th className="th text-center">Early</th>
                     <th className="th text-center">Early Min</th>
+                    <th className="th text-center">Absent Ded.</th>
+                    <th className="th text-center">Late Ded.</th>
+                    <th className="th text-center">Early Ded.</th>
                     <th className="th text-center">Ded. Days</th>
                     <th className="th text-center">Deduction</th>
                   </tr>
@@ -382,17 +385,20 @@ export default function StaffAttendance() {
                         <td className="td text-center">{row.lateMinutes}</td>
                         <td className="td text-center font-semibold">{row.earlyDays}</td>
                         <td className="td text-center">{row.earlyMinutes}</td>
-                        <td className="td text-center font-semibold">{row.dedDays}</td>
+                        <td className="td text-center">{money(row.absentDeduction)}</td>
+                        <td className="td text-center">{money(row.lateDeduction)}</td>
+                        <td className="td text-center">{money(row.earlyDeduction)}</td>
+                        <td className="td text-center font-semibold">{Number(row.dedDays || 0).toFixed(2)}</td>
                         <td className="td text-center font-semibold">{money(row.deduction)}</td>
                       </tr>
                     );
                   })}
-                  {!monthRows.length && <tr><td colSpan={monthDays + 12} className="td py-8 text-center text-slate-400">No staff found</td></tr>}
+                  {!monthRows.length && <tr><td colSpan={monthDays + 15} className="td py-8 text-center text-slate-400">No staff found</td></tr>}
                 </tbody>
               </table>
             </div>
             <p className="px-4 pb-3 text-xs text-slate-500">
-              * = Late, ^ = Early departure. Deduction = (Absent + one day per 3 late/early occurrences) × (monthly salary / 30). Minutes use the current designation timing; set a monthly salary on the staff profile.
+              * = Late, ^ = Early departure. Deduction = Absent × (monthly salary / 30) + (Late Min + Early Min) × (monthly salary / 30 / school-day minutes). School-day minutes = departure − arrival from Set School Timing (fallback 480 min / 8 hrs if no timing). Late/early minutes are deducted per minute; a manually flagged late/early with no minutes deducts 0. Set a monthly salary on the staff profile.
             </p>
           </div>
         </div>
