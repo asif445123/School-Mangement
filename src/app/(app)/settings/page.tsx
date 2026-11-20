@@ -7,6 +7,7 @@ import { resizeImage, toast } from "@/lib/alerts";
 export default function SettingsPage() {
   const { user, setUser } = useSession();
   const [busy, setBusy] = useState(false);
+  const [show, setShow] = useState<Record<string, boolean>>({});
   const school = user.role === "school";
   const now = new Date();
   const year = now.getFullYear() - (now.getMonth() < 6 ? 1 : 0);
@@ -30,12 +31,20 @@ export default function SettingsPage() {
       const d = await api("/api/auth/me", { method: "PUT", body: Object.fromEntries(data) });
       setUser({ ...user, ...d.user });
       form.reset();
+      setShow({});
       toast("success", "Settings updated");
     } catch (err: any) { toast("error", err.message); }
     finally { setBusy(false); }
   }
   function field(name: string, label: string, type = "text", required = false, value = user[name] || "") {
-    return <label>{label}{required && " *"}<input className="input" name={name} type={type} required={required} defaultValue={value} minLength={name === "newPassword" ? 6 : undefined} /></label>;
+    if (type === "password") {
+      const short = name === "newPassword" ? "new password" : "current password";
+      return <label>{label}<span className="relative block">
+        <input className="input pr-10" name={name} type={show[name] ? "text" : "password"} defaultValue={value} minLength={name === "newPassword" ? 6 : undefined} />
+        <button type="button" onClick={() => setShow((s) => ({ ...s, [name]: !s[name] }))} className="absolute right-2 top-1/2 -translate-y-1/2 text-lg" aria-label={`${show[name] ? "Hide" : "Show"} ${short}`} aria-pressed={!!show[name]} title={show[name] ? "Hide password" : "Show password"}>{show[name] ? "👁️" : "👁️‍🗨️"}</button>
+      </span></label>;
+    }
+    return <label>{label}{required && " *"}<input className="input" name={name} type={type} required={required} defaultValue={value} /></label>;
   }
   return <form key={user.updatedAt} onSubmit={save} className="card max-w-3xl space-y-5">
     <h1 className="text-xl font-bold">{school ? "School Info" : "Account Info"}</h1>
@@ -51,6 +60,6 @@ export default function SettingsPage() {
       {field("currentPassword", "Current password (only to change password)", "password")}
       {field("newPassword", "New password (leave empty to keep)", "password")}
     </fieldset>
-    <div className="flex gap-3"><button disabled={busy} className="btn">{busy ? "Saving…" : "Save"}</button><button disabled={busy} type="reset" className="rounded-lg border px-4 py-2">Cancel</button></div>
+    <div className="flex gap-3"><button disabled={busy} className="btn">{busy ? "Saving…" : "Save"}</button><button disabled={busy} type="reset" className="rounded-lg border px-4 py-2" onClick={() => setShow({})}>Cancel</button></div>
   </form>;
 }
