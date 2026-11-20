@@ -12,6 +12,7 @@ import StudentTabs, { studentDataRoutes } from "@/components/student-tabs";
 import TeacherTabs, { teacherDataRoutes, teacherTabRoutes, seesTeacherDataTabs } from "@/components/teacher-tabs";
 import ExpenseTabs, { expenseRoutes, expenseTabRoutes } from "@/components/expense-tabs";
 import ResultsTabs, { resultsRoutes, resultsTabOnly } from "@/components/results-tabs";
+import InventoryTabs, { inventoryRoutes, inventoryTabRoutes } from "@/components/inventory-tabs";
 
 const all: [string, string, string[]][] = [
   ["/dashboard", "Dashboard", ["school"]],
@@ -46,6 +47,9 @@ const all: [string, string, string[]][] = [
   ["/accounts", "Account Master", ["school"]],
   ["/entries", "Enter Expenses", ["school"]],
   ["/reports", "Reports", ["school"]],
+  // Inventory & Purchases is one page with six tabs (items, requisitions,
+  // purchase invoices, stock in / out, suppliers and the supplier ledger).
+  ["/inventory", "Inventory & Purchases", ["school"]],
   ["/payment-accounts", "Payment accounts", ["school"]],
   ["/whatsapp-settings", "WhatsApp settings", ["school"]],
   ["/users", "Schools", ["admin"]],
@@ -59,6 +63,8 @@ const teacherTabOnly = new Set(teacherTabRoutes);
 const expenseTabOnly = new Set(expenseTabRoutes);
 // Pages that are shown as tabs inside Results instead of their own navbar item
 const resultsTabOnlySet = new Set(resultsTabOnly);
+// Pages that are shown as tabs inside Inventory & Purchases instead of their own navbar item
+const inventoryTabOnly = new Set(inventoryTabRoutes);
 const home: any = { admin: "/users", school: "/dashboard", teacher: "/students", student: "/my" };
 // Where a role starts: every teacher now lands on Students, which opens on his own class.
 const landing = (u: any) => home[u?.role];
@@ -78,15 +84,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // School / class teachers see diary, tests, test marks and the timetable
   // as Teacher Data tabs, so those items are replaced by the tab strip.
   const teacherTabs = user ? seesTeacherDataTabs(user) : false;
-  const nav = allowed.filter(([href]) => !tabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
+  const nav = allowed.filter(([href]) => !tabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !inventoryTabOnly.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
+  // A tab page belongs to its own navbar item (Inventory & Purchases tabs and
+  // the other grouped pages keep the group's menu item and heading).
+  const menuItem = (path: string) => allowed.find(([href]) =>
+    href === path || (href === "/inventory" && inventoryTabOnly.has(path)));
   useEffect(() => { // keep each role inside its own pages
-    if (user && !allowed.some(([href]) => href === pathname)) router.replace(landing(user));
+    if (user && !menuItem(pathname)) router.replace(landing(user));
   }, [user, pathname]); // eslint-disable-line
 
   if (!user) return <p className="p-10 text-center text-slate-500">Loading...</p>;
 
   const schoolTitle = user.schoolInfo?.name || user.schoolName || (user.role === "school" ? user.name : "School Management");
-  const currentTitle = allowed.find(([href]) => href === pathname)?.[1] || "Dashboard";
+  const currentTitle = menuItem(pathname)?.[1] || "Dashboard";
 
   return (
     <SessionContext.Provider value={{ user, setUser }}>
@@ -128,7 +138,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 (href === "/students" && tabOnly.has(pathname)) ||
                 (href === "/teachers" && teacherTabOnly.has(pathname)) ||
                 (href === "/entries" && expenseTabOnly.has(pathname)) ||
-                (href === "/exams" && resultsTabOnlySet.has(pathname));
+                (href === "/exams" && resultsTabOnlySet.has(pathname)) ||
+                (href === "/inventory" && inventoryTabOnly.has(pathname));
               return (
                 <Link
                   key={label}
@@ -155,6 +166,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {teacherDataRoutes.includes(pathname) && <TeacherTabs />}
             {expenseRoutes.includes(pathname) && <ExpenseTabs />}
             {resultsRoutes.includes(pathname) && <ResultsTabs />}
+            {inventoryRoutes.includes(pathname) && <InventoryTabs />}
             {children}
           </main>
         </div>

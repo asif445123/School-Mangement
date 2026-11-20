@@ -62,6 +62,18 @@ The navbar has a single **Enter Expenses** item for all accounting setup and exp
 
 Account Types and Account Master used to be separate navbar items. They are now tabs inside Enter Expenses, and their old links (`/account-types`, `/accounts`) still work, keep the same tab selected and open straight on that tab. The navbar **Enter Expenses** item stays highlighted on all three tabs.
 
+### Navigation: one **Inventory & Purchases** page with six tabs
+The navbar has a single **Inventory & Purchases** item (school admin only). Opening it shows a tab strip (same style as Student Data / Teacher Data / Enter Expenses):
+
+- **Items (Stock)** — *Items - Stationery, Books, Furniture & Equipment*: item name, category, unit, rate, live **in stock** and stock **value**, with search, Edit / Delete, **+ Add New** and a printable stock report. The form asks for Item Name, Category, Unit (pcs / box / set…), Rate, Opening Stock and **Minimum Stock Alert** (the stock turns red with a *Low* badge when it reaches the alert).
+- **Purchase Requisition** — a department's purchase demand: date, item / description, quantity, department, requested by, status (Pending / Approved / Ordered / Rejected) and note.
+- **Purchase Invoice** — buy items: date, auto invoice number (`PI-0001`, `PI-0002`…), supplier (or **Cash Purchase**), item rows with qty / rate / amount, **Paid Now**, mode, bank account and note. Saving raises the stock (a Stock In row per item), posts the paid amount as an expense and leaves the rest as the supplier's payable. **Purchase History** lists every invoice with total / paid / due, a **Print** button and Delete (which reverses the stock and the expense).
+- **Stock In / Out** — receive or issue items: item (shown with its current stock), type (Stock In / Stock Out), qty, date, note / issued to. A **Stock Out** also posts its cost (qty × rate) as an expense. Rows that came from a purchase invoice are marked with their invoice number and can only be removed by deleting that invoice.
+- **Suppliers** — supplier name, phone, address, opening payable and the live **balance payable**.
+- **Supplier Ledger** — pick a supplier and **Show**: opening payable, every purchase (credit), every payment (debit) and the running balance, with **Print** and **+ Payment to Supplier** (amount, date, mode, bank, note). Payments can be deleted from the ledger; each one reverses its expense entry.
+
+All amounts are posted to the **Inventory / Store expense** account (created automatically with a *Store & inventory* account type on first use), so purchases, stock outs and supplier payments appear in **Enter Expenses**, the ledger report and the dashboard like any other expense. Every tab is reachable straight from its own link (`/inventory`, `/inventory/requisitions`, `/inventory/purchases`, `/inventory/stock`, `/inventory/suppliers`, `/inventory/ledger`) and the navbar item stays highlighted on all six.
+
 ### Guardian portal: one login for all his / her children
 A guardian with 2, 3, 4 or more children in the school does **not** need a separate login per child. In the Students form, type the **same "Guardian / student login email"** for every brother and sister. The first child creates the login (with its password); each further child with that email is attached to the same login — no password has to be typed again, the guardian keeps the first password (typing a new one changes the guardian's password).
 
