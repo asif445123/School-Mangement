@@ -1,11 +1,6 @@
-"use client";
-import MarksEntry from "@/components/marks-entry";
-import SchoolMarks from "@/components/school-marks";
-import TeacherStatus from "@/components/teacher-status";
-import { useSession } from "@/components/session";
+import MarksScreen from "@/components/marks-screen";
 
-// School admin: class wise marks status. Teachers: the marks entry screen.
+// Exams & Results -> Marks Entry (the existing /marks link remains valid).
 export default function MarksPage() {
-  const { user } = useSession();
-  return user.role === "school" ? <SchoolMarks /> : <div className="space-y-8"><TeacherStatus kind="marks" /><MarksEntry /></div>;
+  return <MarksScreen type="exam" />;
 }
