@@ -197,6 +197,15 @@ export function NavIcon({ href }: { href: string }) {
           <circle cx="12" cy="11" r="1.6" fill="#ffffff" />
         </svg>
       );
+    case "/inventory":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <rect x="2.5" y="7.5" width="19" height="13" rx="2" fill="#f59e0b" />
+          <path d="M2.5 7.5L5 3.5H19L21.5 7.5H2.5Z" fill="#fbbf24" />
+          <rect x="8.5" y="11.5" width="7" height="3.2" rx="1" fill="#ffffff" />
+          <path d="M6 16.5H18" stroke="#b45309" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      );
     case "/my":
       return (
         <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">

@@ -108,3 +108,39 @@ export function printPayroll(rows: any[], month: string, school: School, voucher
     <table>${fields.map(([label,key]) => `<tr><th>${label}</th><td>${money(r[key])}</td></tr>`).join("")}</table>
     ${voucher ? '<p style="margin-top:56px">Received by: ____________________</p>' : ""}</section>`).join(""), "section:not(:last-child){break-after:page}");
 }
+
+// ---------------------------------------------------------------------------
+// Inventory & Purchases (purchase invoice, supplier ledger, stock report)
+// ---------------------------------------------------------------------------
+const inventoryHeader = (title: string, school?: School) => `${header(school)}<h3>${esc(title)}</h3>`;
+
+export function printPurchaseInvoice(inv: any, school?: School) {
+  const rows = (inv.rows || []).map((r: any) =>
+    `<tr><td>${esc(r.name)}</td><td>${esc(r.unit)}</td><td style="text-align:right">${esc(r.qty)}</td><td style="text-align:right">${money(r.rate)}</td><td style="text-align:right">${money(r.amount)}</td></tr>`).join("");
+  const due = (Number(inv.total) || 0) - (Number(inv.paid) || 0);
+  openPrint("Purchase Invoice", `${inventoryHeader("Purchase Invoice", school)}
+    <p><b>Invoice #:</b> ${esc(inv.invoiceNo)} &nbsp;&nbsp; <b>Date:</b> ${esc(inv.date)} &nbsp;&nbsp; <b>Supplier:</b> ${esc(inv.supplierName)}</p>
+    <table><thead><tr><th>Item</th><th>Unit</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows || '<tr><td colspan="5">No items</td></tr>'}</tbody>
+      <tfoot><tr><th colspan="4" style="text-align:right">Total</th><th style="text-align:right">${money(inv.total)}</th></tr>
+      <tr><th colspan="4" style="text-align:right">Paid now</th><th style="text-align:right">${money(inv.paid)}</th></tr>
+      <tr><th colspan="4" style="text-align:right">Payable</th><th style="text-align:right">${money(due)}</th></tr></tfoot></table>
+    ${inv.note ? `<p>Note: ${esc(inv.note)}</p>` : ""}
+    <p style="margin-top:52px">Received by: ____________________ &nbsp;&nbsp;&nbsp;&nbsp; Authorised signature: ____________________</p>`);
+}
+
+export function printSupplierLedger(supplier: any, ledger: any, school?: School) {
+  const rows = (ledger?.rows || []).map((r: any) =>
+    `<tr><td>${esc(r.date || "-")}</td><td>${esc(r.description)}</td><td style="text-align:right">${r.credit ? money(r.credit) : "-"}</td><td style="text-align:right">${r.debit ? money(r.debit) : "-"}</td><td style="text-align:right">${money(r.balance)}</td></tr>`).join("");
+  openPrint("Supplier Ledger", `${inventoryHeader(`Supplier Ledger - ${esc(supplier?.name || "")}`, school)}
+    <p>Phone: ${esc(supplier?.phone || "-")} &nbsp;&nbsp; Address: ${esc(supplier?.address || "-")}</p>
+    <table><thead><tr><th>Date</th><th>Description</th><th>Purchase (credit)</th><th>Payment (debit)</th><th>Balance payable</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="5">No transactions</td></tr>'}</tbody>
+      <tfoot><tr><th colspan="2" style="text-align:right">Total</th><th style="text-align:right">${money(ledger?.credited)}</th><th style="text-align:right">${money(ledger?.debited)}</th><th style="text-align:right">${money(ledger?.balance)}</th></tr></tfoot></table>`);
+}
+
+export function printStockReport(rows: { name: string; category: string; unit: string; rate: number; stock: number; value: number }[], school?: School) {
+  openPrint("Stock Report", `${inventoryHeader("Items - Stationery, Books, Furniture & Equipment", school)}
+    <table><thead><tr><th>Item</th><th>Category</th><th>Unit</th><th>Rate</th><th>In stock</th><th>Value</th></tr></thead>
+      <tbody>${rows.map((r) => `<tr><td>${esc(r.name)}</td><td>${esc(r.category)}</td><td>${esc(r.unit)}</td><td style="text-align:right">${money(r.rate)}</td><td style="text-align:right">${esc(r.stock)}</td><td style="text-align:right">${money(r.value)}</td></tr>`).join("") || '<tr><td colspan="6">No items</td></tr>'}</tbody>
+      <tfoot><tr><th colspan="5" style="text-align:right">Total value</th><th style="text-align:right">${money(rows.reduce((s, r) => s + r.value, 0))}</th></tr></tfoot></table>`);
+}
