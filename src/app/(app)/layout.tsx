@@ -22,10 +22,11 @@ const all: [string, string, string[]][] = [
   ["/gr-register", "GR Register", ["school"]],
   ["/fees", "Fee Chalan", ["school"]],
   ["/fee-receivable", "Fee Receivable", ["school"]],
-  // Daily Diary, Tests and the timetable are tabs inside Teacher Data,
-  // so they keep working as pages but are not repeated in the navbar.
+  // Diary, Tests, test marks and the timetable are tabs inside Teacher Data
+  // for schools and class teachers. Other teachers keep their own menu links.
   ["/diary", "Daily Diary", ["school", "teacher"]],
   ["/papers", "Tests", ["school", "teacher"]],
+  ["/teachers/marks", "Test Marks Entry", ["school", "teacher"]],
   ["/marks", "Marks Entry", ["school", "teacher"]],
   // Exams and Results are their own navbar items (Exams works like the Tests tab).
   ["/exams", "Exams & Results", ["school", "teacher"]],
@@ -74,8 +75,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const keys = user ? [user.role, ...(classTeacherAssignment(user) ? ["classTeacher"] : [])] : [];
   const allowed = user ? all.filter(([, , roles]) => roles.some((r) => keys.includes(r)))
     .filter(([href], index, rows) => rows.findIndex(([other]) => other === href) === index) : [];
-  // school / class teachers see Daily Diary, Tests and the timetable as
-  // tabs inside Teacher Data, so those navbar items are replaced by the tab strip
+  // School / class teachers see diary, tests, test marks and the timetable
+  // as Teacher Data tabs, so those items are replaced by the tab strip.
   const teacherTabs = user ? seesTeacherDataTabs(user) : false;
   const nav = allowed.filter(([href]) => !tabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
   useEffect(() => { // keep each role inside its own pages

@@ -100,6 +100,7 @@ export function NavIcon({ href }: { href: string }) {
         </svg>
       );
     case "/marks":
+    case "/teachers/marks":
       return (
         <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
           <rect x="3" y="4" width="17" height="4.5" rx="1.2" fill="#22c55e" />

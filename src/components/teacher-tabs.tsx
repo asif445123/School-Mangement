@@ -4,12 +4,12 @@ import { usePathname } from "next/navigation";
 import { useSession } from "./session";
 import { classTeacherAssignment } from "@/lib/teacher-scope";
 
-// Teacher Data is one page with tabs: the teacher list, Daily Diary, Tests,
-// and the timetable (same tab style as Student Data / Fee Management).
+// Teacher Data groups the teacher list, diary, tests, test marks and timetable.
 export const teacherDataTabs: { href: string; label: string; teacherLabel?: string }[] = [
   { href: "/teachers", label: "Teacher Data" },
   { href: "/diary", label: "Daily Diary" },
   { href: "/papers", label: "Tests" },
+  { href: "/teachers/marks", label: "Marks Entry" },
   { href: "/timetable", label: "Set Timetable", teacherLabel: "Timetable" },
 ];
 
