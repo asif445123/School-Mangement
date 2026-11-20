@@ -14,6 +14,7 @@ import ExpenseTabs, { expenseRoutes, expenseTabRoutes } from "@/components/expen
 import ResultsTabs, { resultsRoutes, resultsTabOnly } from "@/components/results-tabs";
 import InventoryTabs, { inventoryRoutes, inventoryTabRoutes } from "@/components/inventory-tabs";
 
+const settingsPages = ["/settings", "/payment-accounts", "/whatsapp-settings"];
 const all: [string, string, string[]][] = [
   ["/dashboard", "Dashboard", ["school"]],
   ["/students", "Student Data", ["school", "teacher"]], // a teacher sees only the classes and sections he teaches
@@ -50,6 +51,7 @@ const all: [string, string, string[]][] = [
   // Inventory & Purchases is one page with six tabs (items, requisitions,
   // purchase invoices, stock in / out, suppliers and the supplier ledger).
   ["/inventory", "Inventory & Purchases", ["school"]],
+  ["/settings", "Settings", ["school", "teacher", "student", "admin"]],
   ["/payment-accounts", "Payment accounts", ["school"]],
   ["/whatsapp-settings", "WhatsApp settings", ["school"]],
   ["/users", "Schools", ["admin"]],
@@ -84,7 +86,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // School / class teachers see diary, tests, test marks and the timetable
   // as Teacher Data tabs, so those items are replaced by the tab strip.
   const teacherTabs = user ? seesTeacherDataTabs(user) : false;
-  const nav = allowed.filter(([href]) => !tabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !inventoryTabOnly.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
+  const nav = allowed.filter(([href]) => !settingsPages.slice(1).includes(href) && !tabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !inventoryTabOnly.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
   // A tab page belongs to its own navbar item (Inventory & Purchases tabs and
   // the other grouped pages keep the group's menu item and heading).
   const menuItem = (path: string) => allowed.find(([href]) =>
@@ -134,7 +136,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <nav aria-label="Main menu" className="flex-1 space-y-0.5 overflow-y-auto py-2 [scrollbar-width:thin]">
             {nav.map(([href, label]) => {
               const active =
-                pathname === href ||
+                pathname === href || (href === "/settings" && settingsPages.includes(pathname)) ||
                 (href === "/students" && tabOnly.has(pathname)) ||
                 (href === "/teachers" && teacherTabOnly.has(pathname)) ||
                 (href === "/entries" && expenseTabOnly.has(pathname)) ||
@@ -162,6 +164,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex min-w-0 flex-1 flex-col">
           <Header title={currentTitle} onOpenMenu={() => setMobileOpen(true)} />
           <main className="w-full flex-1 px-2.5 py-3 pb-24 sm:px-3.5 sm:py-3.5 sm:pb-10">
+            {settingsPages.includes(pathname) && <nav aria-label="Settings sections" className="mb-4 flex flex-wrap gap-1 border-b">
+              {allowed.filter(([href]) => settingsPages.includes(href)).map(([href, label]) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined} className={`rounded-t-lg px-3 py-2 font-medium ${pathname === href ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-white"}`}>
+                {href === "/settings" ? (user.role === "school" ? "School Info" : "Account Info") : label}
+              </Link>)}
+            </nav>}
             {studentDataRoutes.includes(pathname) && <StudentTabs />}
             {teacherDataRoutes.includes(pathname) && <TeacherTabs />}
             {expenseRoutes.includes(pathname) && <ExpenseTabs />}

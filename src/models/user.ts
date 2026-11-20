@@ -4,6 +4,9 @@ import { Schema, model, models } from "mongoose";
 const userSchema = new Schema({
   name: { type: String, required: true, trim: true },
   schoolName: { type: String, default: "" },
+  currentSession: String,
+  financialYearStart: String,
+  financialYearEnd: String,
   resetTokenHash: String, resetExpires: Date, // password reset link (token stored hashed, valid 1 hour)
   logo: { type: String, default: "" }, // school logo as a small data URL (school role only)
   whatsapp: {
