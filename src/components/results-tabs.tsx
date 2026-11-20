@@ -5,7 +5,7 @@ import { useSession } from "./session";
 
 export const resultsTabs: { href: string; label: string; schoolOnly?: boolean }[] = [
   { href: "/exams", label: "Exams" },
-  { href: "/marks", label: "Marks Entry" },
+  { href: "/marks", label: "Marks Entry" }, // exam marks; test marks are in Teacher Data
   { href: "/results", label: "Result & Card" },
   { href: "/results/promotion", label: "Student Promotion", schoolOnly: true },
 ];

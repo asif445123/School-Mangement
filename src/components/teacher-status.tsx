@@ -6,6 +6,7 @@ import { toast } from "@/lib/alerts";
 import { ClassRow, buildClasses, norm } from "@/lib/class-rows";
 import { classTeacherClasses } from "@/lib/teacher-scope";
 import { useSession } from "./session";
+import type { PaperType } from "./school-papers";
 
 type Kind = "diary" | "papers" | "marks";
 const LABEL: Record<Kind, string> = { diary: "Diary", papers: "Papers", marks: "Marks" };
@@ -13,7 +14,7 @@ const Tick = ({ ok, title }: { ok: boolean; title: string }) => ok ? <FaCheckCir
 
 // Teacher portal: green tick / red cross for diary, papers or marks of the chosen date.
 // Class teacher: all subjects of his class + his own subject in other classes. Subject teacher: the classes and subjects he teaches.
-export default function TeacherStatus({ kind, type, label }: { kind: Kind; type?: string; label?: string }) {
+export default function TeacherStatus({ kind, type, label }: { kind: Kind; type?: PaperType; label?: string }) {
   const { user } = useSession();
   const title = label || LABEL[kind];
   const cts = useMemo(() => classTeacherClasses(user), [user]);
@@ -28,15 +29,16 @@ export default function TeacherStatus({ kind, type, label }: { kind: Kind; type?
 
   const load = useCallback(async () => {
     try {
-      const req: Promise<any>[] = [api(kind === "diary" ? `/api/diary?date=${date}` : `/api/papers?date=${date}`), isClassTeacher ? api("/api/users?role=teacher&view=class") : Promise.resolve({ items: [] })];
+      const url = kind === "diary" ? `/api/diary?date=${date}` : `/api/papers?date=${date}${type ? `&type=${type}` : ""}`;
+      const req: Promise<any>[] = [api(url), isClassTeacher ? api("/api/users?role=teacher&view=class") : Promise.resolve({ items: [] })];
       // the roster (not the students resource) is what a teacher may read
       if (kind === "marks") req.push(api("/api/marks"), api("/api/roster"));
       const [it, ts, mk, st] = await Promise.all(req);
-      // Tests and exams have separate pages now - the status only counts the chosen kind.
-      const list = kind === "papers" && type ? it.items.filter((e: any) => e.type === type) : it.items;
+      // Paper and marks status must count only the type for this section.
+      const list = kind !== "diary" && type ? it.items.filter((e: any) => e.type === type) : it.items;
       setItems(list); setSubTeachers(ts.items); if (mk) setMarks(mk.items); if (st) setStudents(st.items);
     } catch (e: any) { toast("error", e.message); }
-  }, [date, kind, isClassTeacher]);
+  }, [date, kind, type, isClassTeacher]);
   useEffect(() => { load(); }, [load]);
 
   // rows: my class (all subjects, from the subject teachers + me) and my own subjects elsewhere
@@ -72,11 +74,11 @@ export default function TeacherStatus({ kind, type, label }: { kind: Kind; type?
                 {isOpen && (
                   <tr className="bg-slate-50"><td colSpan={4} className="p-3">
                     <table className="w-full rounded-lg bg-white">
-                      <thead><tr><th className="th">Subject</th><th className="th">Teacher</th><th className="th text-center">Done</th><th className="th">{kind === "diary" ? "Homework / Note" : kind === "papers" ? "Test / exam paper" : "Paper and marks given"}</th></tr></thead>
+                      <thead><tr><th className="th">Subject</th><th className="th">Teacher</th><th className="th text-center">Done</th><th className="th">{kind === "diary" ? "Homework / Note" : kind === "papers" ? (type ? `${type === "exam" ? "Exam" : "Test"} paper` : "Test / exam paper") : "Paper and marks given"}</th></tr></thead>
                       <tbody>
                         {r.subjects.map((s) => { const es = ofSubject(list, s.name), ok = subjectOk(list, s.name); return (
                           <tr key={s.name} className="border-t"><td className="td font-medium">{s.name}</td><td className="td">{s.teachers.join(", ")}</td><td className="td text-center"><Tick ok={ok} title={ok ? "Done" : "Not done"} /></td>
-                            <td className={`td ${es.length ? "" : "text-red-500"}`}>{es.length ? detail(es) : kind === "diary" ? "Diary not filled" : "No test or exam paper on this date"}</td></tr>); })}
+                            <td className={`td ${es.length ? "" : "text-red-500"}`}>{es.length ? detail(es) : kind === "diary" ? "Diary not filled" : type ? `No ${type} paper on this date` : "No test or exam paper on this date"}</td></tr>); })}
                         {!r.subjects.length && <tr><td colSpan={4} className="td py-4 text-center text-slate-400">No subjects assigned yet</td></tr>}
                       </tbody>
                     </table>
