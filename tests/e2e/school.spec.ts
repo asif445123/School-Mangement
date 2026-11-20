@@ -29,8 +29,8 @@ test('school can edit charges, preview image and manage payment accounts', async
   await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(500);
   await page.screenshot({ path: test.info().outputPath('whatsapp-voucher.png'), fullPage: true });
   await page.getByRole('button', { name: 'Close dialog' }).click();
-  await page.getByRole('button', { name: 'User menu' }).click();
-  await page.getByRole('button', { name: 'Payment accounts', exact: true }).click();
+  await page.getByRole('link', { name: 'Settings', exact: true }).click();
+  await page.getByRole('link', { name: 'Payment accounts', exact: true }).click();
   await expect(page.getByText(process.env.E2E_PAYMENT_ACCOUNT || 'School Fees Collection', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Add account', exact: true }).click();
   await page.getByLabel('Account type').selectOption('raast');
