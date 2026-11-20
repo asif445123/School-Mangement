@@ -6,6 +6,7 @@ const studentSchema = new Schema({
   name: { type: String, required: true }, fatherName: String, className: { type: String, required: true },
   section: { type: String, default: "", trim: true }, // A / B / C ... (empty = the school does not use sections)
   rollNo: String, phone: String, whatsapp: { type: String, default: "", trim: true }, monthlyFee: { type: Number, default: 0 }, discount: { type: Number, default: 0 },
+  session: { type: String, default: "", trim: true }, // the session the student is studying in (set when the class is promoted)
   previousPending: { type: Number, default: 0 }, // fee owed from before the school started using the system
   address: { type: String, trim: true },
   previousSchool: { type: String, trim: true },

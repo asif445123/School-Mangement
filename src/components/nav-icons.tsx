@@ -79,6 +79,26 @@ export function NavIcon({ href }: { href: string }) {
           <path d="M15.6 17.5L16.6 18.5L18.6 16.5" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
+    case "/exams":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <path d="M5 2.5H14.5L19.5 7.5V21.5H5V2.5Z" fill="#ffffff" />
+          <path d="M14.5 2.5V7.5H19.5L14.5 2.5Z" fill="#34d399" />
+          <path d="M8 11H16M8 14.5H16M8 18H12.5" stroke="#059669" strokeWidth="1.6" strokeLinecap="round" />
+          <circle cx="16.5" cy="16.5" r="3.4" fill="#f59e0b" />
+          <path d="M16.5 14.6L17.1 15.9L18.5 16L17.4 16.9L17.7 18.3L16.5 17.6L15.3 18.3L15.6 16.9L14.5 16L15.9 15.9L16.5 14.6Z" fill="#ffffff" />
+        </svg>
+      );
+    case "/results":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <rect x="3" y="3.5" width="18" height="17" rx="2.5" fill="#ffffff" />
+          <path d="M3 8.5H21" stroke="#f59e0b" strokeWidth="2.4" />
+          <path d="M7 12.5H9.5V18H7V12.5Z" fill="#22c55e" />
+          <path d="M11.2 10.5H13.7V18H11.2V10.5Z" fill="#3b82f6" />
+          <path d="M15.4 14H17.9V18H15.4V14Z" fill="#ef4444" />
+        </svg>
+      );
     case "/marks":
       return (
         <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">

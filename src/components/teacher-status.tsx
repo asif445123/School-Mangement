@@ -13,8 +13,9 @@ const Tick = ({ ok, title }: { ok: boolean; title: string }) => ok ? <FaCheckCir
 
 // Teacher portal: green tick / red cross for diary, papers or marks of the chosen date.
 // Class teacher: all subjects of his class + his own subject in other classes. Subject teacher: the classes and subjects he teaches.
-export default function TeacherStatus({ kind }: { kind: Kind }) {
+export default function TeacherStatus({ kind, type, label }: { kind: Kind; type?: string; label?: string }) {
   const { user } = useSession();
+  const title = label || LABEL[kind];
   const cts = useMemo(() => classTeacherClasses(user), [user]);
   const isClassTeacher = cts.length > 0;
   const inMyClass = (r: ClassRow) => cts.some((c) => norm(c.className) === norm(r.className) && (!norm(c.section) || norm(c.section) === norm(r.section)));
@@ -31,7 +32,9 @@ export default function TeacherStatus({ kind }: { kind: Kind }) {
       // the roster (not the students resource) is what a teacher may read
       if (kind === "marks") req.push(api("/api/marks"), api("/api/roster"));
       const [it, ts, mk, st] = await Promise.all(req);
-      setItems(it.items); setSubTeachers(ts.items); if (mk) setMarks(mk.items); if (st) setStudents(st.items);
+      // Tests and exams have separate pages now - the status only counts the chosen kind.
+      const list = kind === "papers" && type ? it.items.filter((e: any) => e.type === type) : it.items;
+      setItems(list); setSubTeachers(ts.items); if (mk) setMarks(mk.items); if (st) setStudents(st.items);
     } catch (e: any) { toast("error", e.message); }
   }, [date, kind, isClassTeacher]);
   useEffect(() => { load(); }, [load]);
@@ -54,7 +57,7 @@ export default function TeacherStatus({ kind }: { kind: Kind }) {
       <h3 className="p-4 pb-1 font-semibold">{title}</h3>
       <p className="px-4 pb-2 text-xs text-slate-500">{hint}</p>
       <table className="w-full min-w-[600px]">
-        <thead><tr><th className="th w-8"></th><th className="th">Class</th><th className="th">Section</th><th className="th text-center">{LABEL[kind]}</th></tr></thead>
+        <thead><tr><th className="th w-8"></th><th className="th">Class</th><th className="th">Section</th><th className="th text-center">{title}</th></tr></thead>
         <tbody>
           {rows.map((r) => {
             const list = ofClass(r), okCount = r.subjects.filter((s) => subjectOk(list, s.name)).length, complete = r.subjects.length > 0 && okCount === r.subjects.length;
@@ -91,7 +94,7 @@ export default function TeacherStatus({ kind }: { kind: Kind }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">{LABEL[kind]} status</h2>
+          <h2 className="text-lg font-semibold">{title} status</h2>
           <p className="text-sm text-slate-500">Green tick = done for {date === today() ? "today" : date}, red cross = not done. Click a class to see its subjects.</p>
         </div>
         <div className="flex items-end gap-2">

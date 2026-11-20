@@ -11,6 +11,7 @@ import { SessionContext } from "@/components/session";
 import StudentTabs, { studentDataRoutes } from "@/components/student-tabs";
 import TeacherTabs, { teacherDataRoutes, teacherTabRoutes, seesTeacherDataTabs } from "@/components/teacher-tabs";
 import ExpenseTabs, { expenseRoutes, expenseTabRoutes } from "@/components/expense-tabs";
+import ResultsTabs, { resultsRoutes, resultsTabOnly } from "@/components/results-tabs";
 
 const all: [string, string, string[]][] = [
   ["/dashboard", "Dashboard", ["school"]],
@@ -21,11 +22,17 @@ const all: [string, string, string[]][] = [
   ["/gr-register", "GR Register", ["school"]],
   ["/fees", "Fee Chalan", ["school"]],
   ["/fee-receivable", "Fee Receivable", ["school"]],
-  // Daily Diary, Papers, Marks and the timetable are tabs inside Teacher Data,
+  // Daily Diary, Tests, Marks and the timetable are tabs inside Teacher Data,
   // so they keep working as pages but are not repeated in the navbar.
   ["/diary", "Daily Diary", ["school", "teacher"]],
-  ["/papers", "Papers", ["school", "teacher"]],
+  ["/papers", "Tests", ["school", "teacher"]],
   ["/marks", "Marks", ["school", "teacher"]],
+  // Exams and Results are their own navbar items (Exams works like the Tests tab).
+  ["/exams", "Exams", ["school", "teacher"]],
+  ["/results", "Results", ["school", "teacher"]],
+  // Student Promotion is a tab inside Results, so it keeps working as a page
+  // but is not repeated in the navbar.
+  ["/results/promotion", "Results", ["school"]],
   ["/teachers", "Teacher Data", ["classTeacher"]], // first match wins, so this must come before the school's own label
   ["/teachers", "Teacher Data", ["school"]],
   ["/staff-attendance", "Staff Attendance", ["school"]],
@@ -49,6 +56,8 @@ const tabOnly = new Set(["/gr-register", "/fees", "/fee-receivable"]);
 const teacherTabOnly = new Set(teacherTabRoutes);
 // Pages that are shown as tabs inside Enter Expenses instead of their own navbar item
 const expenseTabOnly = new Set(expenseTabRoutes);
+// Pages that are shown as tabs inside Results instead of their own navbar item
+const resultsTabOnlySet = new Set(resultsTabOnly);
 const home: any = { admin: "/users", school: "/dashboard", teacher: "/students", student: "/my" };
 // Where a role starts: every teacher now lands on Students, which opens on his own class.
 const landing = (u: any) => home[u?.role];
@@ -65,10 +74,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const keys = user ? [user.role, ...(classTeacherAssignment(user) ? ["classTeacher"] : [])] : [];
   const allowed = user ? all.filter(([, , roles]) => roles.some((r) => keys.includes(r)))
     .filter(([href], index, rows) => rows.findIndex(([other]) => other === href) === index) : [];
-  // school / class teachers see Daily Diary, Papers, Marks and the timetable as
+  // school / class teachers see Daily Diary, Tests, Marks and the timetable as
   // tabs inside Teacher Data, so those navbar items are replaced by the tab strip
   const teacherTabs = user ? seesTeacherDataTabs(user) : false;
-  const nav = allowed.filter(([href]) => !tabOnly.has(href) && !expenseTabOnly.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
+  const nav = allowed.filter(([href]) => !tabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
   useEffect(() => { // keep each role inside its own pages
     if (user && !allowed.some(([href]) => href === pathname)) router.replace(landing(user));
   }, [user, pathname]); // eslint-disable-line
@@ -117,7 +126,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 pathname === href ||
                 (href === "/students" && tabOnly.has(pathname)) ||
                 (href === "/teachers" && teacherTabOnly.has(pathname)) ||
-                (href === "/entries" && expenseTabOnly.has(pathname));
+                (href === "/entries" && expenseTabOnly.has(pathname)) ||
+                (href === "/results" && resultsTabOnlySet.has(pathname));
               return (
                 <Link
                   key={label}
@@ -143,6 +153,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {studentDataRoutes.includes(pathname) && <StudentTabs />}
             {teacherDataRoutes.includes(pathname) && <TeacherTabs />}
             {expenseRoutes.includes(pathname) && <ExpenseTabs />}
+            {resultsRoutes.includes(pathname) && <ResultsTabs />}
             {children}
           </main>
         </div>
