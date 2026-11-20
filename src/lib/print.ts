@@ -52,6 +52,29 @@ export function printPaper(p: any, school?: School) {
   <p>Date: ${esc(p.date)} &nbsp;&nbsp; Total Marks: ${esc(p.totalMarks)}</p><p>Name: ____________ &nbsp; Roll #: ______</p><hr/>${qs}`);
 }
 
+// Printable result card of one student: subject wise obtained / total marks,
+// overall total, percentage, grade and pass / fail.
+const resultCardHtml = (r: any, school?: School, session = "") => {
+  const rows = (r.subjects || []).map((s: any) =>
+    `<tr><td>${esc(s.paper?.subject)}</td><td>${esc(s.paper?.title)}</td><td>${s.entered ? s.obtained : "not entered"}</td><td>${esc(s.paper?.totalMarks)}</td><td>${s.pass ? "Pass" : "Fail"}</td></tr>`).join("");
+  return `${header(school)}<h3>Result Card${session ? ` - ${esc(session)}` : ""}</h3>
+  <p><b>${esc(r.student?.name)}</b> &nbsp; S/O ${esc(r.student?.fatherName || "")}</p>
+  <p>Class ${esc(r.student?.className)}${r.student?.section ? " " + esc(r.student.section) : ""} &nbsp; Roll # ${esc(r.student?.rollNo || "")}</p>
+  <table><thead><tr><th>Subject</th><th>Exam</th><th>Obtained</th><th>Total</th><th>Result</th></tr></thead><tbody>${rows || '<tr><td colspan="5">No exam papers</td></tr>'}</tbody></table>
+  <p style="margin-top:12px">Total: <b>${r.obtained} / ${r.total}</b> &nbsp; Percentage: <b>${r.pct.toFixed(1)}%</b> &nbsp; Grade: <b>${r.grade}</b> &nbsp; Result: <b>${r.passed ? "PASS" : "FAIL"}</b></p>
+  <p style="margin-top:44px">Class teacher's signature: ____________________</p>`;
+};
+
+export function printResultCard(r: any, school?: School, session = "") {
+  openPrint("Result Card", resultCardHtml(r, school, session));
+}
+
+// Every student's card in one print window (one card per page).
+export function printResultCards(rows: any[], school?: School, session = "") {
+  if (!rows.length) return;
+  openPrint("Result Cards", rows.map((r) => `<section>${resultCardHtml(r, school, session)}</section>`).join(""), "section{break-after:page}section:last-child{break-after:auto}");
+}
+
 export function printElement(title: string, el: HTMLElement | null, school?: School, landscape = false) {
   if (!el) return;
   openPrint(title, `${header(school)}<h3>${esc(title)}</h3>${el.innerHTML}`, landscape ? "@page{size:landscape}table{font-size:11px}td,th{padding:4px}" : "");

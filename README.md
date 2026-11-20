@@ -25,6 +25,22 @@ The navbar has a single **Student Data** item for every student-related work. Op
 
 The three school-only tabs used to be separate navbar items. They are now tabs, and their old links (`/gr-register`, `/fees`, `/fee-receivable`) still work, keep the same tab selected and open straight on that tab. A teacher only sees the **Student Data** tab (his own class and section, no fees).
 
+### Navigation: one **Teacher Data** page with tabs, plus **Exams** and **Results**
+The navbar **Teacher Data** item (school admin and class teachers) shows a tab strip:
+
+- **Teacher Data** — the teacher list with assignments.
+- **Daily Diary** — the class diary.
+- **Tests** — test papers, with the **+ Test** action only.
+- **Marks** — class wise marks status and marks entry.
+- **Set Timetable** — the class timetable.
+
+**Exams** is its own navbar item and works exactly like the **Tests** tab (same layout, same date / class / subject flow), but it only handles exam papers: the action is **+ Exam** and the exam form also asks for the **session** (e.g. 2025-2026) and the **pass percentage** needed to pass. The pass percentage defaults to 33% when left empty.
+
+**Results** is its own navbar item and has two tabs:
+
+- **Result & Card** — pick an **exam** (one session + term + class, e.g. *Mid Term - Class1*) to see every student's position, subject wise marks, total, percentage, grade and Pass / Fail. A student passes when he reaches the pass percentage in **every** subject. The row **Card** button prints that student's result card, **Print All Result Cards** prints every card in one window, and **Result Sheet** prints the whole table.
+- **Student Promotion** (school admin only) — pick a class, section and exam, then move the students to the **Promote to Class** with a **New Section** and **New Session**. The list can show all students or only those who passed the exam, and students are promoted one by one or by selection.
+
 ### Navigation: **Student Attendance** (school admin + class teachers)
 **Student Attendance** is its own navbar item, directly below **Student Data**. It is shown to the school admin and to every teacher who is a **class teacher** of at least one class (a subject-only teacher does not see it, and no other role does). It has up to four tabs:
 
