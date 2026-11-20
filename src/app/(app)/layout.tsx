@@ -22,13 +22,13 @@ const all: [string, string, string[]][] = [
   ["/gr-register", "GR Register", ["school"]],
   ["/fees", "Fee Chalan", ["school"]],
   ["/fee-receivable", "Fee Receivable", ["school"]],
-  // Daily Diary, Tests, Marks and the timetable are tabs inside Teacher Data,
+  // Daily Diary, Tests and the timetable are tabs inside Teacher Data,
   // so they keep working as pages but are not repeated in the navbar.
   ["/diary", "Daily Diary", ["school", "teacher"]],
   ["/papers", "Tests", ["school", "teacher"]],
-  ["/marks", "Marks", ["school", "teacher"]],
+  ["/marks", "Marks Entry", ["school", "teacher"]],
   // Exams and Results are their own navbar items (Exams works like the Tests tab).
-  ["/exams", "Exams", ["school", "teacher"]],
+  ["/exams", "Exams & Results", ["school", "teacher"]],
   ["/results", "Results", ["school", "teacher"]],
   // Student Promotion is a tab inside Results, so it keeps working as a page
   // but is not repeated in the navbar.
@@ -74,7 +74,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const keys = user ? [user.role, ...(classTeacherAssignment(user) ? ["classTeacher"] : [])] : [];
   const allowed = user ? all.filter(([, , roles]) => roles.some((r) => keys.includes(r)))
     .filter(([href], index, rows) => rows.findIndex(([other]) => other === href) === index) : [];
-  // school / class teachers see Daily Diary, Tests, Marks and the timetable as
+  // school / class teachers see Daily Diary, Tests and the timetable as
   // tabs inside Teacher Data, so those navbar items are replaced by the tab strip
   const teacherTabs = user ? seesTeacherDataTabs(user) : false;
   const nav = allowed.filter(([href]) => !tabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
@@ -127,7 +127,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 (href === "/students" && tabOnly.has(pathname)) ||
                 (href === "/teachers" && teacherTabOnly.has(pathname)) ||
                 (href === "/entries" && expenseTabOnly.has(pathname)) ||
-                (href === "/results" && resultsTabOnlySet.has(pathname));
+                (href === "/exams" && resultsTabOnlySet.has(pathname));
               return (
                 <Link
                   key={label}
