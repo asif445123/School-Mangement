@@ -1,5 +1,5 @@
 import { nz, assignmentsOf, splitList } from "./teacher-scope";
-import { attendancePct } from "./attendance";
+import { attendancePct, normalizeAttendanceStatus } from "./attendance";
 
 // Numbers shown on the dashboard for one chosen date. Everything here is a pure
 // function of the rows the API loaded, so the arithmetic can be unit tested.
@@ -229,4 +229,80 @@ export function staffStrength(users: any[]): { teachers: number; staff: number; 
   const people = (users || []).filter((u) => !u?.role || u.role === "teacher");
   const teachers = people.filter(isTeacherAccount).length;
   return { teachers, staff: people.length - teachers, total: people.length };
+}
+
+export type ClassAttendanceGap = {
+  className: string;
+  section: string;
+  total: number;
+  marked: number;
+  unmarked: number;
+  teachers: { id: string; name: string }[];
+};
+
+// Lists the class-teacher(s) responsible for any active class/section that still
+// has students without an attendance record on the selected day. Attendance
+// records do not store the user who clicked Save, so this reports responsibility
+// from the current class-teacher assignments rather than an individual audit log.
+export function classAttendanceGaps(roster: any[], records: any[], users: any[]): ClassAttendanceGap[] {
+  const groups = new Map<string, { className: string; section: string; total: number; markedIds: Set<string> }>();
+  const groupByStudent = new Map<string, string>();
+  const keyOf = (className: any, section: any) => `${nz(className)}|${nz(section)}`;
+
+  for (const student of roster || []) {
+    const id = String(student?._id || student?.student || "");
+    if (!id) continue;
+    const className = String(student?.className || "").trim();
+    const section = String(student?.section || "").trim();
+    const key = keyOf(className, section);
+    const group = groups.get(key) || { className, section, total: 0, markedIds: new Set<string>() };
+    group.total++;
+    groups.set(key, group);
+    groupByStudent.set(id, key);
+  }
+
+  for (const record of records || []) {
+    const id = String(record?.student?._id || record?.student || "");
+    const key = groupByStudent.get(id);
+    if (!key || !normalizeAttendanceStatus(record?.status)) continue;
+    groups.get(key)?.markedIds.add(id);
+  }
+
+  const classTeachers = (users || []).filter((user) =>
+    (!user?.role || user.role === "teacher") && isTeacherAccount(user),
+  );
+
+  return [...groups.values()]
+    .map((group) => {
+      const teachers: { id: string; name: string }[] = [];
+      const seen = new Set<string>();
+      for (const teacher of classTeachers) {
+        const responsible = assignmentsOf(teacher).some((assignment) =>
+          nz(assignment.teacherType) === "class teacher" &&
+          splitList(assignment.className).some((name) => nz(name) === nz(group.className)) &&
+          (!nz(assignment.section) || !nz(group.section) || nz(assignment.section) === nz(group.section)),
+        );
+        if (!responsible) continue;
+        const id = String(teacher?._id || teacher?.name || "");
+        if (seen.has(id)) continue;
+        seen.add(id);
+        teachers.push({ id, name: String(teacher?.name || "").trim() || "-" });
+      }
+      teachers.sort((a, b) => a.name.localeCompare(b.name));
+      const marked = group.markedIds.size;
+      return {
+        className: group.className,
+        section: group.section,
+        total: group.total,
+        marked,
+        unmarked: Math.max(0, group.total - marked),
+        teachers,
+      };
+    })
+    .filter((row) => row.unmarked > 0)
+    .sort(
+      (a, b) =>
+        a.className.localeCompare(b.className, undefined, { numeric: true }) ||
+        a.section.localeCompare(b.section, undefined, { numeric: true }),
+    );
 }

@@ -16,11 +16,13 @@
 All data is separated per school. Pending / rejected / logged-out visitors can click **View Demo**.
 
 ### Dashboard (school admin + class teachers)
-The dashboard opens on **today** and has one **Date** picker at the top: every card, chart and report below follows the selected date.
+The dashboard opens on **today** and has one **Date** picker at the top: academic cards, charts and reports follow the selected date. The school-only **Fee Report** has its own **Month** picker.
 
 - **Diary card — `S … - D … - R …`** — *S* = total subjects (one row per subject of every subject teacher), *D* = diaries submitted for that date, *R* = diaries remaining. Clicking the card (or **Which teachers did not submit?** under the Diary Report chart) opens the detail: one row per teacher / class / section / subject whose diary is still missing, plus a per-teacher S / D / R table. A diary saved without a section counts for every section of that class, exactly like the Daily Diary page.
 - **Tests card — `T … - M … - R …`** — *T* = tests created on that date (tests only, exams are excluded), *M* = their total marks, *R* = marks still to be entered. Clicking it opens the test report (per class / section / subject: tests, marks entered, total marks and remaining marks).
 - **Students Today / Staff Today** — `P … / A … / L …` present, absent and leave counts with how many were marked, how many are unmarked and the attendance %.
+- When student attendance is incomplete, the **Students Today** card (or Student Attendance donut link) opens a class-wise follow-up list with the assigned class teacher(s) and the number of students still unmarked. This identifies the responsible class teachers; attendance does not record which staff account clicked Save.
+- The school-only **Fee Report** shows selected-month fee, previous pending, received, current pending and total balance, plus collection percentage. Collection is red through 25%, yellow above 25% through 50%, blue above 50% through 75%, and green above 75% through 100%. A link opens the full Student Reports fee report.
 - **Report of the day** — total teachers, other staff (*type* = Staff accounts) and active students, **Students by Class** bar chart, the **Student Attendance** donut, the **Diary Report** donut (submitted vs remaining) and the **Test Report** donut (marks entered vs remaining).
 - The finance section (income / expense / receivable / payable breakdown and charts) stays below, school admin only.
 - A **class teacher** sees the same page for his own class and section only (diary, tests and student attendance of that class; no staff figures). A subject-only teacher has no dashboard, and the page is not shown to students or the platform admin.

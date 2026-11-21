@@ -5,6 +5,7 @@ import { useSession } from "@/components/session";
 import { typeFlags } from "@/lib/account-flags";
 import { Row, splitRows, useAccounting } from "@/lib/accounting";
 import Modal from "@/components/modal";
+import FeeReport from "@/components/fee-report";
 import { BarChart, DonutChart, Legend } from "@/components/charts";
 
 const colors = ["#2563eb", "#dc2626", "#16a34a", "#9333ea", "#0891b2", "#f59e0b", "#ec4899", "#475569", "#84cc16", "#14b8a6", "#f43f5e", "#8b5cf6"];
@@ -108,12 +109,16 @@ function MetricCard({
   );
 }
 
-function AttendanceCard({ title, totals, tone }: { title: string; totals: any; tone: string }) {
+function AttendanceCard({ title, totals, tone, onClick }: { title: string; totals: any; tone: string; onClick?: () => void }) {
+  const hasGaps = totals.unmarked > 0;
   return (
     <MetricCard
       title={title} tone={tone}
       metrics={[["P", totals.present, "Present"], ["A", totals.absent, "Absent"], ["L", totals.leave, "Leave"]]}
       subtitle={`${totals.marked} of ${totals.total} marked · ${totals.unmarked} unmarked · ${totals.pct}% present`}
+      footer={hasGaps && onClick ? <span className="mt-2 inline-block text-xs font-semibold text-blue-600 underline">See class teachers with unmarked attendance</span> : undefined}
+      onClick={hasGaps ? onClick : undefined}
+      active={hasGaps && Boolean(onClick)}
     />
   );
 }
@@ -128,6 +133,7 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [diaryOpen, setDiaryOpen] = useState(false);
   const [testsOpen, setTestsOpen] = useState(false);
+  const [attendanceOpen, setAttendanceOpen] = useState(false);
   const { entries, payments } = useAccounting(isSchool);
   const [from, setFrom] = useState(`${currentMonth()}-01`);
   const [to, setTo] = useState(today());
@@ -197,10 +203,18 @@ export default function DashboardPage() {
             }
             onClick={() => setTestsOpen(true)} active={testsOpen}
           />
-          <AttendanceCard title={`Students Today - ${dayLabel}`} totals={att?.students || { present: 0, absent: 0, leave: 0, marked: 0, total: 0, unmarked: 0, pct: 0 }} tone="#16a34a" />
+          <AttendanceCard title={`Students Today - ${dayLabel}`} totals={att?.students || { present: 0, absent: 0, leave: 0, marked: 0, total: 0, unmarked: 0, pct: 0 }} tone="#16a34a" onClick={() => setAttendanceOpen(true)} />
           {isSchool && <AttendanceCard title={`Staff Today - ${dayLabel}`} totals={att?.staff || { present: 0, absent: 0, leave: 0, marked: 0, total: 0, unmarked: 0, pct: 0 }} tone="#16a34a" />}
         </div>
       </section>
+
+      {isSchool && <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">Fee Report</h2>
+          <p className="text-sm text-slate-500">Monthly collection and pending fees.</p>
+        </div>
+        <FeeReport compact />
+      </section>}
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Report of {dayLabel}</h2>
@@ -249,6 +263,11 @@ export default function DashboardPage() {
                   { label: "Leave", value: att?.students?.leave ?? 0, color: "#f59e0b" },
                 ]} />
                 <p className="text-xs text-slate-400">{att?.students?.unmarked ?? 0} students not marked</p>
+                {(att?.students?.unmarked ?? 0) > 0 && (
+                  <button type="button" className="text-left text-xs font-semibold text-blue-600 underline" onClick={() => setAttendanceOpen(true)}>
+                    Which class teachers have not completed attendance?
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -380,6 +399,43 @@ export default function DashboardPage() {
                       <td className={`td text-center font-semibold ${r.remainingMarks ? "text-red-600" : "text-slate-400"}`}>{r.remainingMarks}</td>
                     </tr>
                   )) : <tr><td colSpan={7} className="td py-8 text-center text-slate-500">No tests were created on this date.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {attendanceOpen && (
+        <Modal title={`Attendance follow-up - ${date}`} onClose={() => setAttendanceOpen(false)} extraWide>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-3">
+              {[
+                ["Students not marked", att?.students?.unmarked ?? 0],
+                ["Classes to follow up", att?.gaps?.length ?? 0],
+                ["Attendance marked", `${att?.students?.marked ?? 0} / ${att?.students?.total ?? 0}`],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-200">
+                  <p className="text-xs text-slate-500">{label}</p>
+                  <p className="text-xl font-bold">{value}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-slate-500">Classes below still have students without an attendance entry for {date}. Teacher names are the assigned class teachers; the attendance register does not record which staff account clicked Save.</p>
+            <div className="table-scroll overflow-x-auto rounded-lg ring-1 ring-slate-200">
+              <table className="w-full min-w-[620px]">
+                <thead><tr><th className="th">#</th><th className="th">Class</th><th className="th">Section</th><th className="th">Assigned class teacher(s)</th><th className="th text-center">Marked</th><th className="th text-center">Not marked</th></tr></thead>
+                <tbody>
+                  {att?.gaps?.length ? att.gaps.map((row: any, i: number) => (
+                    <tr key={`${row.className}-${row.section}`} className="border-t">
+                      <td className="td text-slate-400">{i + 1}</td>
+                      <td className="td font-medium">{row.className || "-"}</td>
+                      <td className="td">{row.section || "-"}</td>
+                      <td className="td">{row.teachers?.length ? row.teachers.map((teacher: any) => teacher.name).join(", ") : <span className="text-slate-400">No class teacher assigned</span>}</td>
+                      <td className="td text-center">{row.marked} / {row.total}</td>
+                      <td className="td text-center font-semibold text-red-600">{row.unmarked}</td>
+                    </tr>
+                  )) : <tr><td colSpan={6} className="td py-8 text-center text-slate-500">All students in your attendance scope are marked for this date.</td></tr>}
                 </tbody>
               </table>
             </div>
