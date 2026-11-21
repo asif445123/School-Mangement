@@ -3,13 +3,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "./session";
 
-// Student Data is one page with tabs: the student list, the G.R. Register, the
-// Fee Chalan page and the Fee Receivable report (same tab style as Fee Management).
+// Student Data is one page with tabs: the student list, the G.R. Register and
+// the Fee Chalan page (same tab style as Fee Management). The month wise fee
+// receivable report now lives under Student Reports.
 export const studentDataTabs: { href: string; label: string; schoolOnly?: boolean }[] = [
   { href: "/students", label: "Student Data" },
   { href: "/gr-register", label: "GR Register", schoolOnly: true },
   { href: "/fees", label: "Fee Chalan", schoolOnly: true },
-  { href: "/fee-receivable", label: "Fee Receivable", schoolOnly: true },
 ];
 
 export const studentDataRoutes = studentDataTabs.map((t) => t.href);
