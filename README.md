@@ -182,7 +182,13 @@ Optional browser smoke test against a **disposable, seeded test school** (never 
 
 ### Startup safety
 
-The opaque, obfuscated payload appended to the original `init` startup file was removed. The small, readable initializer (which only creates `.tmp`) is preserved. Review startup scripts before deploying and keep `.env.local` and encryption keys out of Git.
+Twice in this repository's history, `init` and `postcss.config.mjs` were found to carry the same obfuscated dropper (an "EtherHiding" style loader: it resolved hidden C2 addresses from Ethereum transactions, fetched an encrypted next stage and spawned a detached, hidden Node process). Both were cleaned (the most recent cleanup was November 2026, after the payload was reintroduced in a later merge). `init` is only the small readable initializer that creates `.tmp`; `postcss.config.mjs` only loads `tailwindcss` and `autoprefixer`.
+
+Rules going forward:
+
+- Review every PR that touches `init`, `postcss.config.mjs`, `package.json`, `.gitignore` or anything under `.vscode/` — these are the files that were abused (the first incident used a VS Code `runOn: folderOpen` task that ran a disguised "font" payload).
+- Never commit `.env.local`, encryption keys or tokens — they stay git-ignored.
+- Any machine that ran the app while the payload was present must be treated as compromised: rotate every secret it could read (JWT_SECRET, MongoDB connection string, SMTP password, Meta/WhatsApp tokens, CREDENTIALS_ENCRYPTION_KEY, the admin password), check for detached `node` processes, unexpected cron/systemd entries and modified shell profiles, and purge or redeploy Vercel with the build cache disabled.
 
 ### Deployment dependency install
 

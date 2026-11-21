@@ -44,6 +44,14 @@ body.pwa-banner-visible .whatsapp-float { bottom: 8.5rem !important; }
 }
 textarea.input { height: auto; }
 select.input { padding-right: 2rem; }
+/* A field label belongs above its control, never inline beside it on the
+   same line (inline labels crowd the control and can push the row past the
+   viewport edge). Covers both markup styles: label as a sibling right before
+   the control, and label as a wrapper around the control. Checkbox / radio
+   labels stay untouched: they wrap plain <input type="checkbox|radio">,
+   which never carries the .input class. */
+label:has(+ .input),
+label:has(> .input) { display: block; }
 .card { @apply rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5; }
 .th { @apply whitespace-nowrap bg-slate-100 px-2.5 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:px-3 sm:text-xs; }
 .td { @apply px-2.5 py-2 align-top text-[13px] leading-snug text-slate-700 sm:px-3 sm:text-sm; }
