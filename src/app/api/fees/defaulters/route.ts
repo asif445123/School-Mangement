@@ -12,7 +12,7 @@ export async function GET() {
 
   await connectDb();
   const rows = await Fee.find({ school: access.schoolId })
-    .select("student month amount paid")
+    .select("student month amount paid whatsapp revision")
     .populate({
       path: "student",
       select: "name fatherName className section rollNo phone whatsapp status",

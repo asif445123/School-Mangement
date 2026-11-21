@@ -6,6 +6,8 @@ export type FeeDefaulter = {
   balance: number;
   latestMonth: string;
   pendingVoucherCount: number;
+  whatsapp?: any;
+  revision?: number;
 };
 
 // One reminder row per student. Summing each voucher's remaining amount avoids
@@ -24,7 +26,11 @@ export function buildFeeDefaulters(fees: any[]): FeeDefaulter[] {
     if (current) {
       current.balance += balance;
       current.pendingVoucherCount += 1;
-      if (month > current.latestMonth) current.latestMonth = month;
+      if (month >= current.latestMonth) {
+        current.latestMonth = month;
+        current.whatsapp = fee.whatsapp;
+        current.revision = fee.revision;
+      }
     } else {
       grouped.set(studentId, {
         student,
@@ -32,6 +38,8 @@ export function buildFeeDefaulters(fees: any[]): FeeDefaulter[] {
         balance,
         latestMonth: month,
         pendingVoucherCount: 1,
+        whatsapp: fee.whatsapp,
+        revision: fee.revision,
       });
     }
   }

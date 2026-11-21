@@ -2,12 +2,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 import { api, money } from "@/lib/api";
-import { toast } from "@/lib/alerts";
+import { Swal, toast } from "@/lib/alerts";
 import { formatMonth } from "@/lib/chalan";
 import { buildFeeDefaulters, feeReminderMessage } from "@/lib/fee-defaulters";
 import { studentWhatsApp, whatsappDisplay } from "@/lib/phone";
 import { studentClassSection } from "@/lib/student-details";
 import { useSession } from "@/components/session";
+import WhatsAppStatus from "@/components/whatsapp-status";
 
 export default function FeeDefaultersPage() {
   const { user } = useSession();
@@ -16,6 +17,7 @@ export default function FeeDefaultersPage() {
   const [className, setClassName] = useState("");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [sendingId, setSendingId] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -55,6 +57,36 @@ export default function FeeDefaultersPage() {
   });
   const schoolName = user?.schoolInfo?.name || user?.schoolName || "the school";
 
+  async function sendReminder(studentId: string, studentName: string, href: string) {
+    if (!href || sendingId) return;
+    // Open synchronously from the click so the browser does not block the WhatsApp tab.
+    window.open(href, "_blank", "noopener,noreferrer");
+    const result = await Swal.fire({
+      title: `Did you send this reminder to ${studentName}?`,
+      text: "Only confirm after sending the fee reminder in WhatsApp. This records the reminder on this student's pending chalans so its status appears in Chalans & Payments.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, I sent it",
+      cancelButtonText: "Not yet",
+      confirmButtonColor: "#15803d",
+    });
+    if (!result.isConfirmed) return;
+    setSendingId(studentId);
+    try {
+      const d = await api("/api/fees/defaulters/whatsapp", {
+        method: "POST",
+        body: { studentId, confirmed: true },
+      });
+      const updated = new Map((d.items || []).map((fee: any) => [String(fee._id), fee]));
+      setFees((old) => old.map((fee) => updated.has(String(fee._id)) ? { ...fee, whatsapp: (updated.get(String(fee._id)) as any).whatsapp } : fee));
+      toast("success", "WhatsApp reminder recorded on the student's pending chalans");
+    } catch (error: any) {
+      toast("error", error.message || "Could not record the WhatsApp reminder");
+    } finally {
+      setSendingId("");
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -84,7 +116,7 @@ export default function FeeDefaultersPage() {
       </div>
 
       <div className="card overflow-x-auto p-0">
-        <table className="w-full min-w-[760px]">
+        <table className="w-full min-w-[980px]">
           <thead>
             <tr>
               {[
@@ -95,6 +127,7 @@ export default function FeeDefaultersPage() {
                 "Latest pending month",
                 "Balance",
                 "Phone",
+                "Share status",
               ].map((heading) => <th key={heading} className="th">{heading}</th>)}
               <th className="th"><span className="sr-only">WhatsApp reminder</span></th>
             </tr>
@@ -118,36 +151,25 @@ export default function FeeDefaultersPage() {
                   </td>
                   <td className="td whitespace-nowrap font-semibold text-red-600">{money(row.balance)}</td>
                   <td className="td whitespace-nowrap">{whatsappDisplay(row.student)}</td>
+                  <td className="td"><WhatsAppStatus fee={{ whatsapp: row.whatsapp, revision: row.revision || 0 }} /></td>
                   <td className="td text-center">
-                    {href ? (
-                      <a
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="icon-btn bg-green-600 text-white hover:bg-green-700"
-                        title={`Send WhatsApp reminder to ${row.student.name}`}
-                        aria-label={`Send WhatsApp reminder to ${row.student.name}`}
-                      >
-                        <FaWhatsapp />
-                      </a>
-                    ) : (
-                      <button
-                        type="button"
-                        className="icon-btn cursor-not-allowed bg-slate-100 text-slate-400"
-                        title="No valid WhatsApp or phone number"
-                        aria-label={`No valid WhatsApp number for ${row.student.name}`}
-                        disabled
-                      >
-                        <FaWhatsapp />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className={`icon-btn ${href ? "bg-green-600 text-white hover:bg-green-700" : "cursor-not-allowed bg-slate-100 text-slate-400"}`}
+                      title={href ? `Send WhatsApp reminder to ${row.student.name}` : "No valid WhatsApp or phone number"}
+                      aria-label={`${href ? "Send WhatsApp reminder to" : "No valid WhatsApp number for"} ${row.student.name}`}
+                      disabled={!href || sendingId === row.studentId}
+                      onClick={() => sendReminder(row.studentId, row.student.name, href)}
+                    >
+                      <FaWhatsapp />
+                    </button>
                   </td>
                 </tr>
               );
             })}
             {!shown.length && (
               <tr>
-                <td colSpan={8} className="td py-8 text-center text-slate-400">
+                <td colSpan={9} className="td py-8 text-center text-slate-400">
                   {loading ? "Loading pending fees…" : defaulters.length ? "No defaulters match this filter" : "No pending fees"}
                 </td>
               </tr>
@@ -157,7 +179,7 @@ export default function FeeDefaultersPage() {
       </div>
 
       <p className="text-sm text-slate-500">
-        Select the WhatsApp icon to open a chat with a pre-filled fee reminder. The message is not marked as sent automatically.
+        Select the WhatsApp icon to open a pre-filled fee reminder. Confirm only after sending; the status is then recorded on the student's pending chalans and shown in both this list and Chalans & Payments.
       </p>
     </div>
   );

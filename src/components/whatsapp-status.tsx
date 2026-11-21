@@ -26,7 +26,7 @@ export default function WhatsAppStatus({ fee }: { fee: any }) {
           ? <p className="flex items-start gap-1"><FaClock className="mt-0.5 shrink-0" />Last sent: {s.lastSentText}</p>
           : <p>No successful send yet.</p>}
         {s.recipient && <p>To: +{s.recipient}</p>}
-        {s.methodLabel && <p>{s.methodLabel}{s.sentBy ? ` · by ${s.sentBy}` : ""}</p>}
+        {s.methodLabel && <p>{s.contentLabel} · {s.methodLabel}{s.sentBy ? ` · by ${s.sentBy}` : ""}</p>}
         {s.error && <p className="break-words text-red-600">{s.error}</p>}
       </div>
     </details>
