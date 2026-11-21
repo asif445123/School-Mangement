@@ -46,12 +46,40 @@ export function matrix(rows: Row[], accounts: { id: string; name: string }[], pe
 export function useAccounting(enabled: boolean) {
   const [d, setD] = useState<{ accounts: any[]; types: any[]; entries: any[]; payments: any[] }>({ accounts: [], types: [], entries: [], payments: [] });
   const [loading, setLoading] = useState(enabled);
+  const [error, setError] = useState("");
   const reload = useCallback(() => {
     if (!enabled) return;
-    Promise.all([api("/api/accounts"), api("/api/accountTypes"), api("/api/entries"), api("/api/fees")])
-      .then(([a, t, e, f]) => { setD({ accounts: a.items, types: t.items, entries: e.items, payments: feePayments(f.items) }); setLoading(false); })
-      .catch(() => setLoading(false));
+    setLoading(true);
+    let failed = "";
+    // Every list loads on its own: one failed request (often the big fees list)
+    // must not throw away the accounts / entries that did load, and the failure
+    // is reported through `error` instead of silently leaving every figure at 0.
+    const jobs = [
+      api("/api/accounts").then((a) => setD((p) => ({ ...p, accounts: a.items }))),
+      api("/api/accountTypes").then((t) => setD((p) => ({ ...p, types: t.items }))),
+      api("/api/entries").then((e) => setD((p) => ({ ...p, entries: e.items }))),
+      api("/api/fees").then((f) => setD((p) => ({ ...p, payments: feePayments(f.items) }))),
+    ].map((job) => job.catch((e: any) => { failed ||= e?.message || "Request failed"; }));
+    Promise.all(jobs).then(() => { setError(failed); setLoading(false); });
   }, [enabled]);
   useEffect(() => { reload(); }, [reload]);
-  return { ...d, loading, reload };
+  return { ...d, loading, error, reload };
+}
+
+// The dashboard Finance figures for one period: income / expense rows and
+// totals (fee payments count as "Fee income"), plus the sums of the entries
+// booked on receivable / payable account types inside the same period.
+export function financeSummary(entries: any[], payments: { date: string; amount: number }[], from: string, to: string) {
+  const rows = splitRows(entries, payments);
+  const inPeriod = (date: string) => date >= from && date <= to;
+  const income = rows.income.filter((r) => inPeriod(r.date)), expense = rows.expense.filter((r) => inPeriod(r.date));
+  let receivable = 0, payable = 0;
+  for (const e of entries) {
+    if (!inPeriod(e.date)) continue;
+    const f = typeFlags(e.account?.accountType);
+    if (f.receivable) receivable += e.amount;
+    if (f.payable) payable += e.amount;
+  }
+  const incomeTotal = income.reduce((a, r) => a + r.amount, 0), expenseTotal = expense.reduce((a, r) => a + r.amount, 0);
+  return { income, expense, incomeTotal, expenseTotal, net: incomeTotal - expenseTotal, receivable, payable };
 }
