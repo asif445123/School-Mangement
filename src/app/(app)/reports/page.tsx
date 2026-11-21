@@ -31,6 +31,8 @@ export default function AccountsReportsPage() {
         {accountTabs.map(([id, label]) => <button key={id} onClick={() => setTab(id)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${tab === id ? "bg-blue-600 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"}`}>{label}</button>)}
       </div>
 
+      {acc.error && <div className="card flex flex-wrap items-center justify-between gap-3 text-sm ring-1 ring-red-200"><p className="text-red-600">Some accounting data could not be loaded: {acc.error}. The reports below may be incomplete.</p><button type="button" className="btn-light" onClick={acc.reload}>Retry</button></div>}
+
       {acc.loading ? <p className="text-slate-500">Loading...</p> : (
         <>
           {tab === "list" && <AccountList data={data} />}

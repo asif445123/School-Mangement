@@ -2,8 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, currentMonth, money, today } from "@/lib/api";
 import { useSession } from "@/components/session";
-import { typeFlags } from "@/lib/account-flags";
-import { Row, splitRows, useAccounting } from "@/lib/accounting";
+import { Row, financeSummary, useAccounting } from "@/lib/accounting";
 import Modal from "@/components/modal";
 import FeeReport from "@/components/fee-report";
 import { BarChart, DonutChart, Legend } from "@/components/charts";
@@ -134,7 +133,7 @@ export default function DashboardPage() {
   const [diaryOpen, setDiaryOpen] = useState(false);
   const [testsOpen, setTestsOpen] = useState(false);
   const [attendanceOpen, setAttendanceOpen] = useState(false);
-  const { entries, payments } = useAccounting(isSchool);
+  const acc = useAccounting(isSchool);
   const [from, setFrom] = useState(`${currentMonth()}-01`);
   const [to, setTo] = useState(today());
 
@@ -145,16 +144,11 @@ export default function DashboardPage() {
   useEffect(() => { load(); }, [load]);
 
   const t = useMemo(() => {
-    const inRange = entries.filter((e) => e.date >= from && e.date <= to);
-    const sum = (f: (e: any) => boolean) => inRange.filter(f).reduce((a, e) => a + e.amount, 0);
-    const rows = splitRows(entries, payments); // income rows include fees received ("Fee income")
-    const income = toItems(rows.income.filter((r) => r.date >= from && r.date <= to)), expense = toItems(rows.expense.filter((r) => r.date >= from && r.date <= to));
-    return {
-      income, expense,
-      incomeTotal: income.reduce((a, i) => a + i.amount, 0), expenseTotal: expense.reduce((a, i) => a + i.amount, 0),
-      receivable: sum((e) => typeFlags(e.account?.accountType).receivable), payable: sum((e) => typeFlags(e.account?.accountType).payable),
-    };
-  }, [entries, payments, from, to]);
+    const s = financeSummary(acc.entries, acc.payments, from, to); // income rows include fees received ("Fee income")
+    return { ...s, income: toItems(s.income), expense: toItems(s.expense) };
+  }, [acc.entries, acc.payments, from, to]);
+  // Records exist but none of them falls inside the chosen period
+  const emptyPeriod = !acc.loading && !acc.error && !t.incomeTotal && !t.expenseTotal && !t.receivable && !t.payable && (acc.entries.length > 0 || acc.payments.length > 0);
 
   const net = t.incomeTotal - t.expenseTotal;
   const cards: [string, number, string][] = [["Income", t.incomeTotal, "text-green-700"], ["Expense", t.expenseTotal, "text-red-600"], ["Net (income - expense)", net, net >= 0 ? "text-blue-700" : "text-red-600"], ["Receivable", t.receivable, "text-slate-800"], ["Payable", t.payable, "text-slate-800"]];
@@ -321,11 +315,24 @@ export default function DashboardPage() {
           <div className="min-w-0 flex-1 sm:flex-none"><label className="text-xs font-semibold text-slate-500">From</label><input type="date" className="input mt-1 w-full sm:w-44" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
           <div className="min-w-0 flex-1 sm:flex-none"><label className="text-xs font-semibold text-slate-500">To</label><input type="date" className="input mt-1 w-full sm:w-44" value={to} onChange={(e) => setTo(e.target.value)} /></div>
         </div>
-        <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 lg:grid-cols-5">
-          {cards.map(([label, value, color]) => (<div key={label} className="card"><p className="text-xs uppercase text-slate-500">{label}</p><p className={`mt-1 text-lg font-bold ${color}`}>{money(value)}</p></div>))}
-        </div>
-        <Breakdown title="Expense" items={t.expense} total={t.expenseTotal} />
-        <Breakdown title="Income" items={t.income} total={t.incomeTotal} />
+        {acc.error && (
+          <div className="card flex flex-wrap items-center justify-between gap-3 text-sm ring-1 ring-red-200">
+            <p className="text-red-600">Some finance data could not be loaded: {acc.error}. The figures below may be incomplete.</p>
+            <button type="button" className="btn-light" onClick={acc.reload}>Retry</button>
+          </div>
+        )}
+        {acc.loading && !acc.entries.length && !acc.payments.length ? (
+          <div className="card py-6 text-center text-sm text-slate-400">Loading finance…</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 lg:grid-cols-5">
+              {cards.map(([label, value, color]) => (<div key={label} className="card"><p className="text-xs uppercase text-slate-500">{label}</p><p className={`mt-1 text-lg font-bold ${color}`}>{money(value)}</p></div>))}
+            </div>
+            {emptyPeriod && <p className="card py-4 text-center text-sm text-slate-400">No income, expense or fee receipts were recorded between {from} and {to}. Records exist outside this period - widen the From / To dates to see them.</p>}
+            <Breakdown title="Expense" items={t.expense} total={t.expenseTotal} />
+            <Breakdown title="Income" items={t.income} total={t.incomeTotal} />
+          </>
+        )}
       </section>}
 
       {diaryOpen && (

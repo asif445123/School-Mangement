@@ -50,6 +50,7 @@ export default function ChartOfAccounts() {
 
   return (
     <div className="space-y-4">
+      {acc.error && <div className="card flex flex-wrap items-center justify-between gap-3 text-sm ring-1 ring-red-200"><p className="text-red-600">Some accounting data could not be loaded: {acc.error}. The list below may be incomplete.</p><button type="button" className="btn-light" onClick={acc.reload}>Retry</button></div>}
       <div className="card flex flex-wrap items-end gap-4">
         <div className="min-w-0 flex-1 sm:flex-none">
           <label className="text-xs font-semibold text-slate-500">Search</label>
