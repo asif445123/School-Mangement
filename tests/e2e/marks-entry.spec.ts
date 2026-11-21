@@ -94,8 +94,7 @@ test('school manages test and exam marks from separate tabs, including status sh
   const { writes, paperTypesRequested } = await mockApp(page, school);
   await page.goto('/teachers');
   const menu = page.getByRole('navigation', { name: 'Main menu' });
-  await expect(menu.getByRole('link', { name: 'Teachers & Staff' })).toHaveClass(/bg-blue-600/);
-  await expect(menu.getByRole('link', { name: 'Set Timetable', exact: true })).toBeVisible();
+  await expect(menu.getByRole('link', { name: 'Teachers & time table' })).toHaveClass(/bg-blue-600/);
   await expect(page.getByRole('navigation', { name: 'Diary & Tests sections' })).toHaveCount(0);
   await menu.getByRole('link', { name: 'Diary & Tests' }).click();
   const teacherTabs = page.getByRole('navigation', { name: 'Diary & Tests sections' });
