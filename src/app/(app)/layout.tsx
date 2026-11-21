@@ -19,7 +19,9 @@ import FeeManagementTabs, { feeManagementRoutes, feeManagementTabRoutes } from "
 
 const settingsPages = ["/settings", "/payment-accounts", "/whatsapp-settings"];
 const all: [string, string, string[]][] = [
-  ["/dashboard", "Dashboard", ["school"]],
+  // The dashboard is the school admin's home page; a class teacher opens the
+  // same report for his own classes (Diary S / D / R, tests T / M / R, attendance).
+  ["/dashboard", "Dashboard", ["school", "classTeacher"]],
   ["/students", "Enroll Students", ["school", "teacher"]], // a teacher sees only the classes and sections he teaches
   ["/fees", "Fee Management", ["school"]],
   ["/attendance", "Student Attendance", ["school", "classTeacher"]], // a class teacher marks attendance of his own class only
