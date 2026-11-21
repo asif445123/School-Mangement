@@ -10,20 +10,22 @@
 |---|---|---|
 | **admin** | First account that signs up | Approve / reject / delete **schools** |
 | **school** (school admin) | Signs up at /signup, waits for admin approval | Everything in its school: students, fee chalans, diary, papers, marks, reports, **student attendance** (all classes, with the class-wise summary), create **teachers**, approve/disable teacher & student logins |
-| **teacher** | Created by school (Users page) | Diary, papers, enter marks, result reports, their own timetable, the **Student Data** page — but only for the classes and sections they teach — and **Student Attendance** for the class he is class teacher of. No fees |
-| **student** | Created from the Student Data page (school or teacher) with login email/password | Read-only **My Portal**: own fee chalans, class diary, test/exam marks. The **same login email on brothers/sisters makes it a Guardian Portal** for all of them (see below) |
+| **teacher** | Created by school (Users page) | Diary, papers, enter marks, result reports, their own timetable, the **Enroll Students** page — but only for the classes and sections they teach — and **Student Attendance** for the class he is class teacher of. No fees |
+| **student** | Created from the Enroll Students page (school or teacher) with login email/password | Read-only **My Portal**: own fee chalans, class diary, test/exam marks. The **same login email on brothers/sisters makes it a Guardian Portal** for all of them (see below) |
 
 All data is separated per school. Pending / rejected / logged-out visitors can click **View Demo**.
 
-### Navigation: one **Student Data** page with tabs
-The navbar has a single **Student Data** item for every student-related work. Opening it shows a tab strip (same style as the Fee Management tabs):
+### Navigation: **Enroll Students** and **Fee Management**
+The navbar's **Enroll Students** item contains the student list (Class / Section / Status filters, Add / Edit / Delete, school leaving certificate and student-login approvals) and the school-only **GR Register** tab. A teacher sees only the students in assigned classes and sections and has no fee access.
 
-- **Student Data** — the student list, with Class / Section / Status filters, Add / Edit / Delete, the student fee ledger, the school leaving certificate and student-login approvals.
-- **GR Register** — the G.R. Register entries (school admin only).
-- **Fee Chalan** — create, print, receive and share fee chalans (school admin only).
-- **Fee Receivable** — the month-wise fee receivable report (school admin only).
+School administrators also have a separate **Fee Management** item with four tabs:
 
-The three school-only tabs used to be separate navbar items. They are now tabs, and their old links (`/gr-register`, `/fees`, `/fee-receivable`) still work, keep the same tab selected and open straight on that tab. A teacher only sees the **Student Data** tab (his own class and section, no fees).
+- **Chalans & Payments** — create, print, receive and share fee chalans.
+- **Fee Structure** — review and edit each student's monthly fee and recurring discount.
+- **Student Fee Ledger** — find a student by admission / roll number or name, review totals and every voucher, and print the full ledger.
+- **Defaulters & WhatsApp** — one row per student with the combined outstanding balance and an icon-only WhatsApp reminder action.
+
+The existing `/fees` link now opens **Chalans & Payments**. The fee-management tabs are directly addressable at `/fee-structure`, `/student-fee-ledger` and `/fee-defaulters`; `/gr-register` remains directly addressable under Enroll Students.
 
 ### Navigation: **Teacher Data** and **Exams & Results**
 The navbar **Teacher Data** item (school admin and class teachers) shows a tab strip:
@@ -44,7 +46,7 @@ Subject-only teachers, who do not have the Teacher Data tab strip, can open the 
 - **Student Promotion** (school admin only) — pick a class, section and exam, then move the students to the **Promote to Class** with a **New Section** and **New Session**. The list can show all students or only those who passed the exam, and students are promoted one by one or by selection.
 
 ### Navigation: **Student Attendance** (school admin + class teachers)
-**Student Attendance** is its own navbar item, directly below **Student Data**. It is shown to the school admin and to every teacher who is a **class teacher** of at least one class (a subject-only teacher does not see it, and no other role does). It has up to four tabs:
+**Student Attendance** is its own navbar item near **Enroll Students**. It is shown to the school admin and to every teacher who is a **class teacher** of at least one class (a subject-only teacher does not see it, and no other role does). It has up to four tabs:
 
 - **Mark Attendance** — Date / Class / Section with a Load button, one **Present / Absent / Leave** radio per student, **All Present** / **All Absent** shortcuts and the green **Save Attendance** button. Saving writes one row per student for that date, and opening the date again shows what was already marked.
 - **Monthly Report** — Month / Class / Section, a day-by-day register (P / A / L, absent days highlighted) with per-student **P / A / L** totals and attendance %, printable.
@@ -54,7 +56,7 @@ Subject-only teachers, who do not have the Teacher Data tab strip, can open the 
 Attendance is stored per student per day (unique per student + date). A class teacher can only mark and read attendance of the classes he is class teacher of; the class and section saved with each day are kept as a snapshot so an old register still shows the class the student was in then.
 
 ### Navigation: one **Enter Expenses** page with tabs
-The navbar has a single **Enter Expenses** item for all accounting setup and expense entry (school admin only). Opening it shows a tab strip (same style as Student Data / Teacher Data):
+The navbar has a single **Enter Expenses** item for all accounting setup and expense entry (school admin only). Opening it shows a tab strip (same style as Enroll Students / Teacher Data):
 
 - **Account Types** — the account type list (receivable / payable / income / expense flags).
 - **Account Master** — the account master file (code, name and account type).
@@ -63,7 +65,7 @@ The navbar has a single **Enter Expenses** item for all accounting setup and exp
 Account Types and Account Master used to be separate navbar items. They are now tabs inside Enter Expenses, and their old links (`/account-types`, `/accounts`) still work, keep the same tab selected and open straight on that tab. The navbar **Enter Expenses** item stays highlighted on all three tabs.
 
 ### Navigation: one **Inventory & Purchases** page with six tabs
-The navbar has a single **Inventory & Purchases** item (school admin only). Opening it shows a tab strip (same style as Student Data / Teacher Data / Enter Expenses):
+The navbar has a single **Inventory & Purchases** item (school admin only). Opening it shows a tab strip (same style as Enroll Students / Teacher Data / Enter Expenses):
 
 - **Items (Stock)** — *Items - Stationery, Books, Furniture & Equipment*: item name, category, unit, rate, live **in stock** and stock **value**, with search, Edit / Delete, **+ Add New** and a printable stock report. The form asks for Item Name, Category, Unit (pcs / box / set…), Rate, Opening Stock and **Minimum Stock Alert** (the stock turns red with a *Low* badge when it reaches the alert).
 - **Purchase Requisition** — a department's purchase demand: date, item / description, quantity, department, requested by, status (Pending / Approved / Ordered / Rejected) and note.
@@ -140,7 +142,7 @@ Sections are stored on the student (`section`, empty when the school does not us
 2. Set a long random `CREDENTIALS_ENCRYPTION_KEY` in the server environment (see `.env.example`) and restart. Keep this key stable and backed up securely; changing it requires re-entering saved tokens.
 3. Open the user menu → **WhatsApp settings**. Enter the **Phone Number ID** and a permanent System User access token with `whatsapp_business_messaging` and `whatsapp_business_management` permissions. Enable sending and save. Tokens are encrypted with AES-256-GCM, never returned to the browser after saving, and never included in voucher images.
 4. Recommended: create an approved **UTILITY** template with an **IMAGE header** and four body variables, in order: **student name, chalan number, month, balance due**. Enter its exact name and language in settings. The uploaded voucher image becomes the header. Without a template, ordinary image messages only work inside Meta's open 24-hour customer-service window.
-5. Open **Fee Chalan → WhatsApp icon**, check the recipient and image, then **Send image via WhatsApp**. Use **Send again** for reminders; there is no arbitrary two-send limit.
+5. Open **Fee Management → Chalans & Payments → WhatsApp icon**, check the recipient and image, then **Send image via WhatsApp**. Use **Send again** for reminders; there is no arbitrary two-send limit.
 
 Status is per voucher, in the table's **Share status** column:
 

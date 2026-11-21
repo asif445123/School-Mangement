@@ -46,6 +46,26 @@ export function printChalan(f: any, school?: School, accounts: any[] = []) {
   openPrint("Fee Chalan", copy("Student Copy") + copy("School Copy"), ".copy{break-inside:avoid}.copy+.copy{break-before:page}@page{margin:10mm}");
 }
 
+export function printStudentFeeLedger(student: any, fees: any[], school?: School) {
+  const total = fees.reduce((sum, fee) => sum + (Number(fee.amount) || 0), 0);
+  const paid = fees.reduce((sum, fee) => sum + (Number(fee.paid) || 0), 0);
+  const balance = Math.max(0, total - paid);
+  const rows = fees.map((fee) => {
+    const amount = Number(fee.amount) || 0;
+    const received = Number(fee.paid) || 0;
+    const due = Math.max(0, amount - received);
+    const status = due <= 0 ? "Received" : received > 0 ? "Part received" : "Pending";
+    return `<tr><td>${esc(fee.month === "0000-00" ? "Previous pending" : formatMonth(fee.month))}</td><td>${esc(fee.chalanNo)}</td><td>${money(fee.admissionFee)}</td><td>${money(fee.annualCharges)}</td><td>${money(amount)}</td><td>${money(received)}</td><td>${money(due)}</td><td>${status}</td></tr>`;
+  }).join("");
+  const classSection = `${student.className || ""}${student.section ? ` ${student.section}` : ""}`.trim();
+
+  openPrint("Student Fee Ledger", `${header(school)}<h3>Student Fee Ledger</h3>
+    <p><b>Student:</b> ${esc(student.name)} &nbsp;&nbsp; <b>Admission / Roll #:</b> ${esc(student.rollNo || "-")} &nbsp;&nbsp; <b>Class:</b> ${esc(classSection || "-")}</p>
+    <p><b>Father:</b> ${esc(student.fatherName || "-")}</p>
+    <table style="margin:14px 0"><tr><th>Total amount</th><th>Paid amount</th><th>Balance</th></tr><tr><td><b>${money(total)}</b></td><td><b>${money(paid)}</b></td><td><b>${money(balance)}</b></td></tr></table>
+    <table><thead><tr><th>Month</th><th>Chalan #</th><th>Admission</th><th>Annual charges</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="8">No chalans yet</td></tr>'}</tbody></table>`);
+}
+
 export function printPaper(p: any, school?: School) {
   const qs = String(p.questions || "").split("\n").filter(Boolean).map((q, i) => `<p><b>Q${i + 1}.</b> ${esc(q)}</p>`).join("");
   openPrint(p.title, `${header(school)}<h2>${esc(p.title)}</h2><h3>${esc(String(p.type).toUpperCase())} - Class ${esc(p.className)} - ${esc(p.subject)}</h3>

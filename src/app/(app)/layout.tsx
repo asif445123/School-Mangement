@@ -14,16 +14,17 @@ import ExpenseTabs, { expenseRoutes, expenseTabRoutes } from "@/components/expen
 import ResultsTabs, { resultsRoutes, resultsTabOnly } from "@/components/results-tabs";
 import StudentReportsTabs, { studentReportsRoutes, studentReportsTabRoutes } from "@/components/student-reports-tabs";
 import InventoryTabs, { inventoryRoutes, inventoryTabRoutes } from "@/components/inventory-tabs";
+import FeeManagementTabs, { feeManagementRoutes, feeManagementTabRoutes } from "@/components/fee-management-tabs";
 
 const settingsPages = ["/settings", "/payment-accounts", "/whatsapp-settings"];
 const all: [string, string, string[]][] = [
   ["/dashboard", "Dashboard", ["school"]],
-  ["/students", "Student Data", ["school", "teacher"]], // a teacher sees only the classes and sections he teaches
+  ["/students", "Enroll Students", ["school", "teacher"]], // a teacher sees only the classes and sections he teaches
+  ["/fees", "Fee Management", ["school"]],
   ["/attendance", "Student Attendance", ["school", "classTeacher"]], // a class teacher marks attendance of his own class only
-  // G.R. Register, Fee Chalan and Fee Receivable are tabs inside Student Data,
-  // so they keep working as pages but are not repeated in the navbar.
+  // G.R. Register remains a tab beside Enroll Students. The old Fee Receivable
+  // route stays available for existing bookmarks but is not repeated in the menu.
   ["/gr-register", "GR Register", ["school"]],
-  ["/fees", "Fee Chalan", ["school"]],
   ["/fee-receivable", "Fee Receivable", ["school"]],
   // Diary, Tests, test marks and the timetable are tabs inside Teacher Data
   // for schools and class teachers. Other teachers keep their own menu links.
@@ -65,8 +66,11 @@ const all: [string, string, string[]][] = [
   ["/users", "Schools", ["admin"]],
   ["/my", "My Portal", ["student"]],
 ];
-// Pages that are shown as tabs inside Student Data instead of their own navbar item
-const tabOnly = new Set(["/gr-register", "/fees", "/fee-receivable"]);
+// Pages that are shown beside Enroll Students (or retained only as a legacy
+// direct route) instead of having their own navbar item.
+const tabOnly = new Set(["/gr-register", "/fee-receivable"]);
+// Pages shown under the Fee Management sidebar item.
+const feeTabOnly = new Set(feeManagementTabRoutes);
 // Pages that are shown as tabs inside Teacher Data instead of their own navbar item
 const teacherTabOnly = new Set(teacherTabRoutes);
 // Pages that are shown as tabs inside Enter Expenses instead of their own navbar item
@@ -96,11 +100,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // School / class teachers see diary, tests, test marks and the timetable
   // as Teacher Data tabs, so those items are replaced by the tab strip.
   const teacherTabs = user ? seesTeacherDataTabs(user) : false;
-  const nav = allowed.filter(([href]) => !settingsPages.slice(1).includes(href) && !tabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !studentReportsTabOnly.has(href) && !inventoryTabOnly.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
-  // A tab page belongs to its own navbar item (Inventory & Purchases tabs and
-  // the other grouped pages keep the group's menu item and heading).
+  const nav = allowed.filter(([href]) => !settingsPages.slice(1).includes(href) && !tabOnly.has(href) && !feeTabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !studentReportsTabOnly.has(href) && !inventoryTabOnly.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
+  // A tab page belongs to its own navbar item (Fee Management, Inventory &
+  // Purchases and the other grouped pages keep the group's menu item/heading).
   const menuItem = (path: string) => allowed.find(([href]) =>
-    href === path || (href === "/inventory" && inventoryTabOnly.has(path)) || (href === "/student-reports" && studentReportsTabOnly.has(path)));
+    href === path ||
+    (href === "/fees" && feeTabOnly.has(path)) ||
+    (href === "/inventory" && inventoryTabOnly.has(path)) ||
+    (href === "/student-reports" && studentReportsTabOnly.has(path)));
   useEffect(() => { // keep each role inside its own pages
     if (user && !menuItem(pathname)) router.replace(landing(user));
   }, [user, pathname]); // eslint-disable-line
@@ -148,6 +155,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               const active =
                 pathname === href || (href === "/settings" && settingsPages.includes(pathname)) ||
                 (href === "/students" && tabOnly.has(pathname)) ||
+                (href === "/fees" && feeTabOnly.has(pathname)) ||
                 (href === "/teachers" && teacherTabOnly.has(pathname)) ||
                 (href === "/entries" && expenseTabOnly.has(pathname)) ||
                 (href === "/exams" && resultsTabOnlySet.has(pathname)) ||
@@ -181,6 +189,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>)}
             </nav>}
             {studentDataRoutes.includes(pathname) && <StudentTabs />}
+            {feeManagementRoutes.includes(pathname) && <FeeManagementTabs />}
             {teacherDataRoutes.includes(pathname) && <TeacherTabs />}
             {expenseRoutes.includes(pathname) && <ExpenseTabs />}
             {resultsRoutes.includes(pathname) && <ResultsTabs />}

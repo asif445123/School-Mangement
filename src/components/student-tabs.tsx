@@ -3,13 +3,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "./session";
 
-// Student Data is one page with tabs: the student list, the G.R. Register and
-// the Fee Chalan page (same tab style as Fee Management). The month wise fee
-// receivable report now lives under Student Reports.
+// Enroll Students groups the student list and the G.R. Register. Fee work has
+// its own Fee Management menu and tab strip.
 export const studentDataTabs: { href: string; label: string; schoolOnly?: boolean }[] = [
-  { href: "/students", label: "Student Data" },
+  { href: "/students", label: "Enroll Students" },
   { href: "/gr-register", label: "GR Register", schoolOnly: true },
-  { href: "/fees", label: "Fee Chalan", schoolOnly: true },
 ];
 
 export const studentDataRoutes = studentDataTabs.map((t) => t.href);
@@ -21,7 +19,7 @@ export default function StudentTabs() {
   const shown = studentDataTabs.filter((t) => !t.schoolOnly || isSchool);
   if (shown.length < 2) return null; // a teacher only has the student list, so no tab strip
   return (
-    <nav aria-label="Student Data sections" className="mb-4 border-b border-slate-200">
+    <nav aria-label="Enroll Students sections" className="mb-4 border-b border-slate-200">
       <div role="tablist" className="flex gap-1 overflow-x-auto pb-0">
         {shown.map((t) => {
           const active = pathname === t.href;

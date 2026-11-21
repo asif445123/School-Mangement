@@ -10,9 +10,15 @@ test('school can edit charges, preview image and manage payment accounts', async
   await page.getByRole('button', { name: 'Login', exact: true }).click();
   await expect(page).toHaveURL(/dashboard/);
   await page.goto('/students');
+  await expect(page.getByRole('link', { name: 'Enroll Students', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Fee Management', exact: true })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'Phone', exact: true })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'WhatsApp', exact: true })).toHaveCount(0);
   await page.goto('/fees');
+  await expect(page.getByRole('tab', { name: 'Chalans & Payments', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Fee Structure', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Student Fee Ledger', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Defaulters & WhatsApp', exact: true })).toBeVisible();
   await expect(page.getByText(process.env.E2E_STUDENT || 'Ali Raza', { exact: true })).toBeVisible();
   await page.getByTitle('Edit admission fee, annual charges and fees').first().click();
   await expect(page.getByRole('dialog', { name: /Edit chalan/ })).toContainText('Admission fee (Rs)');
@@ -43,6 +49,6 @@ test('school can edit charges, preview image and manage payment accounts', async
   await expect(page.getByRole('heading', { name: 'WhatsApp settings', exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/fees');
-  await expect(page.getByRole('heading', { name: 'Fee Chalan & Receiving' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chalans & Payments' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBeTruthy();
 });
