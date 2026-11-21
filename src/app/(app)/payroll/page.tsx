@@ -78,7 +78,7 @@ function PayrollSheet({ month, setMonth, tab, school }) {
         {["Staff", "Basic", "Allowances", "Bonus", "Overtime", "Att. Ded.", "Advance", "Other Ded.", "Net", "Status", ""].map(h => <th key={h} className="px-2 py-3">{h}</th>)}</tr></thead><tbody>
         {rows.map(r => <SalaryRow key={`${r.staff}-${r.version}`} row={r} edits={edits[r.staff]} change={values => change(r.staff, values)} selected={selected.includes(r.staff)} toggle={() => select(selected.includes(r.staff) ? selected.filter(id => id !== r.staff) : [...selected,r.staff])} print={print}
           save={values => act(async () => { await post({ action:"adjust", month, staff:r.staff, version:r.version, ...values }); change(r.staff); }, "Adjustments saved")} />)}
-        {!rows.length && <tr><td colSpan={12} className="p-6 text-center text-slate-500">{!data ? error || "Loading payroll…" : data.staff.length ? "Process salaries to prepare this month’s payroll." : "Add active staff in Teacher Data to prepare payroll."}</td></tr>}
+        {!rows.length && <tr><td colSpan={12} className="p-6 text-center text-slate-500">{!data ? error || "Loading payroll…" : data.staff.length ? "Process salaries to prepare this month’s payroll." : "Add active staff in Teachers &amp; Staff to prepare payroll."}</td></tr>}
       </tbody></table></div>
       <p className="text-xs text-slate-500">Processing uses staff salaries, fixed allowances and attendance. Advance installments are recovered when you pay. Save any bonus, overtime or other deduction before payment.</p>
     </> : <><div className="flex items-center justify-between"><h2 className="font-bold">Advance Salary</h2><button className="btn" disabled={!data?.staff.length} onClick={() => setAdvanceOpen(true)}>+ New Advance</button></div>

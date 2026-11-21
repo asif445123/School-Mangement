@@ -27,16 +27,16 @@ School administrators also have a separate **Fee Management** item with four tab
 
 The existing `/fees` link now opens **Chalans & Payments**. The fee-management tabs are directly addressable at `/fee-structure`, `/student-fee-ledger` and `/fee-defaulters`; `/gr-register` remains directly addressable under Enroll Students.
 
-### Navigation: **Teacher Data** and **Exams & Results**
-The navbar **Teacher Data** item (school admin and class teachers) shows a tab strip:
+### Navigation: **Teachers & Staff**, **Diary & Tests** and **Exams & Results**
+**Teachers & Staff** opens the teacher and staff list with assignments.
+**Set Timetable** is a separate sidebar link (called **Timetable** for teachers).
+The **Diary & Tests** item (school admin and class teachers) shows a tab strip:
 
-- **Teacher Data** — the teacher list with assignments.
 - **Daily Diary** — the class diary.
 - **Tests** — test papers, with the **+ Test** action only.
 - **Marks Entry** — class-wise status and marks entry for **test papers only** (`/teachers/marks`).
-- **Set Timetable** — the class timetable.
 
-Subject-only teachers, who do not have the Teacher Data tab strip, can open the same test marks page from **Test Marks Entry** in their menu. Teachers continue to see only papers from their assigned classes and sections.
+Subject-only teachers, who do not have the Diary & Tests tab strip, can open the same test marks page from **Test Marks Entry** in their menu. Teachers continue to see only papers from their assigned classes and sections.
 
 **Exams & Results** is a separate navbar item with these tabs:
 

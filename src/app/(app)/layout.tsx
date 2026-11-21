@@ -9,7 +9,7 @@ import Header from "@/components/header";
 import { NavIcon } from "@/components/nav-icons";
 import { SessionContext } from "@/components/session";
 import StudentTabs, { studentDataRoutes } from "@/components/student-tabs";
-import TeacherTabs, { teacherDataRoutes, teacherTabRoutes, seesTeacherDataTabs } from "@/components/teacher-tabs";
+import DiaryTestsTabs, { diaryTestsRoutes, diaryTestsTabRoutes, seesDiaryTestsTabs } from "@/components/diary-tests-tabs";
 import ExpenseTabs, { expenseRoutes, expenseTabRoutes } from "@/components/expense-tabs";
 import ResultsTabs, { resultsRoutes, resultsTabOnly } from "@/components/results-tabs";
 import StudentReportsTabs, { studentReportsRoutes, studentReportsTabRoutes } from "@/components/student-reports-tabs";
@@ -26,9 +26,10 @@ const all: [string, string, string[]][] = [
   // route stays available for existing bookmarks but is not repeated in the menu.
   ["/gr-register", "GR Register", ["school"]],
   ["/fee-receivable", "Fee Receivable", ["school"]],
-  // Diary, Tests, test marks and the timetable are tabs inside Teacher Data
+  // Diary, Tests and test marks are tabs inside Diary & Tests
   // for schools and class teachers. Other teachers keep their own menu links.
-  ["/diary", "Daily Diary", ["school", "teacher"]],
+  ["/diary", "Diary & Tests", ["school", "classTeacher"]],
+  ["/diary", "Daily Diary", ["teacher"]],
   ["/papers", "Tests", ["school", "teacher"]],
   ["/teachers/marks", "Test Marks Entry", ["school", "teacher"]],
   ["/marks", "Marks Entry", ["school", "teacher"]],
@@ -42,8 +43,8 @@ const all: [string, string, string[]][] = [
   // Report, Month Wise Fee Receivable, GR Register, Test Report and Exams
   // Report are its tabs (all moved out of the old Reports page).
   ["/student-reports", "Student Reports", ["school", "teacher"]],
-  ["/teachers", "Teacher Data", ["classTeacher"]], // first match wins, so this must come before the school's own label
-  ["/teachers", "Teacher Data", ["school"]],
+  ["/teachers", "Teachers & Staff", ["classTeacher"]], // first match wins, so this must come before the school's own label
+  ["/teachers", "Teachers & Staff", ["school"]],
   ["/staff-attendance", "Staff Attendance", ["school"]],
   ["/payroll", "Payroll & Salary", ["school"]],
   ["/timetable", "Set Timetable", ["school"]],
@@ -71,8 +72,8 @@ const all: [string, string, string[]][] = [
 const tabOnly = new Set(["/gr-register", "/fee-receivable"]);
 // Pages shown under the Fee Management sidebar item.
 const feeTabOnly = new Set(feeManagementTabRoutes);
-// Pages that are shown as tabs inside Teacher Data instead of their own navbar item
-const teacherTabOnly = new Set(teacherTabRoutes);
+// Pages shown as tabs inside Diary & Tests instead of their own navbar item
+const diaryTestsTabOnly = new Set(diaryTestsTabRoutes);
 // Pages that are shown as tabs inside Enter Expenses instead of their own navbar item
 const expenseTabOnly = new Set(expenseTabRoutes);
 // Pages that are shown as tabs inside Results instead of their own navbar item
@@ -97,13 +98,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const keys = user ? [user.role, ...(classTeacherAssignment(user) ? ["classTeacher"] : [])] : [];
   const allowed = user ? all.filter(([, , roles]) => roles.some((r) => keys.includes(r)))
     .filter(([href], index, rows) => rows.findIndex(([other]) => other === href) === index) : [];
-  // School / class teachers see diary, tests, test marks and the timetable
-  // as Teacher Data tabs, so those items are replaced by the tab strip.
-  const teacherTabs = user ? seesTeacherDataTabs(user) : false;
-  const nav = allowed.filter(([href]) => !settingsPages.slice(1).includes(href) && !tabOnly.has(href) && !feeTabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !studentReportsTabOnly.has(href) && !inventoryTabOnly.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
+  // Schools / class teachers use the grouped Diary & Tests navigation.
+  const diaryTestsTabs = user ? seesDiaryTestsTabs(user) : false;
+  const nav = allowed.filter(([href]) => !settingsPages.slice(1).includes(href) && !tabOnly.has(href) && !feeTabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !studentReportsTabOnly.has(href) && !inventoryTabOnly.has(href) && !(diaryTestsTabs && diaryTestsTabOnly.has(href)));
   // A tab page belongs to its own navbar item (Fee Management, Inventory &
   // Purchases and the other grouped pages keep the group's menu item/heading).
   const menuItem = (path: string) => allowed.find(([href]) =>
+    (diaryTestsTabs && href === "/diary" && diaryTestsRoutes.includes(path)) ||
     href === path ||
     (href === "/fees" && feeTabOnly.has(path)) ||
     (href === "/inventory" && inventoryTabOnly.has(path)) ||
@@ -156,7 +157,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 pathname === href || (href === "/settings" && settingsPages.includes(pathname)) ||
                 (href === "/students" && tabOnly.has(pathname)) ||
                 (href === "/fees" && feeTabOnly.has(pathname)) ||
-                (href === "/teachers" && teacherTabOnly.has(pathname)) ||
+                (diaryTestsTabs && href === "/diary" && diaryTestsTabOnly.has(pathname)) ||
                 (href === "/entries" && expenseTabOnly.has(pathname)) ||
                 (href === "/exams" && resultsTabOnlySet.has(pathname)) ||
                 (href === "/student-reports" && studentReportsTabOnly.has(pathname)) ||
@@ -190,7 +191,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </nav>}
             {studentDataRoutes.includes(pathname) && <StudentTabs />}
             {feeManagementRoutes.includes(pathname) && <FeeManagementTabs />}
-            {teacherDataRoutes.includes(pathname) && <TeacherTabs />}
+            {diaryTestsRoutes.includes(pathname) && <DiaryTestsTabs />}
             {expenseRoutes.includes(pathname) && <ExpenseTabs />}
             {resultsRoutes.includes(pathname) && <ResultsTabs />}
             {studentReportsRoutes.includes(pathname) && <StudentReportsTabs />}

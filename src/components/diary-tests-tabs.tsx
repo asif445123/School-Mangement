@@ -4,35 +4,32 @@ import { usePathname } from "next/navigation";
 import { useSession } from "./session";
 import { classTeacherAssignment } from "@/lib/teacher-scope";
 
-// Teacher Data groups the teacher list, diary, tests, test marks and timetable.
-export const teacherDataTabs: { href: string; label: string; teacherLabel?: string }[] = [
-  { href: "/teachers", label: "Teacher Data" },
+// Diary & Tests groups daily diary, test papers and test marks.
+export const diaryTestsTabs: { href: string; label: string }[] = [
   { href: "/diary", label: "Daily Diary" },
   { href: "/papers", label: "Tests" },
   { href: "/teachers/marks", label: "Marks Entry" },
-  { href: "/timetable", label: "Set Timetable", teacherLabel: "Timetable" },
 ];
 
-export const teacherDataRoutes = teacherDataTabs.map((t) => t.href);
-// Pages that live inside Teacher Data as tabs for the school / class teachers
+export const diaryTestsRoutes = diaryTestsTabs.map((t) => t.href);
+// Pages that live inside Diary & Tests for schools / class teachers
 // (kept as pages, but not repeated in the navbar)
-export const teacherTabRoutes = teacherDataRoutes.filter((href) => href !== "/teachers");
+export const diaryTestsTabRoutes = diaryTestsRoutes.filter((href) => href !== "/diary");
 
 // The tab strip is for the school and for class teachers (they can open the
 // teacher list). A plain teacher keeps the plain navbar instead.
-export const seesTeacherDataTabs = (user: any) => user?.role === "school" || !!classTeacherAssignment(user);
+export const seesDiaryTestsTabs = (user: any) => user?.role === "school" || !!classTeacherAssignment(user);
 
-export default function TeacherTabs() {
+export default function DiaryTestsTabs() {
   const { user } = useSession();
   const pathname = usePathname();
-  if (!seesTeacherDataTabs(user)) return null; // a plain teacher keeps the plain navbar
-  const isSchool = user.role === "school";
+  if (!seesDiaryTestsTabs(user)) return null; // a plain teacher keeps the plain navbar
   return (
-    <nav aria-label="Teacher Data sections" className="mb-4 border-b border-slate-200">
+    <nav aria-label="Diary & Tests sections" className="mb-4 border-b border-slate-200">
       <div role="tablist" className="flex gap-1 overflow-x-auto pb-0">
-        {teacherDataTabs.map((t) => {
+        {diaryTestsTabs.map((t) => {
           const active = pathname === t.href;
-          const label = !isSchool && t.teacherLabel ? t.teacherLabel : t.label;
+          const label = t.label;
           return (
             <Link
               key={t.href}
