@@ -93,11 +93,17 @@ async function openClass(page: Page, className: string) {
 test('school manages test and exam marks from separate tabs, including status shortcuts and saved edits', async ({ page }) => {
   const { writes, paperTypesRequested } = await mockApp(page, school);
   await page.goto('/teachers');
-  const teacherTabs = page.getByRole('navigation', { name: 'Teacher Data sections' });
+  const menu = page.getByRole('navigation', { name: 'Main menu' });
+  await expect(menu.getByRole('link', { name: 'Teachers & Staff' })).toHaveClass(/bg-blue-600/);
+  await expect(menu.getByRole('link', { name: 'Set Timetable', exact: true })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Diary & Tests sections' })).toHaveCount(0);
+  await menu.getByRole('link', { name: 'Diary & Tests' }).click();
+  const teacherTabs = page.getByRole('navigation', { name: 'Diary & Tests sections' });
+  await expect(teacherTabs.getByRole('tab')).toHaveText(['Daily Diary', 'Tests', 'Marks Entry']);
   await teacherTabs.getByRole('tab', { name: 'Marks Entry' }).click();
   await expect(page).toHaveURL(/\/teachers\/marks$/);
   await expect(teacherTabs.getByRole('tab', { name: 'Marks Entry' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('navigation', { name: 'Main menu' }).getByRole('link', { name: 'Teacher Data' })).toHaveClass(/bg-blue-600/);
+  await expect(page.getByRole('navigation', { name: 'Main menu' }).getByRole('link', { name: 'Diary & Tests' })).toHaveClass(/bg-blue-600/);
   await expect(page.getByRole('heading', { name: 'Test Marks', exact: true })).toBeVisible();
   await expect(page.getByText('Midterm Maths Exam', { exact: false })).toHaveCount(0);
   await openClass(page, '5');
@@ -122,7 +128,7 @@ test('school manages test and exam marks from separate tabs, including status sh
   await resultTabs.getByRole('tab', { name: 'Marks Entry' }).click();
   await expect(page).toHaveURL(/\/marks$/);
   await expect(resultTabs.getByRole('tab', { name: 'Marks Entry' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('navigation', { name: 'Teacher Data sections' })).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: 'Diary & Tests sections' })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Exam Marks', exact: true })).toBeVisible();
   await expect(page.getByText('Weekly Fractions Test', { exact: false })).toHaveCount(0);
   await openClass(page, '5');
@@ -158,7 +164,7 @@ test('school manages test and exam marks from separate tabs, including status sh
 test('class teacher sees only each paper type within assigned classes and sections', async ({ page }) => {
   const { writes } = await mockApp(page, classTeacher);
   await page.goto('/teachers/marks');
-  await expect(page.getByRole('navigation', { name: 'Teacher Data sections' }).getByRole('tab', { name: 'Marks Entry' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('navigation', { name: 'Diary & Tests sections' }).getByRole('tab', { name: 'Marks Entry' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('heading', { name: 'Test marks status' })).toBeVisible();
   await expect.poll(() => optionValues(page, 'Test paper')).toEqual(['', 'test-5a', 'test-6b', 'test-5-all']);
   await openClass(page, '5');
@@ -192,8 +198,8 @@ test('subject teacher can reach test marks from the menu and exam marks from Exa
   await expect(page).toHaveURL(/\/teachers\/marks$/);
   const menu = page.getByRole('navigation', { name: 'Main menu' });
   await expect(menu.getByRole('link', { name: 'Test Marks Entry' })).toHaveClass(/bg-blue-600/);
-  await expect(menu.getByRole('link', { name: 'Teacher Data' })).toHaveCount(0);
-  await expect(page.getByRole('navigation', { name: 'Teacher Data sections' })).toHaveCount(0);
+  await expect(menu.getByRole('link', { name: 'Diary & Tests' })).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: 'Diary & Tests sections' })).toHaveCount(0);
   await expect.poll(() => optionValues(page, 'Test paper')).toEqual(['', 'test-5a', 'test-6b', 'test-5-all']);
   await page.getByLabel('Test paper').selectOption('test-5a');
   await page.getByLabel('Marks for Ali Raza').fill('10'); // left unsaved when changing sections
@@ -263,8 +269,8 @@ test('a failed roster load can be retried without changing the selected paper', 
 test('both marks tabs and paper selectors remain usable on a phone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockApp(page, school);
-  await page.goto('/teachers');
-  await page.getByRole('navigation', { name: 'Teacher Data sections' }).getByRole('tab', { name: 'Marks Entry' }).click();
+  await page.goto('/diary');
+  await page.getByRole('navigation', { name: 'Diary & Tests sections' }).getByRole('tab', { name: 'Marks Entry' }).click();
   await page.getByRole('button', { name: 'Enter marks', exact: true }).click();
   await expect.poll(() => optionValues(page, 'Test paper')).toContain('test-5a');
   await page.getByLabel('Test paper').selectOption('test-5a');
