@@ -126,7 +126,7 @@ export default function TeachersPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">{isSchool ? "Teachers & Staff" : "Subject Teachers"}</h1>
+          <h1 className="text-xl font-bold">{isSchool ? "Teachers & time table" : "Subject Teachers"}</h1>
           <p className="text-sm text-slate-500">{isSchool ? "Click a teacher to see all his classes, subjects, periods and period times." : `Class ${myClasses.map((c) => c.className + (c.section ? " " + c.section : "")).join(", ") || "-"}. Teachers you add here are subject teachers of your class. Choose a saved teacher's name to add your class to him.`}</p>
         </div>
         <button className="btn flex items-center gap-2" onClick={add}><FaPlus /> {isSchool ? "Add teacher" : "Add subject teacher"}</button>
@@ -180,7 +180,7 @@ export default function TeachersPage() {
         </table>
       </div>
       <p className="text-xs text-slate-500">
-        Period times come from <b>Set Timetable</b>{periodTime(schedule, 1) ? ` (period 1: ${periodTime(schedule, 1)})` : ""}. A period can be given to only one teacher of a class - a period that another teacher already has is shown as taken and cannot be selected.
+        Period times come from the <b>Set Timetable</b> tab{periodTime(schedule, 1) ? ` (period 1: ${periodTime(schedule, 1)})` : ""}. A period can be given to only one teacher of a class - a period that another teacher already has is shown as taken and cannot be selected.
       </p>
     </div>
   );
