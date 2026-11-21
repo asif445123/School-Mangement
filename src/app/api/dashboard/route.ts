@@ -5,7 +5,7 @@ import { isClassTeacher, nz } from "@/lib/teacher-scope";
 import { studentRights, studentScopes } from "@/lib/student-scope";
 import { studentStatus } from "@/lib/student-details";
 import { isValidDate } from "@/lib/attendance";
-import { attendanceTotals, classStrength, diaryRequirements, diarySummary, staffStrength, testSummary } from "@/lib/dashboard-summary";
+import { attendanceTotals, classAttendanceGaps, classStrength, diaryRequirements, diarySummary, staffStrength, testSummary } from "@/lib/dashboard-summary";
 import User from "@/models/user";
 import Student from "@/models/student";
 import Diary from "@/models/diary";
@@ -63,8 +63,8 @@ export async function GET(req: NextRequest) {
     StaffAttendance.find({ school: schoolId, date }).select("staff status").lean(),
   ]);
 
-  // A class teacher may only read the attendance records of the students he sees.
-  const studentIds = new Set(students.map((st) => String(st._id)));
+  // Attendance totals and gaps are measured against the active roster the user may see.
+  const studentIds = new Set(studying.map((st) => String(st._id)));
   const studentRecords = studentAttendance.filter((r: any) => studentIds.has(String(r.student)));
   // Staff strength and staff attendance are school-wide information, so a class
   // teacher gets neither (his cards stay empty).
@@ -77,6 +77,7 @@ export async function GET(req: NextRequest) {
   const requirements = diaryRequirements(teachers as any[]).filter((r) => owns(r.className, r.section));
   const staff = staffStrength(rosterStaff as any[]);
   const classSections = classStrength(studying, true);
+  const attendanceGaps = classAttendanceGaps(studying, studentRecords, teachers as any[]);
 
   return NextResponse.json({
     date,
@@ -87,6 +88,7 @@ export async function GET(req: NextRequest) {
     attendance: {
       students: attendanceTotals(studentRecords, studying),
       staff: attendanceTotals(staffRecords, rosterStaff),
+      gaps: attendanceGaps,
     },
     strength: {
       students: studying.length,

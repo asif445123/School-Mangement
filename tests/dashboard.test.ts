@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   attendanceTotals,
+  classAttendanceGaps,
   classStrength,
   diaryRequirements,
   diarySummary,
@@ -109,4 +110,32 @@ test("teachers and other staff are counted separately", () => {
   assert.equal(isTeacherAccount({ type: "" }), true); // schema default
   assert.equal(isTeacherAccount({ type: "Staff" }), false);
   assert.deepEqual(staffStrength([{ name: "a" }, { name: "b", type: "Teacher" }, { name: "c", type: "Staff" }, { name: "d", type: "staff" }]), { teachers: 2, staff: 2, total: 4 });
+});
+
+test("class attendance gaps identify assigned class teachers for incomplete registers", () => {
+  const roster = [
+    { _id: "a1", className: "5", section: "A" },
+    { _id: "a2", className: "5", section: "A" },
+    { _id: "a3", className: "5", section: "A" },
+    { _id: "b1", className: "5", section: "B" },
+    { _id: "c1", className: "6", section: "" },
+  ];
+  const teachers = [
+    { _id: "ct-a", name: "Ms A", role: "teacher", type: "Teacher", teacherType: "Class teacher", className: "5", section: "A" },
+    { _id: "ct-all", name: "Mr All", role: "teacher", type: "Teacher", teacherType: "Class teacher", className: "5, 6", section: "" },
+    { _id: "subject", name: "Ms Subject", role: "teacher", type: "Teacher", teacherType: "Subject teacher", className: "5", section: "B" },
+    { _id: "staff", name: "Staff", role: "teacher", type: "Staff", teacherType: "Class teacher", className: "5", section: "B" },
+  ];
+  const gaps = classAttendanceGaps(roster, [
+    { student: "a1", status: "Present" },
+    { student: "a2", status: "Absent" },
+    { student: "c1", status: "Present" },
+  ], teachers);
+
+  assert.deepEqual(gaps.map((row) => [row.className, row.section, row.total, row.marked, row.unmarked]), [
+    ["5", "A", 3, 2, 1],
+    ["5", "B", 1, 0, 1],
+  ]);
+  assert.deepEqual(gaps[0].teachers.map((teacher) => teacher.name), ["Mr All", "Ms A"]);
+  assert.deepEqual(gaps[1].teachers.map((teacher) => teacher.name), ["Mr All"]);
 });
