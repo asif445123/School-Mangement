@@ -42,12 +42,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
     const at = new Date();
     const item = await Fee.findOneAndUpdate({ _id: id, school: user._id, "whatsapp.lockToken": token }, {
-      $set: { "whatsapp.lastStatus": "sent", "whatsapp.lastAttemptAt": at, "whatsapp.lastSentAt": at, "whatsapp.lastTo": recipient.number, "whatsapp.lastBy": body.mode === "manual" ? `${user.name} (manual confirmation)` : user.name, "whatsapp.lastMessageId": messageId, "whatsapp.sentRevision": fee.revision || 0, "whatsapp.deliveryStatus": deliveryStatus },
+      $set: { "whatsapp.lastStatus": "sent", "whatsapp.lastMessageType": "chalan", "whatsapp.lastAttemptAt": at, "whatsapp.lastSentAt": at, "whatsapp.lastTo": recipient.number, "whatsapp.lastBy": body.mode === "manual" ? `${user.name} (manual confirmation)` : user.name, "whatsapp.lastMessageId": messageId, "whatsapp.sentRevision": fee.revision || 0, "whatsapp.deliveryStatus": deliveryStatus },
       $inc: { "whatsapp.sentCount": 1, "whatsapp.attemptCount": 1 }, $unset: { "whatsapp.lastError": 1, "whatsapp.lockUntil": 1, "whatsapp.lockToken": 1 },
     }, { new: true });
     return NextResponse.json({ item, message: body.mode === "manual" ? "Manual WhatsApp send recorded" : "Image accepted by WhatsApp" });
   } catch (e: any) {
-    const item = await Fee.findOneAndUpdate({ _id: id, school: user._id, "whatsapp.lockToken": token }, { $set: { "whatsapp.lastStatus": "failed", "whatsapp.lastAttemptAt": new Date(), "whatsapp.lastError": String(e.message).slice(0, 500), "whatsapp.lastBy": user.name }, $inc: { "whatsapp.attemptCount": 1 }, $unset: { "whatsapp.lockUntil": 1, "whatsapp.lockToken": 1 } }, { new: true });
+    const item = await Fee.findOneAndUpdate({ _id: id, school: user._id, "whatsapp.lockToken": token }, { $set: { "whatsapp.lastStatus": "failed", "whatsapp.lastMessageType": "chalan", "whatsapp.lastAttemptAt": new Date(), "whatsapp.lastError": String(e.message).slice(0, 500), "whatsapp.lastBy": user.name }, $inc: { "whatsapp.attemptCount": 1 }, $unset: { "whatsapp.lockUntil": 1, "whatsapp.lockToken": 1 } }, { new: true });
     return NextResponse.json({ error: e.message, item }, { status: 422 });
   }
 }

@@ -37,6 +37,17 @@ test("manual share: counted the same, shown as manually confirmed by name", () =
   assert.equal(s.sentBy, "Admin");
 });
 
+test("a manually confirmed defaulter reminder is visible without appearing stale as a chalan image", () => {
+  const s = shareStatus({
+    revision: 3,
+    whatsapp: { lastStatus: "sent", lastMessageType: "reminder", sentCount: 1, attemptCount: 1, sentRevision: null, lastSentAt: "2026-11-14T09:05:00", lastBy: "Admin (manual confirmation)" },
+  });
+  assert.equal(s.label, "WhatsApp sent");
+  assert.equal(s.stale, false);
+  assert.equal(s.contentLabel, "Fee reminder");
+  assert.equal(s.methodLabel, "Manually confirmed");
+});
+
 test("charges edited after sending: Updated · send again, count is kept", () => {
   const s = shareStatus({
     revision: 2,

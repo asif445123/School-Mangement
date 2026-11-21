@@ -13,6 +13,7 @@ const feeSchema = new Schema({
   whatsapp: {
     sentCount: { type: Number, default: 0 }, attemptCount: { type: Number, default: 0 },
     lastStatus: { type: String, enum: ["sent", "failed"], default: undefined },
+    lastMessageType: { type: String, enum: ["chalan", "reminder"], default: "chalan" },
     lastAttemptAt: Date, lastSentAt: Date, lastTo: String, lastBy: String,
     lastError: String, lastMessageId: String, sentRevision: Number,
     deliveryStatus: String, deliveryAt: Date,

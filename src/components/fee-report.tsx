@@ -39,14 +39,14 @@ export default function FeeReport({ compact = false }: { compact?: boolean } = {
   return (
     <div className="space-y-4">
       <div className="card flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-wrap items-end gap-3">
-          <div>
-            <label className="text-xs font-semibold text-slate-500" htmlFor={monthInputId}>Month</label>
+        <div className="flex min-w-0 flex-wrap items-end gap-4">
+          <div className="w-full sm:w-48">
+            <label className="block text-xs font-semibold text-slate-500" htmlFor={monthInputId}>Month</label>
             <input
               id={monthInputId}
               type="month"
               aria-label="Select fee report month"
-              className="input mt-1 w-full sm:w-48"
+              className="input mt-1 block w-full"
               value={month}
               onChange={(e) => setMonth(e.target.value || currentMonth())}
             />

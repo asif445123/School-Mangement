@@ -20,8 +20,9 @@ export function shareStatus(fee: any) {
   const count = Number(w.sentCount || 0);
   const attempts = Number(w.attemptCount || 0);
   const sent = w.lastStatus === "sent";
-  // charges were edited after the last successful send — the family still has the old image
-  const stale = sent && w.sentRevision !== (fee?.revision || 0);
+  const messageType = w.lastMessageType === "reminder" ? "reminder" : "chalan";
+  // Only chalan images become outdated when voucher charges change.
+  const stale = sent && messageType === "chalan" && w.sentRevision !== (fee?.revision || 0);
   const manual = String(w.lastBy || "").includes("manual");
   return {
     sent,
@@ -33,6 +34,7 @@ export function shareStatus(fee: any) {
     recipient: w.lastTo ? String(w.lastTo) : "",
     sentBy: w.lastBy ? String(w.lastBy).replace(/\s*\(manual confirmation\)\s*/i, "") : "",
     methodLabel: !sent ? "" : manual ? "Manually confirmed" : "Accepted by WhatsApp",
+    contentLabel: !sent ? "" : messageType === "reminder" ? "Fee reminder" : "Chalan image",
     error: w.lastError ? String(w.lastError) : "",
   };
 }
