@@ -12,6 +12,7 @@ import StudentTabs, { studentDataRoutes } from "@/components/student-tabs";
 import TeacherTabs, { teacherDataRoutes, teacherTabRoutes, seesTeacherDataTabs } from "@/components/teacher-tabs";
 import ExpenseTabs, { expenseRoutes, expenseTabRoutes } from "@/components/expense-tabs";
 import ResultsTabs, { resultsRoutes, resultsTabOnly } from "@/components/results-tabs";
+import StudentReportsTabs, { studentReportsRoutes, studentReportsTabRoutes } from "@/components/student-reports-tabs";
 import InventoryTabs, { inventoryRoutes, inventoryTabRoutes } from "@/components/inventory-tabs";
 
 const settingsPages = ["/settings", "/payment-accounts", "/whatsapp-settings"];
@@ -36,18 +37,25 @@ const all: [string, string, string[]][] = [
   // Student Promotion is a tab inside Results, so it keeps working as a page
   // but is not repeated in the navbar.
   ["/results/promotion", "Results", ["school"]],
+  // Student Reports is its own navbar item, right below Exams & Results: Fee
+  // Report, Month Wise Fee Receivable, GR Register, Test Report and Exams
+  // Report are its tabs (all moved out of the old Reports page).
+  ["/student-reports", "Student Reports", ["school", "teacher"]],
   ["/teachers", "Teacher Data", ["classTeacher"]], // first match wins, so this must come before the school's own label
   ["/teachers", "Teacher Data", ["school"]],
   ["/staff-attendance", "Staff Attendance", ["school"]],
   ["/payroll", "Payroll & Salary", ["school"]],
   ["/timetable", "Set Timetable", ["school"]],
   ["/timetable", "Timetable", ["teacher"]],
-  // Account Types and Account Master are tabs inside Enter Expenses,
+  // Account Types, Account Master and Chart of Accounts are tabs inside Enter Expenses,
   // so they keep working as pages but are not repeated in the navbar.
   ["/account-types", "Account Types", ["school"]],
   ["/accounts", "Account Master", ["school"]],
   ["/entries", "Enter Expenses", ["school"]],
-  ["/reports", "Reports", ["school"]],
+  ["/chart-of-accounts", "Chart of Accounts", ["school"]],
+  // Accounts Reports holds only the accounting reports now (fee and result
+  // reports moved to Student Reports).
+  ["/reports", "Accounts Reports", ["school"]],
   // Inventory & Purchases is one page with six tabs (items, requisitions,
   // purchase invoices, stock in / out, suppliers and the supplier ledger).
   ["/inventory", "Inventory & Purchases", ["school"]],
@@ -65,6 +73,8 @@ const teacherTabOnly = new Set(teacherTabRoutes);
 const expenseTabOnly = new Set(expenseTabRoutes);
 // Pages that are shown as tabs inside Results instead of their own navbar item
 const resultsTabOnlySet = new Set(resultsTabOnly);
+// Pages that are shown as tabs inside Student Reports instead of their own navbar item
+const studentReportsTabOnly = new Set(studentReportsTabRoutes);
 // Pages that are shown as tabs inside Inventory & Purchases instead of their own navbar item
 const inventoryTabOnly = new Set(inventoryTabRoutes);
 const home: any = { admin: "/users", school: "/dashboard", teacher: "/students", student: "/my" };
@@ -86,11 +96,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // School / class teachers see diary, tests, test marks and the timetable
   // as Teacher Data tabs, so those items are replaced by the tab strip.
   const teacherTabs = user ? seesTeacherDataTabs(user) : false;
-  const nav = allowed.filter(([href]) => !settingsPages.slice(1).includes(href) && !tabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !inventoryTabOnly.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
+  const nav = allowed.filter(([href]) => !settingsPages.slice(1).includes(href) && !tabOnly.has(href) && !expenseTabOnly.has(href) && !resultsTabOnlySet.has(href) && !studentReportsTabOnly.has(href) && !inventoryTabOnly.has(href) && !(teacherTabs && teacherTabOnly.has(href)));
   // A tab page belongs to its own navbar item (Inventory & Purchases tabs and
   // the other grouped pages keep the group's menu item and heading).
   const menuItem = (path: string) => allowed.find(([href]) =>
-    href === path || (href === "/inventory" && inventoryTabOnly.has(path)));
+    href === path || (href === "/inventory" && inventoryTabOnly.has(path)) || (href === "/student-reports" && studentReportsTabOnly.has(path)));
   useEffect(() => { // keep each role inside its own pages
     if (user && !menuItem(pathname)) router.replace(landing(user));
   }, [user, pathname]); // eslint-disable-line
@@ -141,6 +151,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 (href === "/teachers" && teacherTabOnly.has(pathname)) ||
                 (href === "/entries" && expenseTabOnly.has(pathname)) ||
                 (href === "/exams" && resultsTabOnlySet.has(pathname)) ||
+                (href === "/student-reports" && studentReportsTabOnly.has(pathname)) ||
                 (href === "/inventory" && inventoryTabOnly.has(pathname));
               return (
                 <Link
@@ -173,6 +184,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {teacherDataRoutes.includes(pathname) && <TeacherTabs />}
             {expenseRoutes.includes(pathname) && <ExpenseTabs />}
             {resultsRoutes.includes(pathname) && <ResultsTabs />}
+            {studentReportsRoutes.includes(pathname) && <StudentReportsTabs />}
             {inventoryRoutes.includes(pathname) && <InventoryTabs />}
             {children}
           </main>

@@ -61,7 +61,7 @@ export default function GrRegisterPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h1 className="text-xl font-bold">G.R. Register</h1><p className="text-sm text-slate-500">Enter every admitted student here. The full register is in Reports &rarr; GR Register.</p></div>
+        <div><h1 className="text-xl font-bold">G.R. Register</h1><p className="text-sm text-slate-500">Enter every admitted student here. The full register is in Student Reports &rarr; GR Register.</p></div>
         <div className="flex w-full gap-2 sm:w-auto">
           <input className="input min-w-0 flex-1 sm:w-48 sm:flex-none" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
           <button className="btn flex items-center gap-2" onClick={add}><FaPlus /> Add entry</button>

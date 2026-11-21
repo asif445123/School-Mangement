@@ -153,6 +153,26 @@ export function NavIcon({ href }: { href: string }) {
           <path d="M17.5 14.2V18.8M16.2 15.5H18.4M16.2 17.5H18.4" stroke="#92400e" strokeWidth="1.3" strokeLinecap="round" />
         </svg>
       );
+    case "/student-reports":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <rect x="3.5" y="2.5" width="17" height="19" rx="2.4" fill="#ffffff" />
+          <path d="M3.5 6.5C3.5 4.3 5.3 2.5 7.5 2.5H16.5C18.7 2.5 20.5 4.3 20.5 6.5V7.5H3.5V6.5Z" fill="#0ea5e9" />
+          <circle cx="8.5" cy="6" r="1.6" fill="#fde047" />
+          <circle cx="12" cy="12.5" r="2.1" fill="#38bdf8" />
+          <path d="M8 17.8C8 15.9 9.7 14.9 12 14.9C14.3 14.9 16 15.9 16 17.8H8Z" fill="#22c55e" />
+          <path d="M16.5 11.5H18.5M16.5 14H18.5M16.5 16.5H18" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round" />
+        </svg>
+      );
+    case "/chart-of-accounts":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <rect x="9" y="2.5" width="6" height="4.5" rx="1.2" fill="#2563eb" />
+          <rect x="2.5" y="15.5" width="6" height="4.5" rx="1.2" fill="#22c55e" />
+          <rect x="15.5" y="15.5" width="6" height="4.5" rx="1.2" fill="#f59e0b" />
+          <path d="M12 7V11M5.5 15.5V11H18.5V15.5" stroke="#94a3b8" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      );
     case "/reports":
       return (
         <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">

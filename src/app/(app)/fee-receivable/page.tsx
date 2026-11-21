@@ -1,7 +1,7 @@
 "use client";
 import FeeMonthReport from "@/components/fee-month-report";
 
-// Month wise fee receivable detail (also available as a tab inside Reports)
+// Month wise fee receivable detail (also available as a tab inside Student Reports)
 export default function FeeReceivablePage() {
   return (
     <div className="space-y-4">
