@@ -17,21 +17,23 @@ export default function FeeDefaultersPage() {
   const [className, setClassName] = useState("");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [attempt, setAttempt] = useState(0);
   const [sendingId, setSendingId] = useState("");
 
   useEffect(() => {
     let active = true;
     setLoading(true);
-    Promise.all([api("/api/fees/defaulters"), api("/api/settings/whatsapp")])
-      .then(([feeData, whatsappData]) => {
-        if (!active) return;
-        setFees(feeData.items || []);
-        setCountryCode(whatsappData.settings?.countryCallingCode || "92");
-      })
-      .catch((error: any) => {
-        if (active) toast("error", error.message || "Could not load pending fees");
-      })
+    // The two requests load independently: the settings call only picks the
+    // default country code, so its failure must never blank the pending-fee
+    // list, and a failed fee load shows its error instead of "No pending fees".
+    api("/api/fees/defaulters")
+      .then((feeData) => { if (active) { setFees(feeData.items || []); setLoadError(""); } })
+      .catch((error: any) => { if (active) setLoadError(error.message || "Could not load pending fees"); })
       .finally(() => { if (active) setLoading(false); });
+    api("/api/settings/whatsapp")
+      .then((whatsappData) => { if (active) setCountryCode(whatsappData.settings?.countryCallingCode || "92"); })
+      .catch(() => {});
     return () => { active = false; };
   }, []);
 
