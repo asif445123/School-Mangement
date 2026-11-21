@@ -6,7 +6,7 @@ import { useSession } from "./session";
 // Student Reports is one page with tabs: Fee Report, Month Wise Fee
 // Receivable, GR Register, Test Report and Exams Report. The last two are
 // the old "Result report" tab from Reports, split by paper kind (test papers
-// vs exam papers). Same tab style as Student Data / Enter Expenses.
+// vs exam papers). Same tab style as Enroll Students / Enter Expenses.
 export const studentReportsTabs: { href: string; label: string; schoolOnly?: boolean }[] = [
   { href: "/student-reports", label: "Fee Report", schoolOnly: true },
   { href: "/student-reports/month-wise-fee-receivable", label: "Month Wise Fee Receivable", schoolOnly: true },

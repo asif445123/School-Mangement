@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 // Enter Expenses is one page with tabs: Account Types, Account Master, the
 // expense Entries page and the Chart of Accounts tree (same tab style as
-// Student Data / Teacher Data).
+// Enroll Students / Teacher Data).
 export const expenseTabs: { href: string; label: string }[] = [
   { href: "/account-types", label: "Account Types" },
   { href: "/accounts", label: "Account Master" },

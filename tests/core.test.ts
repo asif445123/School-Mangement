@@ -5,6 +5,7 @@ import { feeValues, previousBalance, validMonth } from '../src/lib/fee-calculati
 import { cleanPaymentAccount } from '../src/lib/payment-accounts';
 import { chalanRows } from '../src/lib/chalan';
 import { encryptCredential, decryptCredential } from '../src/lib/credential-crypto';
+import { buildFeeDefaulters, feeReminderMessage } from '../src/lib/fee-defaulters';
 
 test('WhatsApp falls back to phone only when separate number is blank', () => {
   assert.equal(studentWhatsApp({ phone: '0300 1234567' }).number, '923001234567');
@@ -28,6 +29,21 @@ test('legacy voucher totals and previous balances remain compatible', () => {
   assert.equal(rows.total, 1700); assert.equal(rows.balance, 1200);
   assert.equal(previousBalance([{ student: 'a', month: '2026-10', amount: 100, paid: 30 }, { student: 'a', month: '2026-11', amount: 200, paid: 0 }, { student: 'b', month: '2026-10', amount: 500, paid: 0 }], 'a', '2026-11'), 70);
 });
+test('fee defaulters are grouped once per student without double-counting previous balances', () => {
+  const student = { _id: 's1', name: 'Ali', className: '5', section: 'A' };
+  const rows = buildFeeDefaulters([
+    { student, month: '2026-10', amount: 1000, paid: 250, previous: 9000 },
+    { student, month: '2026-11', amount: 1000, paid: 0, previous: 750 },
+    { student: { _id: 's2', name: 'Paid Student', className: '4' }, month: '2026-11', amount: 500, paid: 500 },
+  ]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].balance, 1750);
+  assert.equal(rows[0].latestMonth, '2026-11');
+  assert.equal(rows[0].pendingVoucherCount, 2);
+  assert.match(feeReminderMessage(rows[0], 'Arena School'), /Rs 1,750/);
+  assert.match(feeReminderMessage(rows[0], 'Arena School'), /Nov 2026/);
+});
+
 test('payment account validation preserves leading zeros and rejects incomplete bank details', () => {
   assert.equal(cleanPaymentAccount({ type: 'jazzcash', title: 'School', accountNumber: '03001234567' }).accountNumber, '03001234567');
   assert.throws(() => cleanPaymentAccount({ type: 'bank', title: 'School', accountNumber: '123' }));
