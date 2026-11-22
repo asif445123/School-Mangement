@@ -16,6 +16,14 @@ import StudentReportsTabs, { studentReportsRoutes, studentReportsTabRoutes } fro
 import InventoryTabs, { inventoryRoutes, inventoryTabRoutes } from "@/components/inventory-tabs";
 import TeachersTabs, { schoolTimetableTabRoutes, teachersTabRoutes } from "@/components/teachers-tabs";
 import FeeManagementTabs, { feeManagementRoutes, feeManagementTabRoutes } from "@/components/fee-management-tabs";
+import { childClassLine, isPortalPath, parsePortalPath, portalHome, portalPath, portalSectionLabel, portalSections } from "@/lib/portal-routes";
+
+// A sidebar row is either a link or the name of one child in the student /
+// guardian portal. A guardian linked to brothers / sisters gets one named
+// group per child, so every child's reports open separately.
+type NavRow =
+  | { kind: "link"; key: string; href: string; label: string; active: boolean; nested?: boolean }
+  | { kind: "group"; key: string; label: string; note?: string };
 
 const settingsPages = ["/settings", "/payment-accounts", "/whatsapp-settings"];
 const all: [string, string, string[]][] = [
@@ -115,14 +123,73 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     (href === "/inventory" && inventoryTabOnly.has(path)) ||
     (href === "/student-reports" && studentReportsTabOnly.has(path)) ||
     (href === "/teachers" && user?.role === "school" && teachersTabOnly.has(path)));
+  // --- student / guardian portal -----------------------------------------
+  // The portal has its own sidebar shape: a flat set of section links for a
+  // single child, and one named group per child when a guardian login is
+  // linked to brothers / sisters (see lib/portal-routes).
+  const isStudent = user?.role === "student";
+  const portalChildren: any[] = isStudent ? (user.portalChildren || []) : [];
+  const portalMatch = parsePortalPath(pathname);
+  const activePortalChildId = portalMatch?.childId || "";
+  const activePortalSection = portalMatch?.section || "";
+
+  const isActive = (href: string) =>
+    pathname === href || (href === "/settings" && settingsPages.includes(pathname)) ||
+    (href === "/students" && tabOnly.has(pathname)) ||
+    (href === "/fees" && feeTabOnly.has(pathname)) ||
+    (diaryTestsTabs && href === "/diary" && diaryTestsTabOnly.has(pathname)) ||
+    (href === "/entries" && expenseTabOnly.has(pathname)) ||
+    (href === "/exams" && resultsTabOnlySet.has(pathname)) ||
+    (href === "/student-reports" && studentReportsTabOnly.has(pathname)) ||
+    (href === "/inventory" && inventoryTabOnly.has(pathname)) ||
+    (href === "/teachers" && user?.role === "school" && teachersTabOnly.has(pathname));
+
+  const linkRow = ([href, label]: [string, string, string[]]): NavRow =>
+    ({ kind: "link", key: href, href, label, active: isActive(href) });
+
+  const portalRows: NavRow[] = [];
+  if (isStudent) {
+    const multi = portalChildren.length > 1;
+    portalRows.push({
+      kind: "link", key: "portal-home", href: portalHome,
+      label: multi ? "All children" : "My Portal", active: pathname === portalHome,
+    });
+    for (const child of portalChildren) {
+      if (multi) portalRows.push({ kind: "group", key: `child-${child._id}`, label: child.name, note: childClassLine(child) });
+      for (const section of portalSections) {
+        portalRows.push({
+          kind: "link",
+          key: `${child._id}-${section.key}`,
+          href: portalPath(child._id, section.key),
+          label: section.label,
+          active: activePortalChildId === String(child._id) && activePortalSection === section.key,
+          nested: multi,
+        });
+      }
+    }
+  }
+  const navRows: NavRow[] = isStudent
+    ? [...portalRows, ...allowed.filter(([href]) => settingsPages.includes(href)).map(linkRow)]
+    : nav.map(linkRow);
+
   useEffect(() => { // keep each role inside its own pages
-    if (user && !menuItem(pathname)) router.replace(landing(user));
+    if (!user) return;
+    if (isStudent && isPortalPath(pathname)) {
+      if (pathname === portalHome) return;
+      // another family's child, or a broken portal address: back to the overview
+      if (!portalMatch || (portalChildren.length && !portalChildren.some((c) => String(c._id) === portalMatch.childId))) router.replace(portalHome);
+      return;
+    }
+    if (!menuItem(pathname)) router.replace(landing(user));
   }, [user, pathname]); // eslint-disable-line
 
   if (!user) return <p className="p-10 text-center text-slate-500">Loading...</p>;
 
   const schoolTitle = user.schoolInfo?.name || user.schoolName || (user.role === "school" ? user.name : "School Management");
-  const currentTitle = menuItem(pathname)?.[1] || "Dashboard";
+  const portalChild = portalMatch ? portalChildren.find((c) => String(c._id) === portalMatch.childId) : null;
+  const currentTitle = portalMatch
+    ? `${portalSectionLabel(portalMatch.section)}${portalChild ? ` · ${portalChild.name}` : ""}`
+    : pathname === portalHome && portalChildren.length > 1 ? "Guardian Portal" : menuItem(pathname)?.[1] || "Dashboard";
 
   return (
     <SessionContext.Provider value={{ user, setUser }}>
@@ -158,33 +225,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <nav aria-label="Main menu" className="flex-1 space-y-0.5 overflow-y-auto py-2 [scrollbar-width:thin]">
-            {nav.map(([href, label]) => {
-              const active =
-                pathname === href || (href === "/settings" && settingsPages.includes(pathname)) ||
-                (href === "/students" && tabOnly.has(pathname)) ||
-                (href === "/fees" && feeTabOnly.has(pathname)) ||
-                (diaryTestsTabs && href === "/diary" && diaryTestsTabOnly.has(pathname)) ||
-                (href === "/entries" && expenseTabOnly.has(pathname)) ||
-                (href === "/exams" && resultsTabOnlySet.has(pathname)) ||
-                (href === "/student-reports" && studentReportsTabOnly.has(pathname)) ||
-                (href === "/inventory" && inventoryTabOnly.has(pathname)) ||
-                (href === "/teachers" && user?.role === "school" && teachersTabOnly.has(pathname));
-              return (
-                <Link
-                  key={label}
-                  href={href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex min-h-[40px] items-center gap-3 px-4 py-2.5 text-[13.5px] transition-colors ${
-                    active
-                      ? "bg-blue-600 font-semibold text-white"
-                      : "font-medium text-slate-200 hover:bg-slate-800 hover:text-white"
-                  }`}
-                >
-                  <NavIcon href={href} />
-                  <span className="truncate">{label}</span>
-                </Link>
-              );
-            })}
+            {navRows.map((row) => row.kind === "group" ? (
+              <div key={row.key} className="px-4 pb-1 pt-3">
+                <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-slate-400">{row.label}</p>
+                {row.note && <p className="truncate text-[11px] text-slate-500">{row.note}</p>}
+              </div>
+            ) : (
+              <Link
+                key={row.key}
+                href={row.href}
+                onClick={() => setMobileOpen(false)}
+                aria-current={row.active ? "page" : undefined}
+                className={`flex min-h-[40px] items-center gap-3 py-2.5 text-[13.5px] transition-colors ${
+                  row.nested ? "pl-8 pr-4" : "px-4"
+                } ${
+                  row.active
+                    ? "bg-blue-600 font-semibold text-white"
+                    : "font-medium text-slate-200 hover:bg-slate-800 hover:text-white"
+                }`}
+              >
+                <NavIcon href={row.href} />
+                <span className="truncate">{row.label}</span>
+              </Link>
+            ))}
           </nav>
         </aside>
 
