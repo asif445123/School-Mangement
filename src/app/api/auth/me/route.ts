@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDb } from "@/lib/db";
 import { fail, getSessionUser } from "@/lib/auth";
+import { linkedStudentIds } from "@/lib/guardian";
 import User from "@/models/user";
+import Student from "@/models/student";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -11,6 +13,20 @@ export async function GET() {
   const owner: any = user.role === "school" ? obj : user.school ? await User.findById(user.school).select("schoolName logo").lean() : null;
   const schoolLogo = owner?.logo || "";
   delete obj.logo;
+  // A student / guardian login needs the names of every linked child so the
+  // sidebar can show one group of reports per child (Fee Chalan, Daily Diary,
+  // Tests, Exams). Only the few fields the menu prints are sent here - the
+  // portal pages read the full data from /api/my.
+  if (user.role === "student") {
+    const ids = linkedStudentIds(user);
+    const found: any[] = ids.length
+      ? await Student.find({ _id: { $in: ids }, school: user.school }).select("name className section rollNo").lean()
+      : [];
+    obj.portalChildren = ids
+      .map((id) => found.find((s: any) => String(s._id) === id))
+      .filter(Boolean)
+      .map((s: any) => ({ _id: String(s._id), name: s.name, className: s.className || "", section: s.section || "", rollNo: s.rollNo || "" }));
+  }
   return NextResponse.json({ user: { ...obj, schoolInfo: owner ? { name: owner.schoolName, logo: schoolLogo } : null } });
 }
 export async function PUT(req: NextRequest) {

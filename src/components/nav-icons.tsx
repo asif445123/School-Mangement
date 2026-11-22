@@ -2,7 +2,11 @@ import React from "react";
 
 export function NavIcon({ href }: { href: string }) {
   const cls = "h-[18px] w-[18px] shrink-0";
-  switch (href) {
+  // Portal section links look like /my/<childId>/<section>; their icon only
+  // depends on the section, so map them onto a stable key first.
+  const portalSection = /^\/my\/[^/]+\/(fees|diary|tests|exams)\/?$/.exec(href)?.[1];
+  const key = portalSection ? `/my:${portalSection}` : href;
+  switch (key) {
     case "/dashboard":
       return (
         <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
@@ -224,6 +228,42 @@ export function NavIcon({ href }: { href: string }) {
           <path d="M2.5 7.5L5 3.5H19L21.5 7.5H2.5Z" fill="#fbbf24" />
           <rect x="8.5" y="11.5" width="7" height="3.2" rx="1" fill="#ffffff" />
           <path d="M6 16.5H18" stroke="#b45309" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      );
+    case "/my:fees":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <rect x="2.5" y="5.5" width="19" height="13" rx="2" fill="#34d399" />
+          <rect x="2.5" y="5.5" width="19" height="3.6" rx="1.6" fill="#059669" />
+          <circle cx="12" cy="13.6" r="3.6" fill="#ecfdf5" />
+          <path d="M11 12.2H13.2M11 15H13.2M13.2 12.2C14 12.2 14.4 12.5 14.4 13C14.4 13.5 14 13.8 13.2 13.8C12.4 13.8 12 14.1 12 14.6C12 15.1 12.4 15.4 13.2 15.4" stroke="#059669" strokeWidth="1.1" strokeLinecap="round" />
+        </svg>
+      );
+    case "/my:diary":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <rect x="4" y="3" width="13" height="18" rx="2" fill="#ffffff" />
+          <rect x="8" y="1.5" width="5.5" height="3" rx="1" fill="#f59e0b" />
+          <path d="M7 8.5H15M7 12H14M7 15.5H11.5" stroke="#3b82f6" strokeWidth="1.6" strokeLinecap="round" />
+          <path d="M15.5 18L20 13.5L21.8 15.3L17.3 19.8L15 20.3L15.5 18Z" fill="#ef4444" />
+        </svg>
+      );
+    case "/my:tests":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <path d="M5 2.5H14.5L19.5 7.5V21.5H5V2.5Z" fill="#ffffff" />
+          <path d="M14.5 2.5V7.5H19.5L14.5 2.5Z" fill="#38bdf8" />
+          <path d="M8 11H16M8 14.5H16M8 18H12.5" stroke="#2563eb" strokeWidth="1.6" strokeLinecap="round" />
+          <circle cx="17" cy="17.5" r="3.5" fill="#f59e0b" />
+          <path d="M15.6 17.5L16.6 18.5L18.6 16.5" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "/my:exams":
+      return (
+        <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+          <path d="M7 3H17V8C17 11 15 13 12 13C9 13 7 11 7 8V3Z" fill="#fbbf24" />
+          <path d="M7 4.5H4.5V6.5C4.5 8.4 5.6 9.5 7.4 9.5M17 4.5H19.5V6.5C19.5 8.4 18.4 9.5 16.6 9.5" stroke="#f59e0b" strokeWidth="1.6" strokeLinecap="round" />
+          <path d="M12 13V16M10 17H14L15 20.5H9L10 17Z" fill="#3b82f6" />
         </svg>
       );
     case "/my":
