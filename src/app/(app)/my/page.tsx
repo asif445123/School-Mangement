@@ -7,7 +7,7 @@ import { childClassLine, childTitle, portalPath, portalSections } from "@/lib/po
 
 // What each sidebar section holds, shown on its quick-link card.
 const sectionNote: Record<string, string> = {
-  fees: "This month's single chalan, balance due, print & download voucher",
+  fees: "All fee chalans, balance due, print & download voucher",
   diary: "Class homework / notes, day by day",
   tests: "Test papers with marks obtained",
   exams: "First / Mid / Final term papers with grade",
@@ -16,7 +16,7 @@ const sectionNote: Record<string, string> = {
 // The portal overview. A child sees his own summary + links; a guardian with
 // several children sees the family fee summary and one card per child. Each
 // link opens ONLY its own page (/my/<childId>/fees, ...) with no other tabs
-// on the page - the fee page shows one chalan for the picked month.
+// on the page - the fee page lists all chalans of that child.
 export default function MyPortalPage() {
   const { data, bundles, guardianName } = usePortal();
   const multi = bundles.length > 1;
@@ -92,7 +92,9 @@ export default function MyPortalPage() {
                   <p className="text-sm text-slate-600">{childClassLine(b.student)}</p>
                 </div>
                 <div className="grid gap-1 text-sm">
-                  <p>Fee balance: <b className={t.balance > 0 ? "text-red-600" : "text-green-700"}>{money(t.balance)}</b></p>
+                  <p>
+                    Fee chalans: <b>{b.fees.length}</b> · Balance: <b className={t.balance > 0 ? "text-red-600" : "text-green-700"}>{money(t.balance)}</b>
+                  </p>
                   <p>Diary today: <b>{diaryToday ? `${diaryToday} ${diaryToday === 1 ? "entry" : "entries"}` : "none yet"}</b></p>
                   <p>Tests today: <b>{testsToday || "none"}</b></p>
                   <p>Exam marks overall: <b>{ex.pct === null ? "no marks yet" : `${ex.pct.toFixed(1)}% (${gradeOf(ex.pct)})`}</b></p>
