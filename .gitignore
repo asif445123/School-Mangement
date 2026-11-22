@@ -1,9 +1,9 @@
 node_modules
 .next
-.env.local
 
 !.env.example
 .tmp
 *.tsbuildinfo
 playwright-report
 test-results
+config.bat
