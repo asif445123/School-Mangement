@@ -3,6 +3,7 @@ import { connectDb } from "@/lib/db";
 import { fail, getSessionUser } from "@/lib/auth";
 import { belongsToStudentClass, feeTotals, linkedStudentIds } from "@/lib/guardian";
 import { previousPendingForMonth } from "@/lib/fee-calculation";
+import { PORTAL_FEE_FIELDS } from "@/lib/portal-fees";
 import Student from "@/models/student";
 import Fee from "@/models/fee";
 import Diary from "@/models/diary";
@@ -34,7 +35,8 @@ export async function GET() {
     const classNames = [...new Set(students.map((s) => s.className))];
     const classLimit = 500 * classNames.length; // the old 500-per-child allowance, per class
     const [fees, diary, marks, papers, owner, accounts] = await Promise.all([
-      Fee.find({ student: { $in: studentIds }, school }).select("-whatsapp").sort({ month: -1 }).lean(),
+      // Inclusion projection only - never `-whatsapp` (see lib/portal-fees).
+      Fee.find({ student: { $in: studentIds }, school }).select(PORTAL_FEE_FIELDS).sort({ month: -1 }).lean(),
       Diary.find({ className: { $in: classNames }, school }).sort({ date: -1 }).limit(classLimit).lean(),
       // paper questions are not sent to students
       Mark.find({ student: { $in: studentIds }, school }).populate({ path: "paper", select: "title type subject date totalMarks term className section" }).sort({ createdAt: -1 }).lean(),

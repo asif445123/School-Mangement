@@ -87,3 +87,39 @@ test('month and previous-pending helpers compute per-month values accurately', (
   assert.equal(formatMonthLabel('2026-10'), 'Oct 2026');
   assert.equal(formatMonthLabel('0000-00'), 'Previous pending');
 });
+
+// Regression: the guardian portal used `.select("-whatsapp")` on the Fee query,
+// which - because whatsapp.lockUntil / lockToken are select: false - sent MongoDB
+// `{ whatsapp: 0, "whatsapp.lockUntil": 0, "whatsapp.lockToken": 0 }`. Mongo rejects
+// a parent excluded with its own children ("Path collision at
+// whatsapp.lockUntil remaining portion lockUntil") and the portal failed for every
+// child. The portal must keep using an inclusion projection that stays clear of
+// the hidden WhatsApp lease paths.
+import Fee from '../src/models/fee';
+import { PORTAL_FEE_FIELDS } from '../src/lib/portal-fees';
+
+const resolvedProjection = (select: string) => {
+  const q: any = Fee.find({}).select(select);
+  q._applyPaths?.();
+  const fields = q._fieldsForExec ? q._fieldsForExec() : q._fields;
+  return Object.entries(fields || {}).map(([path, value]) => [path, Number(value) || 0] as [string, number]);
+};
+const hasCollision = (projection: [string, number][]) =>
+  projection.some(([path, value], i) =>
+    value === 0 && projection.some(([other, otherValue], j) => j !== i && otherValue === 0 && other.startsWith(`${path}.`)));
+
+test('portal fee projection includes every portal column and never touches whatsapp', () => {
+  const projection = resolvedProjection(PORTAL_FEE_FIELDS);
+  const keys = projection.map(([path]) => path);
+  for (const needed of ['student', 'month', 'chalanNo', 'actualFee', 'discount', 'admissionFee', 'annualCharges', 'amount', 'paid', 'status', 'receivedDate', 'payments']) {
+    assert.ok(keys.includes(needed), `portal projection must include ${needed}`);
+  }
+  assert.ok(!keys.some((k) => k.startsWith('whatsapp')), 'the portal projection must not touch whatsapp');
+  assert.ok(projection.every(([, value]) => value === 1), 'portal projection must be inclusion-only');
+  assert.equal(hasCollision(projection), false);
+});
+
+test('the old parent-exclusion projection is what MongoDB rejects', () => {
+  const projection = resolvedProjection('-whatsapp');
+  assert.ok(hasCollision(projection), 'excluding whatsapp while hidden lease children exist must collide');
+});
