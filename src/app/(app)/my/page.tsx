@@ -7,15 +7,16 @@ import { childClassLine, childTitle, portalPath, portalSections } from "@/lib/po
 
 // What each sidebar section holds, shown on its quick-link card.
 const sectionNote: Record<string, string> = {
-  fees: "Monthly chalans, balance due, print & download voucher",
+  fees: "This month's single chalan, balance due, print & download voucher",
   diary: "Class homework / notes, day by day",
   tests: "Test papers with marks obtained",
   exams: "First / Mid / Final term papers with grade",
 };
 
 // The portal overview. A child sees his own summary + links; a guardian with
-// several children sees the family fee summary and one card per child. The
-// full reports open on their own sidebar page (/my/<childId>/fees, ...).
+// several children sees the family fee summary and one card per child. Each
+// link opens ONLY its own page (/my/<childId>/fees, ...) with no other tabs
+// on the page - the fee page shows one chalan for the picked month.
 export default function MyPortalPage() {
   const { data, bundles, guardianName } = usePortal();
   const multi = bundles.length > 1;
@@ -115,8 +116,8 @@ export default function MyPortalPage() {
         </div>
         <p className="text-xs text-slate-500">
           {multi
-            ? "Every child has his own Fee Chalan, Daily Diary, Tests and Exams page - open them here or from the menu."
-            : "Fee Chalan, Daily Diary, Tests and Exams each open on their own page from the menu."}
+            ? "Every child has his own Fee Chalan, Daily Diary, Tests and Exams page - each link opens only its own page, with no other tabs on it."
+            : "Fee Chalan, Daily Diary, Tests and Exams each open on their own page with no other tabs on it."}
         </p>
       </section>
     </div>
