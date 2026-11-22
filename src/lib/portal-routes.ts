@@ -7,13 +7,15 @@
 // children - into one set of pages per child:
 //
 //   /my                     -> overview (family summary + one card per child)
-//   /my/<childId>/fees      -> fee chalans, voucher print / download, accounts
+//   /my/<childId>/fees      -> ONE month's chalan (month picker), voucher print / download, accounts
 //   /my/<childId>/diary     -> daily diary of the class, by date
 //   /my/<childId>/tests     -> test papers of the class with marks obtained
 //   /my/<childId>/exams     -> exam paper marks per term (First / Mid / Final)
 //
-// The sidebar (app layout) builds its child groups from these same helpers,
-// so the menu and the pages can never disagree about a link.
+// Each link opens ONLY its own page: the child pages carry no in-page tabs
+// for the other sections. The sidebar (app layout) builds its child groups
+// from these same helpers, so the menu and the pages can never disagree
+// about a link.
 // ---------------------------------------------------------------------------
 
 export type PortalSection = "fees" | "diary" | "tests" | "exams";

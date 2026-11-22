@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { FaDownload, FaPrint } from "react-icons/fa";
-import { gradeOf, money, today } from "@/lib/api";
+import { currentMonth, gradeOf, money, today } from "@/lib/api";
+import { availableChalanMonths, chalanForMonth, formatMonthLabel, previousPendingForMonth } from "@/lib/fee-calculation";
 import { printChalan } from "@/lib/print";
 import { accountTypeLabel } from "@/lib/payment-accounts";
 import type { PortalBundle } from "./my-portal-data";
@@ -104,57 +105,89 @@ function Marks({ title, rows }: { title: string; rows: any[] }) {
 }
 
 // --- Fee chalan ------------------------------------------------------------
+// One chalan per month: this page shows a SINGLE month's voucher at a time
+// (the current month by default). Pick another month to see that month's one
+// chalan - the full history is never listed together on this page.
 export function FeeChalanSection({ bundle, schoolInfo, accounts = [] }: { bundle: PortalBundle; schoolInfo?: any; accounts?: any[] }) {
   const { student, fees } = bundle;
-  const { total, paid, balance } = totalsOf(fees);
-  const pending = fees.filter((f: any) => feeStatus(f) !== "paid").length;
+  const [month, setMonth] = useState(currentMonth());
+  const selected = chalanForMonth(fees, month);
+  const previousPending = previousPendingForMonth(fees, month);
+  const months = availableChalanMonths(fees);
+  const amount = Number(selected?.amount) || 0;
+  const paid = Number(selected?.paid) || 0;
+  const balance = Math.max(0, previousPending + amount - paid);
+  // Status covers the whole amount due on this view (previous pending +
+  // this voucher), so a fully paid voucher with older pending still reads
+  // as pending / part received instead of "Received".
+  const st = selected ? (balance <= 0 ? "paid" : paid > 0 ? "partial" : "unpaid") : null;
 
   return (
     <div className="space-y-4">
       <section className="space-y-3">
-        <h2 className="font-semibold">Fee chalan summary</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard label="Total amount" value={money(total)} />
-          <StatCard label="Paid amount" value={money(paid)} tone="text-green-700" />
-          <StatCard label="Balance" value={money(balance)} tone={balance > 0 ? "text-red-600" : "text-green-700"} />
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 className="font-semibold">Fee chalan</h2>
+          <div className="flex items-end gap-2">
+            <div>
+              <label className="text-xs font-semibold text-slate-500" htmlFor="chalan-month">Chalan month</label>
+              <input
+                id="chalan-month"
+                type="month"
+                className="input mt-1 w-full sm:w-44"
+                value={month}
+                onChange={(e) => setMonth(e.target.value || currentMonth())}
+              />
+            </div>
+            {month !== currentMonth() && <button className="btn-light" onClick={() => setMonth(currentMonth())}>This month</button>}
+          </div>
         </div>
-        <p className="text-sm text-slate-600">
-          {fees.length} {fees.length === 1 ? "chalan" : "chalans"} · {pending ? `${pending} still to be paid` : "everything cleared"}
-        </p>
-      </section>
+        <p className="text-xs text-slate-500">One chalan per month. Pick a month to see that month&apos;s single chalan.</p>
 
-      <section className="space-y-3">
-        <h2 className="font-semibold">Month by month chalans</h2>
-        <div className="card overflow-x-auto p-0">
-          <table className="w-full min-w-[760px]">
-            <thead>
-              <tr>{["Month", "Chalan #", "Admission", "Annual charges", "Amount", "Paid", "Balance", "Status", "Voucher"].map((h) => <th key={h} className="th">{h}</th>)}</tr>
-            </thead>
-            <tbody>
-              {fees.map((f: any) => {
-                const bal = f.amount - f.paid;
-                const st = feeStatus(f);
-                return (
-                  <tr key={f._id} className="border-t">
-                    <td className="td">{f.month === "0000-00" ? "Previous pending" : f.month}</td>
-                    <td className="td">{f.chalanNo}</td>
-                    <td className="td">{money(f.admissionFee)}</td>
-                    <td className="td">{money(f.annualCharges)}</td>
-                    <td className="td">{money(f.amount)}</td>
-                    <td className="td">{money(f.paid)}</td>
-                    <td className="td font-semibold">{money(bal)}</td>
-                    <td className="td"><span className={`rounded px-2 py-1 text-xs ${badge[st]}`}>{statusLabel[st]}</span></td>
+        {selected ? (
+          <>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <StatCard label="This month payable" value={money(amount)} />
+              <StatCard label="Paid amount" value={money(paid)} tone="text-green-700" />
+              <StatCard label="Balance due" value={money(balance)} tone={balance > 0 ? "text-red-600" : "text-green-700"} />
+            </div>
+            <div className="card overflow-x-auto p-0">
+              <table className="w-full min-w-[600px]">
+                <thead>
+                  <tr>{["Chalan #", "Month", "Monthly fee", "Discount", "Admission", "Annual charges", "Payable", "Paid", "Previous pending", "Total payable", "Balance", "Status", "Voucher"].map((h) => <th key={h} className="th">{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t">
+                    <td className="td">{selected.chalanNo}</td>
+                    <td className="td whitespace-nowrap">{formatMonthLabel(selected.month)}</td>
+                    <td className="td">{money(selected.actualFee ?? selected.amount)}</td>
+                    <td className="td">{money(selected.discount)}</td>
+                    <td className="td">{money(selected.admissionFee)}</td>
+                    <td className="td">{money(selected.annualCharges)}</td>
+                    <td className="td">{money(amount)}</td>
+                    <td className="td">{money(paid)}</td>
+                    <td className="td">{money(previousPending)}</td>
+                    <td className="td">{money(previousPending + amount)}</td>
+                    <td className="td font-semibold">{money(balance)}</td>
+                    <td className="td"><span className={`rounded px-2 py-1 text-xs ${badge[st!]}`}>{statusLabel[st!]}</span></td>
                     <td className="td whitespace-nowrap">
-                      <button className="icon-btn" title="Print voucher" aria-label={`Print chalan ${f.chalanNo}`} onClick={() => printChalan({ ...f, student }, schoolInfo, accounts)}><FaPrint /></button>
-                      <a className="icon-btn text-green-700" title="Download voucher image" aria-label={`Download chalan ${f.chalanNo}`} href={`/api/fees/${f._id}/image?download=1`}><FaDownload /></a>
+                      <button className="icon-btn" title="Print voucher" aria-label={`Print chalan ${selected.chalanNo}`} onClick={() => printChalan({ ...selected, student }, schoolInfo, accounts)}><FaPrint /></button>
+                      <a className="icon-btn text-green-700" title="Download voucher image" aria-label={`Download chalan ${selected.chalanNo}`} href={`/api/fees/${selected._id}/image?download=1`}><FaDownload /></a>
                     </td>
                   </tr>
-                );
-              })}
-              {!fees.length && <tr><td colSpan={9} className="td py-6 text-center text-slate-400">No chalans yet</td></tr>}
-            </tbody>
-          </table>
-        </div>
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
+          <div className="card py-8 text-center">
+            <p className="font-medium">No chalan for {formatMonthLabel(month)} yet</p>
+            <p className="mt-1 text-sm text-slate-500">The school creates one chalan per student per month.</p>
+            {previousPending > 0 && <p className="mt-2 text-sm">Previous pending: <b className="text-red-600">{money(previousPending)}</b></p>}
+            {months.length > 0 && (
+              <button className="btn-light mt-4" onClick={() => setMonth(months[0])}>View latest chalan ({formatMonthLabel(months[0])})</button>
+            )}
+          </div>
+        )}
       </section>
 
       {accounts.length > 0 && (

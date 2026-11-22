@@ -115,5 +115,5 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       else await createStudentLogin(item, email, body.loginPassword, s.schoolId);
     }
     return NextResponse.json({ item: resource === "fees" ? { ...item.toObject(), previous: 0, ...feeValues(item.toObject()) } : item });
-  } catch (e: any) { return fail(e.code === 11000 ? "Duplicate entry" : e.message); }
+  } catch (e: any) { return fail(e.code === 11000 ? (resource === "fees" ? "This student already has a chalan for this month. Edit the existing voucher instead." : "Duplicate entry") : e.message); }
 }

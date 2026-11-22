@@ -99,12 +99,12 @@ Portal pages (a child's login shows the same pages without the child-name group)
 | Page | Address | What it shows |
 | --- | --- | --- |
 | My Portal / All children | `/my` | Family (or own) fee summary, per-child cards and quick links |
-| Fee Chalan | `/my/<childId>/fees` | Month-by-month chalans, paid / balance, voucher print & PNG download, school payment accounts |
+| Fee Chalan | `/my/<childId>/fees` | One month's single chalan (month picker, current month by default), paid / balance, voucher print & PNG download, school payment accounts |
 | Daily Diary | `/my/<childId>/diary` | Class diary of one chosen date (previous dates via the date picker) |
 | Tests | `/my/<childId>/tests` | Test papers of one chosen date with marks obtained and % |
 | Exams | `/my/<childId>/exams` | First / Mid / Final term papers with subject marks, term % and grade |
 
-`/my/<childId>` opens the child's Fee Chalan. One `/api/my` call feeds the whole portal (the pages share one provider), so moving between the four sections does not reload the family's data, and a link to a child of another family is refused and sent back to `/my`.
+Each link opens **only its own page** — the child pages carry no in-page tabs for the other sections; moving between sections is done from the sidebar menu (or the overview cards). `/my/<childId>` opens the child's Fee Chalan. One `/api/my` call feeds the whole portal (the pages share one provider), so moving between the four sections does not reload the family's data, and a link to a child of another family is refused and sent back to `/my`.
 
 Notes:
 - Only the email typed by the school/teacher links children — never the phone number or father name alone — so one family can never see another family's children. An email belonging to a teacher, another school or any non-student account still gives "Login email already in use".
@@ -152,12 +152,12 @@ Sections are stored on the student (`section`, empty when the school does not us
 
 ### Fee chalans
 
-- **Generate monthly chalans** creates the regular monthly vouchers. **Create chalan** creates one student's voucher and immediately opens its WhatsApp/image preview.
+- **One chalan per student per month** (enforced by a unique `{student, month}` index). **Generate monthly chalans** creates only the missing monthly vouchers and reports how many were skipped because they already existed; **Create chalan** checks up front and blocks a second voucher for the same student + month, telling the admin to use **Edit** on the existing voucher instead. **Create chalan** creates one student's voucher and immediately opens its WhatsApp/image preview.
 - The pencil button edits **Monthly fee, Discount, Admission fee and Annual charges** on any voucher. These extra charges default to zero and are not silently repeated on every monthly generation.
 - `Voucher total = monthly fee − discount + admission fee + annual charges`. Previous pending is shown separately. Existing vouchers without the new fields continue to work with zero extra charges.
 - Print includes both voucher copies, the charge breakdown and active school payment accounts. The PNG contains the same information in one readable image.
 - The fee table omits the chalan image thumbnail to keep the list compact. Use the WhatsApp action to preview the voucher, or the **Share icon** to share the chalan PNG directly — native share sheet, or download + WhatsApp chat where file sharing is unsupported. Share status details are expandable per row.
-- Families can print/download their own vouchers and see active school payment accounts in **My Portal**. They cannot see other children's vouchers or the school's WhatsApp credentials/send logs.
+- Families can print/download their own vouchers and see active school payment accounts in **My Portal**. The portal fee page shows **one chalan at a time** (month picker, current month by default) with its previous pending — the full history is never listed together. They cannot see other children's vouchers or the school's WhatsApp credentials/send logs.
 
 ### WhatsApp sending
 

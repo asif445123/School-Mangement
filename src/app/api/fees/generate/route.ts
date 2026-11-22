@@ -15,7 +15,12 @@ export async function POST(req: NextRequest) {
   await connectDb();
   const students = await Student.find({ school: s.schoolId });
   const existing = new Set((await Fee.find({ month, school: s.schoolId })).map((f: any) => String(f.student)));
-  const docs = students.filter((st: any) => !existing.has(String(st._id)) && !(st.leftDate && st.leftDate < month + "-01")).map((st: any) => ({
+  // One chalan per student per month: students who already have a chalan for
+  // this month are skipped, never duplicated (the unique {student, month}
+  // index is the backstop if two requests race).
+  const eligible = students.filter((st: any) => !(st.leftDate && st.leftDate < month + "-01"));
+  const skipped = eligible.filter((st: any) => existing.has(String(st._id))).length;
+  const docs = eligible.filter((st: any) => !existing.has(String(st._id))).map((st: any) => ({
     school: s.schoolId, student: st._id, month,
     ...feeValues({ actualFee: st.monthlyFee || 0, discount: st.discount || 0 }),
     // Admission and annual charges are added per voucher, never silently repeated every month.
@@ -23,5 +28,5 @@ export async function POST(req: NextRequest) {
     chalanNo: `${month.replace("-", "")}-${String(st.className).replace(/[^a-zA-Z0-9]/g, "").slice(0, 16)}-${String(st.rollNo || String(st._id).slice(-6)).replace(/[^a-zA-Z0-9]/g, "").slice(0, 16)}`,
   }));
   if (docs.length) await Fee.insertMany(docs);
-  return NextResponse.json({ created: docs.length });
+  return NextResponse.json({ created: docs.length, skipped });
 }
