@@ -99,7 +99,7 @@ Portal pages (a child's login shows the same pages without the child-name group)
 | Page | Address | What it shows |
 | --- | --- | --- |
 | My Portal / All children | `/my` | Family (or own) fee summary, per-child cards and quick links |
-| Fee Chalan | `/my/<childId>/fees` | One month's single chalan (month picker, current month by default), paid / balance, voucher print & PNG download, school payment accounts |
+| Fee Chalan | `/my/<childId>/fees` | All fee chalans of the student (summary totals, month-by-month breakdown, paid / balance / status), voucher print & PNG download, school payment accounts |
 | Daily Diary | `/my/<childId>/diary` | Class diary of one chosen date (previous dates via the date picker) |
 | Tests | `/my/<childId>/tests` | Test papers of one chosen date with marks obtained and % |
 | Exams | `/my/<childId>/exams` | First / Mid / Final term papers with subject marks, term % and grade |
@@ -157,7 +157,7 @@ Sections are stored on the student (`section`, empty when the school does not us
 - `Voucher total = monthly fee − discount + admission fee + annual charges`. Previous pending is shown separately. Existing vouchers without the new fields continue to work with zero extra charges.
 - Print includes both voucher copies, the charge breakdown and active school payment accounts. The PNG contains the same information in one readable image.
 - The fee table omits the chalan image thumbnail to keep the list compact. Use the WhatsApp action to preview the voucher, or the **Share icon** to share the chalan PNG directly — native share sheet, or download + WhatsApp chat where file sharing is unsupported. Share status details are expandable per row.
-- Families can print/download their own vouchers and see active school payment accounts in **My Portal**. The portal fee page shows **one chalan at a time** (month picker, current month by default) with its previous pending — the full history is never listed together. They cannot see other children's vouchers or the school's WhatsApp credentials/send logs.
+- Families can print/download their own vouchers and see active school payment accounts in **My Portal**. The portal fee page lists **all chalans** of the student (newest month first, including any opening / previous pending balance) with summary totals, charge breakdown and voucher print / PNG download. They cannot see other children's vouchers or the school's WhatsApp credentials/send logs.
 
 ### WhatsApp sending
 

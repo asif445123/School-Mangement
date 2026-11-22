@@ -17,13 +17,11 @@ export const feeStatus = (amount: number, paid: number) => paid >= amount ? "pai
 export const validMonth = (value: any) => typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 export const previousBalance = (fees: any[], studentId: any, month: string) => fees.filter((f) => String(f.student?._id || f.student) === String(studentId) && f.month < month).reduce((sum, f) => sum + Math.max(0, Number(f.amount || 0) - Number(f.paid || 0)), 0);
 
-// --- One chalan per month (student portal) ---------------------------------
+// --- Student portal chalans ------------------------------------------------
 // A student has at most ONE monthly chalan per month (enforced by the unique
-// {student, month} index). The portal shows a single month at a time, so
-// these helpers pick that one voucher and its previous pending. `fees` here
-// is ONE child's list (as /api/my returns it), so no student filter is needed.
-// The opening balance (month "0000-00") is never a monthly chalan: it only
-// counts towards previous pending.
+// {student, month} index), plus an optional opening balance ("0000-00").
+// The student portal lists ALL chalans of a child (newest month first) while
+// still tracking previous pending per voucher for print / image rendering.
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 export function formatMonthLabel(month: string) {
   if (!month) return "—";
@@ -46,3 +44,30 @@ export const previousPendingForMonth = (fees: any[] = [], month: string) =>
 // Months that actually have a chalan, newest first (opening balance excluded).
 export const availableChalanMonths = (fees: any[] = []) =>
   [...new Set((fees || []).map((f: any) => f.month).filter((m: any) => m && m !== "0000-00"))].sort().reverse();
+
+// Every chalan of one child for the student portal, newest month first
+// (including any "0000-00" opening balance), with charge breakdown, per-row
+// balance/status and `previous` pending populated for voucher printing.
+export function portalChalanRows(fees: any[] = []) {
+  const list = [...(fees || [])].sort((a: any, b: any) => String(b?.month || "").localeCompare(String(a?.month || "")));
+  return list.map((f: any) => {
+    const amount = Number(f.amount) || 0;
+    const paid = Number(f.paid) || 0;
+    const balance = Math.max(0, amount - paid);
+    const previous = f.previous !== undefined ? Number(f.previous) || 0 : previousPendingForMonth(list, f.month);
+    return {
+      ...f,
+      monthLabel: formatMonthLabel(f.month),
+      isOpening: f.month === "0000-00",
+      actualFee: Number(f.actualFee ?? f.amount) || 0,
+      discount: Number(f.discount) || 0,
+      admissionFee: Number(f.admissionFee) || 0,
+      annualCharges: Number(f.annualCharges) || 0,
+      amount,
+      paid,
+      balance,
+      previous,
+      status: feeStatus(amount, paid),
+    };
+  });
+}

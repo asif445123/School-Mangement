@@ -7,7 +7,7 @@
 // children - into one set of pages per child:
 //
 //   /my                     -> overview (family summary + one card per child)
-//   /my/<childId>/fees      -> ONE month's chalan (month picker), voucher print / download, accounts
+//   /my/<childId>/fees      -> all fee chalans of the child, voucher print / download, accounts
 //   /my/<childId>/diary     -> daily diary of the class, by date
 //   /my/<childId>/tests     -> test papers of the class with marks obtained
 //   /my/<childId>/exams     -> exam paper marks per term (First / Mid / Final)

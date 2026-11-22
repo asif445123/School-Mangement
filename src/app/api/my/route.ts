@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDb } from "@/lib/db";
 import { fail, getSessionUser } from "@/lib/auth";
 import { belongsToStudentClass, feeTotals, linkedStudentIds } from "@/lib/guardian";
+import { previousPendingForMonth } from "@/lib/fee-calculation";
 import Student from "@/models/student";
 import Fee from "@/models/fee";
 import Diary from "@/models/diary";
@@ -42,7 +43,15 @@ export async function GET() {
   ]);
 
   const children = students.map((student) => {
-    const ownFees = fees.filter((f: any) => String(f.student) === String(student._id));
+    const rawFees = fees.filter((f: any) => String(f.student) === String(student._id));
+    const ownFees = rawFees.map((f: any) => ({
+      ...f,
+      previous: previousPendingForMonth(rawFees, f.month),
+      actualFee: f.actualFee ?? f.amount,
+      discount: f.discount ?? 0,
+      admissionFee: f.admissionFee ?? 0,
+      annualCharges: f.annualCharges ?? 0,
+    }));
     return {
       student,
       fees: ownFees,
